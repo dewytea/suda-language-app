@@ -31,10 +31,10 @@ export function AppSidebar() {
       <SidebarHeader className="p-6 space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
-            L
+            S
           </div>
           <div>
-            <h2 className="font-serif font-bold text-xl">LinguaLearn</h2>
+            <h2 className="font-serif font-bold text-xl">SUDA</h2>
             <p className="text-xs text-muted-foreground">Your language journey</p>
           </div>
         </div>
