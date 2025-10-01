@@ -1,14 +1,19 @@
 import { ReadingContent } from "@/components/ReadingContent";
 import { VocabularyItem } from "@/components/VocabularyItem";
+import { LevelGuide } from "@/components/LevelGuide";
 import { Card } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Vocabulary } from "@shared/schema";
+import type { Vocabulary, UserProgress } from "@shared/schema";
 import { useState } from "react";
 
 export default function Reading() {
   const [selectedLanguage] = useState("en");
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
 
   const { data: vocabulary = [] } = useQuery<Vocabulary[]>({
     queryKey: ["/api/vocabulary", selectedLanguage],
@@ -41,7 +46,7 @@ export default function Reading() {
   const handleWordClick = (word: string) => {
     const newVocab = {
       word,
-      translation: "Click to add translation",
+      translation: "번역을 추가하려면 클릭하세요",
       language: selectedLanguage,
     };
     addVocabulary.mutate(newVocab);
@@ -52,10 +57,12 @@ export default function Reading() {
       <div className="flex items-center gap-3">
         <BookOpen className="h-8 w-8 text-skill-reading" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Reading Practice</h1>
-          <p className="text-muted-foreground mt-1">10 minutes • Build comprehension</p>
+          <h1 className="font-serif font-bold text-4xl">읽기 연습</h1>
+          <p className="text-muted-foreground mt-1">10분 • 독해력 향상에 집중하세요</p>
         </div>
       </div>
+
+      <LevelGuide level={progress?.level || 1} skill="reading" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
@@ -69,13 +76,13 @@ export default function Reading() {
 
         <div className="space-y-6">
           <Card className="p-6">
-            <h3 className="font-semibold text-lg mb-4">My Vocabulary</h3>
+            <h3 className="font-semibold text-lg mb-4">나의 어휘장</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Click on words in the text to add them here
+              본문의 단어를 클릭하면 여기에 저장됩니다
             </p>
             {vocabulary.length === 0 ? (
               <p className="text-sm text-center text-muted-foreground py-8">
-                No vocabulary yet. Click on words to add them!
+                아직 저장된 단어가 없습니다. 단어를 클릭해보세요!
               </p>
             ) : (
               <div className="space-y-3">

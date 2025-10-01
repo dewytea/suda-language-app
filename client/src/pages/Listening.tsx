@@ -1,6 +1,10 @@
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { ListeningTranscript } from "@/components/ListeningTranscript";
+import { LevelGuide } from "@/components/LevelGuide";
 import { Headphones } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { UserProgress } from "@shared/schema";
+import { useState } from "react";
 
 const sentences = [
   { id: 1, text: "Good morning, how are you today?", translation: "좋은 아침입니다, 오늘 어떻게 지내세요?" },
@@ -11,19 +15,27 @@ const sentences = [
 ];
 
 export default function Listening() {
+  const [selectedLanguage] = useState("en");
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
         <Headphones className="h-8 w-8 text-skill-listening" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Listening Practice</h1>
-          <p className="text-muted-foreground mt-1">10 minutes • Train your ear</p>
+          <h1 className="font-serif font-bold text-4xl">듣기 연습</h1>
+          <p className="text-muted-foreground mt-1">10분 • 듣기 능력을 향상시키세요</p>
         </div>
       </div>
 
+      <LevelGuide level={progress?.level || 1} skill="listening" />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <AudioPlayer title="Daily Conversation" duration="5:30" />
+          <AudioPlayer title="일상 대화" duration="5:30" />
         </div>
         <div>
           <ListeningTranscript sentences={sentences} currentSentence={1} />

@@ -72,8 +72,8 @@ export default function Review() {
       <div className="flex items-center gap-3">
         <RotateCcw className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Daily Review</h1>
-          <p className="text-muted-foreground mt-1">10 minutes • Reinforce yesterday's learning</p>
+          <h1 className="font-serif font-bold text-4xl">일일 복습</h1>
+          <p className="text-muted-foreground mt-1">10분 • 어제 배운 내용을 복습하세요</p>
         </div>
       </div>
 

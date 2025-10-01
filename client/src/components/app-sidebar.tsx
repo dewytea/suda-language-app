@@ -14,18 +14,28 @@ import {
 import { LevelBadge } from "./LevelBadge";
 import { StreakDisplay } from "./StreakDisplay";
 import { PointsDisplay } from "./PointsDisplay";
+import { useQuery } from "@tanstack/react-query";
+import type { UserProgress } from "@shared/schema";
+import { useState } from "react";
+import { Link } from "wouter";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Speaking", url: "/speaking", icon: Mic },
-  { title: "Reading", url: "/reading", icon: BookOpen },
-  { title: "Listening", url: "/listening", icon: Headphones },
-  { title: "Writing", url: "/writing", icon: PenLine },
-  { title: "Vocabulary", url: "/vocabulary", icon: BookMarked },
-  { title: "Achievements", url: "/achievements", icon: Award },
+  { title: "대시보드", url: "/", icon: Home },
+  { title: "말하기", url: "/speaking", icon: Mic },
+  { title: "읽기", url: "/reading", icon: BookOpen },
+  { title: "듣기", url: "/listening", icon: Headphones },
+  { title: "쓰기", url: "/writing", icon: PenLine },
+  { title: "어휘", url: "/vocabulary", icon: BookMarked },
+  { title: "업적", url: "/achievements", icon: Award },
 ];
 
 export function AppSidebar() {
+  const [selectedLanguage] = useState("en");
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
+
   return (
     <Sidebar>
       <SidebarHeader className="p-6 space-y-4">
@@ -35,24 +45,24 @@ export function AppSidebar() {
           </div>
           <div>
             <h2 className="font-serif font-bold text-xl">SUDA</h2>
-            <p className="text-xs text-muted-foreground">Your language journey</p>
+            <p className="text-xs text-muted-foreground">당신의 언어 여정</p>
           </div>
         </div>
-        <LevelBadge level={5} />
+        <LevelBadge level={progress?.level || 1} showDescription={true} />
       </SidebarHeader>
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Learning</SidebarGroupLabel>
+          <SidebarGroupLabel>학습</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} data-testid={`link-${item.url === '/' ? 'dashboard' : item.url.slice(1)}`}>
                       <item.icon />
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -63,16 +73,16 @@ export function AppSidebar() {
 
       <SidebarFooter className="p-6 space-y-4">
         <div className="space-y-3">
-          <StreakDisplay days={15} />
-          <PointsDisplay points={1250} />
+          <StreakDisplay days={progress?.streakDays || 0} />
+          <PointsDisplay points={progress?.totalPoints || 0} />
         </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <a href="/settings" data-testid="link-settings">
+              <Link href="/settings" data-testid="link-settings">
                 <Settings />
-                <span>Settings</span>
-              </a>
+                <span>설정</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

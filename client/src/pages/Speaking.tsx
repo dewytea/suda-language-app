@@ -1,17 +1,22 @@
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { PronunciationScore } from "@/components/PronunciationScore";
 import { KeySentenceCard } from "@/components/KeySentenceCard";
+import { LevelGuide } from "@/components/LevelGuide";
 import { Card } from "@/components/ui/card";
 import { Mic } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { KeySentence, PronunciationResult } from "@shared/schema";
+import type { KeySentence, PronunciationResult, UserProgress } from "@shared/schema";
 
 export default function Speaking() {
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [currentSentence, setCurrentSentence] = useState("Where is the boarding gate?");
   const [latestScore, setLatestScore] = useState<PronunciationResult | null>(null);
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
 
   const { data: sentences = [], status: sentencesStatus } = useQuery<KeySentence[]>({
     queryKey: ["/api/sentences", selectedLanguage],
@@ -76,17 +81,19 @@ export default function Speaking() {
       <div className="flex items-center gap-3">
         <Mic className="h-8 w-8 text-skill-speaking" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Speaking Practice</h1>
-          <p className="text-muted-foreground mt-1">30 minutes • Focus on pronunciation</p>
+          <h1 className="font-serif font-bold text-4xl">말하기 연습</h1>
+          <p className="text-muted-foreground mt-1">30분 • 발음과 억양에 집중하세요</p>
         </div>
       </div>
+
+      <LevelGuide level={progress?.level || 1} skill="speaking" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
           <Card className="p-6">
-            <h2 className="font-semibold text-xl mb-4">Record Your Voice</h2>
+            <h2 className="font-semibold text-xl mb-4">음성 녹음</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Repeat the sentence below and get instant feedback
+              아래 문장을 따라 읽고 즉각적인 피드백을 받아보세요
             </p>
             <div className="p-4 bg-muted rounded-md mb-6">
               <p className="text-lg font-medium text-center">
@@ -100,7 +107,7 @@ export default function Speaking() {
         <div className="space-y-6">
           {evaluatePronunciation.isPending && (
             <Card className="p-6">
-              <p className="text-center text-muted-foreground">Evaluating your pronunciation...</p>
+              <p className="text-center text-muted-foreground">발음을 평가하고 있습니다...</p>
             </Card>
           )}
           {latestScore && !evaluatePronunciation.isPending && (
@@ -110,8 +117,8 @@ export default function Speaking() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="font-serif font-semibold text-2xl">Today's Key Sentences</h2>
-        <p className="text-muted-foreground">Memorize these essential phrases</p>
+        <h2 className="font-serif font-semibold text-2xl">오늘의 핵심 문장</h2>
+        <p className="text-muted-foreground">반드시 익혀야 할 필수 표현들입니다</p>
         <div className="grid grid-cols-1 gap-4">
           {sentences.map((item) => (
             <KeySentenceCard

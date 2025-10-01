@@ -1,14 +1,19 @@
 import { WritingPrompt } from "@/components/WritingPrompt";
 import { WritingFeedback } from "@/components/WritingFeedback";
+import { LevelGuide } from "@/components/LevelGuide";
 import { PenLine } from "lucide-react";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { WritingResult } from "@shared/schema";
+import type { WritingResult, UserProgress } from "@shared/schema";
 
 export default function Writing() {
   const [selectedLanguage] = useState("en");
   const [latestResult, setLatestResult] = useState<WritingResult | null>(null);
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
 
   const evaluateWriting = useMutation({
     mutationFn: async ({ prompt, userText }: { prompt: string; userText: string }) => {
@@ -36,10 +41,12 @@ export default function Writing() {
       <div className="flex items-center gap-3">
         <PenLine className="h-8 w-8 text-skill-writing" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Writing Practice</h1>
-          <p className="text-muted-foreground mt-1">10 minutes • Express yourself</p>
+          <h1 className="font-serif font-bold text-4xl">쓰기 연습</h1>
+          <p className="text-muted-foreground mt-1">10분 • 생각을 글로 표현하세요</p>
         </div>
       </div>
+
+      <LevelGuide level={progress?.level || 1} skill="writing" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>

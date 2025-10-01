@@ -1,5 +1,7 @@
 import { SkillCard } from "@/components/SkillCard";
 import { ScenarioCard } from "@/components/ScenarioCard";
+import { LevelProgress } from "@/components/LevelProgress";
+import { DailyGoalProgress } from "@/components/DailyGoalProgress";
 import { Mic, BookOpen, Headphones, PenLine } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useState } from "react";
@@ -56,26 +58,39 @@ export default function Dashboard() {
         <div className="absolute inset-0 z-20 flex items-center justify-center">
           <div className="text-center space-y-4 px-4">
             <h1 className="font-serif font-bold text-4xl md:text-6xl text-white">
-              Master Any Language
+              모든 언어를 마스터하세요
             </h1>
             <p className="text-lg md:text-xl text-white/90 max-w-2xl">
-              AI-powered learning with focus on speaking, reading, listening, and writing
+              AI 기반 학습으로 말하기, 읽기, 듣기, 쓰기를 모두 향상시키세요
             </p>
           </div>
         </div>
       </div>
 
       <section className="space-y-6">
-        <h2 className="font-serif font-semibold text-3xl">Choose Your Language</h2>
+        <h2 className="font-serif font-semibold text-3xl">언어 선택</h2>
         <LanguageSelector 
           selectedLanguage={selectedLanguage} 
           onSelect={setSelectedLanguage} 
         />
       </section>
 
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LevelProgress 
+          currentLevel={progress?.level || 1}
+          totalPoints={progress?.totalPoints || 0}
+        />
+        <DailyGoalProgress
+          speakingProgress={progress?.speakingProgress || 0}
+          readingProgress={progress?.readingProgress || 0}
+          listeningProgress={progress?.listeningProgress || 0}
+          writingProgress={progress?.writingProgress || 0}
+        />
+      </section>
+
       <section className="space-y-6">
-        <h2 className="font-serif font-semibold text-3xl">Daily Practice</h2>
-        <p className="text-muted-foreground">Complete your 1-hour daily goal across all skills</p>
+        <h2 className="font-serif font-semibold text-3xl">학습 영역</h2>
+        <p className="text-muted-foreground">네 가지 핵심 영역을 균형있게 연습하세요</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <SkillCard
             title="Speaking"
@@ -113,8 +128,8 @@ export default function Dashboard() {
       </section>
 
       <section className="space-y-6">
-        <h2 className="font-serif font-semibold text-3xl">Practice Scenarios</h2>
-        <p className="text-muted-foreground">Learn practical conversations for real-life situations</p>
+        <h2 className="font-serif font-semibold text-3xl">실생활 시나리오</h2>
+        <p className="text-muted-foreground">실제 상황에서 사용할 수 있는 회화를 배워보세요</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {scenarios.map((scenario) => (
             <ScenarioCard

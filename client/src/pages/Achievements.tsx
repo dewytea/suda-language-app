@@ -18,24 +18,24 @@ export default function Achievements() {
       <div className="flex items-center gap-3">
         <Award className="h-8 w-8 text-yellow-500" />
         <div>
-          <h1 className="font-serif font-bold text-4xl">Achievements</h1>
-          <p className="text-muted-foreground mt-1">Track your progress and unlock rewards</p>
+          <h1 className="font-serif font-bold text-4xl">업적</h1>
+          <p className="text-muted-foreground mt-1">진행 상황을 추적하고 보상을 잠금 해제하세요</p>
         </div>
       </div>
 
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-3">
           <Trophy className="h-6 w-6 text-primary" />
-          <h2 className="font-semibold text-xl">Overall Progress</h2>
+          <h2 className="font-semibold text-xl">전체 진행 상황</h2>
         </div>
         <ProgressBar 
           value={unlockedCount} 
           max={totalCount} 
-          label="Achievements Unlocked" 
+          label="잠금 해제된 업적" 
           showPercentage={false}
         />
         <p className="text-sm text-muted-foreground">
-          {unlockedCount} of {totalCount} achievements unlocked
+          {totalCount}개 중 {unlockedCount}개 업적 잠금 해제
         </p>
       </Card>
 
