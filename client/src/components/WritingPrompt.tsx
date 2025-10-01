@@ -8,14 +8,14 @@ interface WritingPromptProps {
   prompt: string;
   example: string;
   onSubmit: (text: string) => void;
+  isEvaluating?: boolean;
 }
 
-export function WritingPrompt({ prompt, example, onSubmit }: WritingPromptProps) {
+export function WritingPrompt({ prompt, example, onSubmit, isEvaluating = false }: WritingPromptProps) {
   const [text, setText] = useState("");
 
   const handleSubmit = () => {
     onSubmit(text);
-    console.log("Submitted:", text);
   };
 
   return (
@@ -33,12 +33,17 @@ export function WritingPrompt({ prompt, example, onSubmit }: WritingPromptProps)
         onChange={(e) => setText(e.target.value)}
         className="min-h-32 resize-none"
         data-testid="textarea-writing"
+        disabled={isEvaluating}
       />
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">{text.length} characters</p>
-        <Button onClick={handleSubmit} disabled={!text.trim()} data-testid="button-submit-writing">
+        <Button 
+          onClick={handleSubmit} 
+          disabled={!text.trim() || isEvaluating} 
+          data-testid="button-submit-writing"
+        >
           <Send className="h-4 w-4 mr-2" />
-          Submit
+          {isEvaluating ? "Evaluating..." : "Submit"}
         </Button>
       </div>
     </Card>

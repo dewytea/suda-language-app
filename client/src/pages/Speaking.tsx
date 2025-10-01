@@ -3,13 +3,73 @@ import { PronunciationScore } from "@/components/PronunciationScore";
 import { KeySentenceCard } from "@/components/KeySentenceCard";
 import { Card } from "@/components/ui/card";
 import { Mic } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { KeySentence, PronunciationResult } from "@shared/schema";
 
 export default function Speaking() {
-  const keySentences = [
-    { sentence: "Where is the boarding gate?", translation: "탑승구가 어디에 있나요?" },
-    { sentence: "I would like to check in, please.", translation: "체크인하고 싶습니다." },
-    { sentence: "Can I see your passport?", translation: "여권을 보여주시겠습니까?" },
-  ];
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [currentSentence, setCurrentSentence] = useState("Where is the boarding gate?");
+  const [latestScore, setLatestScore] = useState<PronunciationResult | null>(null);
+
+  const { data: sentences = [], status: sentencesStatus } = useQuery<KeySentence[]>({
+    queryKey: ["/api/sentences", selectedLanguage],
+  });
+
+  const evaluatePronunciation = useMutation({
+    mutationFn: async ({ sentence, audioBlob }: { sentence: string; audioBlob?: Blob }) => {
+      let audioData = undefined;
+      if (audioBlob) {
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve) => {
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(audioBlob);
+        });
+        audioData = await base64Promise;
+      }
+
+      const res = await apiRequest("POST", `/api/pronunciation/evaluate`, {
+        sentence,
+        language: selectedLanguage,
+        audioData,
+      });
+      return await res.json();
+    },
+    onSuccess: (data: PronunciationResult) => {
+      setLatestScore(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/pronunciation", selectedLanguage] });
+    },
+  });
+
+  const addSentence = useMutation({
+    mutationFn: async (sentence: Omit<KeySentence, "id">) => {
+      const res = await apiRequest("POST", "/api/sentences", sentence);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sentences", selectedLanguage] });
+    },
+  });
+
+  useEffect(() => {
+    if (sentencesStatus === "success" && sentences.length === 0) {
+      const defaultSentences = [
+        { sentence: "Where is the boarding gate?", translation: "탑승구가 어디에 있나요?", language: "en", scenario: "airport", memorized: false },
+        { sentence: "I would like to check in, please.", translation: "체크인하고 싶습니다.", language: "en", scenario: "airport", memorized: false },
+        { sentence: "Can I see your passport?", translation: "여권을 보여주시겠습니까?", language: "en", scenario: "airport", memorized: false },
+      ];
+      
+      defaultSentences.forEach(s => addSentence.mutate(s));
+    }
+  }, [sentencesStatus, sentences.length]);
+
+  const handleRecordingComplete = (audioBlob: Blob) => {
+    evaluatePronunciation.mutate({
+      sentence: currentSentence,
+      audioBlob,
+    });
+  };
 
   return (
     <div className="space-y-8">
@@ -30,15 +90,22 @@ export default function Speaking() {
             </p>
             <div className="p-4 bg-muted rounded-md mb-6">
               <p className="text-lg font-medium text-center">
-                "Where is the boarding gate?"
+                "{currentSentence}"
               </p>
             </div>
-            <VoiceRecorder />
+            <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
           </Card>
         </div>
 
         <div className="space-y-6">
-          <PronunciationScore score={85} />
+          {evaluatePronunciation.isPending && (
+            <Card className="p-6">
+              <p className="text-center text-muted-foreground">Evaluating your pronunciation...</p>
+            </Card>
+          )}
+          {latestScore && !evaluatePronunciation.isPending && (
+            <PronunciationScore score={latestScore.score} />
+          )}
         </div>
       </div>
 
@@ -46,12 +113,14 @@ export default function Speaking() {
         <h2 className="font-serif font-semibold text-2xl">Today's Key Sentences</h2>
         <p className="text-muted-foreground">Memorize these essential phrases</p>
         <div className="grid grid-cols-1 gap-4">
-          {keySentences.map((item, idx) => (
+          {sentences.map((item) => (
             <KeySentenceCard
-              key={idx}
+              key={item.id}
               sentence={item.sentence}
               translation={item.translation}
-              index={idx}
+              index={item.id}
+              memorized={item.memorized}
+              onSentenceClick={() => setCurrentSentence(item.sentence)}
             />
           ))}
         </div>

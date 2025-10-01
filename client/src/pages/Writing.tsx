@@ -2,25 +2,34 @@ import { WritingPrompt } from "@/components/WritingPrompt";
 import { WritingFeedback } from "@/components/WritingFeedback";
 import { PenLine } from "lucide-react";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { WritingResult } from "@shared/schema";
 
 export default function Writing() {
-  const [showFeedback, setShowFeedback] = useState(false);
+  const [selectedLanguage] = useState("en");
+  const [latestResult, setLatestResult] = useState<WritingResult | null>(null);
 
-  const handleSubmit = (text: string) => {
-    console.log("Submitted:", text);
-    setShowFeedback(true);
+  const evaluateWriting = useMutation({
+    mutationFn: async ({ prompt, userText }: { prompt: string; userText: string }) => {
+      const res = await apiRequest("POST", "/api/writing/evaluate", {
+        prompt,
+        userText,
+        language: selectedLanguage,
+      });
+      return await res.json();
+    },
+    onSuccess: (data: WritingResult) => {
+      setLatestResult(data);
+    },
+  });
+
+  const handleSubmit = (prompt: string, text: string) => {
+    evaluateWriting.mutate({ prompt, userText: text });
   };
 
-  const corrections = [
-    { original: "I goes to school", corrected: "I go to school", type: "grammar" as const },
-    { original: "beautifull", corrected: "beautiful", type: "spelling" as const },
-  ];
-
-  const suggestions = [
-    "Try using more descriptive adjectives to make your writing more vivid",
-    "Consider adding transition words between sentences for better flow",
-    "Great job expressing your ideas clearly!",
-  ];
+  const currentPrompt = "Describe your typical morning routine";
+  const currentExample = "I wake up at 7 AM, brush my teeth, and have breakfast.";
 
   return (
     <div className="space-y-8">
@@ -35,18 +44,19 @@ export default function Writing() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <WritingPrompt
-            prompt="Describe your typical morning routine"
-            example="I wake up at 7 AM, brush my teeth, and have breakfast."
-            onSubmit={handleSubmit}
+            prompt={currentPrompt}
+            example={currentExample}
+            onSubmit={(text) => handleSubmit(currentPrompt, text)}
+            isEvaluating={evaluateWriting.isPending}
           />
         </div>
 
-        {showFeedback && (
+        {latestResult && (
           <div>
             <WritingFeedback
-              score={85}
-              corrections={corrections}
-              suggestions={suggestions}
+              score={latestResult.score}
+              corrections={latestResult.corrections}
+              suggestions={latestResult.suggestions}
             />
           </div>
         )}

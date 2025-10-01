@@ -2,19 +2,16 @@ import { AchievementBadge } from "@/components/AchievementBadge";
 import { Card } from "@/components/ui/card";
 import { Award, Trophy } from "lucide-react";
 import { ProgressBar } from "@/components/ProgressBar";
+import { useQuery } from "@tanstack/react-query";
+import type { Achievement } from "@shared/schema";
 
 export default function Achievements() {
-  const achievements = [
-    { title: "First Steps", description: "Complete your first lesson", icon: "🎯", unlocked: true },
-    { title: "Week Warrior", description: "Maintain a 7-day streak", icon: "🔥", unlocked: true },
-    { title: "Speaking Star", description: "Complete 10 speaking lessons", icon: "🎤", unlocked: true },
-    { title: "Bookworm", description: "Read 5 stories", icon: "📚", unlocked: true },
-    { title: "Good Listener", description: "Complete 10 listening exercises", icon: "👂", unlocked: false },
-    { title: "Master Writer", description: "Write 20 essays", icon: "✍️", unlocked: false },
-    { title: "Polyglot", description: "Learn 3 languages", icon: "🌍", unlocked: false },
-    { title: "Century Club", description: "Earn 100 points", icon: "💯", unlocked: true },
-    { title: "Dedication", description: "30-day streak", icon: "⭐", unlocked: false },
-  ];
+  const { data: achievements = [] } = useQuery<Achievement[]>({
+    queryKey: ["/api/achievements"],
+  });
+
+  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const totalCount = achievements.length;
 
   return (
     <div className="space-y-8">
@@ -32,18 +29,20 @@ export default function Achievements() {
           <h2 className="font-semibold text-xl">Overall Progress</h2>
         </div>
         <ProgressBar 
-          value={5} 
-          max={9} 
+          value={unlockedCount} 
+          max={totalCount} 
           label="Achievements Unlocked" 
           showPercentage={false}
         />
-        <p className="text-sm text-muted-foreground">5 of 9 achievements unlocked</p>
+        <p className="text-sm text-muted-foreground">
+          {unlockedCount} of {totalCount} achievements unlocked
+        </p>
       </Card>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {achievements.map((achievement) => (
           <AchievementBadge
-            key={achievement.title}
+            key={achievement.id}
             title={achievement.title}
             description={achievement.description}
             icon={achievement.icon}

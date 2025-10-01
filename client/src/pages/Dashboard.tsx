@@ -3,6 +3,10 @@ import { ScenarioCard } from "@/components/ScenarioCard";
 import { Mic, BookOpen, Headphones, PenLine } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { UserProgress } from "@shared/schema";
+import { useLocation } from "wouter";
 import heroImage from "@assets/generated_images/Language_learning_hero_image_466f9149.png";
 import airportImage from "@assets/generated_images/Airport_scenario_background_e10f50e6.png";
 import bankImage from "@assets/generated_images/Bank_scenario_background_57f59a83.png";
@@ -12,6 +16,21 @@ import cinemaImage from "@assets/generated_images/Cinema_scenario_background_561
 
 export default function Dashboard() {
   const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [, setLocation] = useLocation();
+
+  const { data: progress } = useQuery<UserProgress>({
+    queryKey: ["/api/progress", selectedLanguage],
+  });
+
+  const updateProgress = useMutation({
+    mutationFn: async (updates: Partial<UserProgress>) => {
+      const res = await apiRequest("PATCH", `/api/progress/${selectedLanguage}`, updates);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/progress", selectedLanguage] });
+    },
+  });
 
   const scenarios = [
     { title: "At the Airport", description: "Travel conversations", image: airportImage },
@@ -20,6 +39,10 @@ export default function Dashboard() {
     { title: "At a Restaurant", description: "Dining conversations", image: restaurantImage },
     { title: "At the Cinema", description: "Entertainment talks", image: cinemaImage },
   ];
+
+  const handleSkillClick = (skill: string) => {
+    setLocation(`/${skill.toLowerCase()}`);
+  };
 
   return (
     <div className="space-y-12">
@@ -58,33 +81,33 @@ export default function Dashboard() {
             title="Speaking"
             icon={Mic}
             duration="30 min"
-            progress={65}
+            progress={progress?.speakingProgress || 0}
             color="speaking"
-            onClick={() => console.log("Speaking clicked")}
+            onClick={() => handleSkillClick("Speaking")}
           />
           <SkillCard
             title="Reading"
             icon={BookOpen}
             duration="10 min"
-            progress={40}
+            progress={progress?.readingProgress || 0}
             color="reading"
-            onClick={() => console.log("Reading clicked")}
+            onClick={() => handleSkillClick("Reading")}
           />
           <SkillCard
             title="Listening"
             icon={Headphones}
             duration="10 min"
-            progress={80}
+            progress={progress?.listeningProgress || 0}
             color="listening"
-            onClick={() => console.log("Listening clicked")}
+            onClick={() => handleSkillClick("Listening")}
           />
           <SkillCard
             title="Writing"
             icon={PenLine}
             duration="10 min"
-            progress={55}
+            progress={progress?.writingProgress || 0}
             color="writing"
-            onClick={() => console.log("Writing clicked")}
+            onClick={() => handleSkillClick("Writing")}
           />
         </div>
       </section>
@@ -99,7 +122,7 @@ export default function Dashboard() {
               title={scenario.title}
               description={scenario.description}
               imageUrl={scenario.image}
-              onClick={() => console.log(`${scenario.title} clicked`)}
+              onClick={() => handleSkillClick("Speaking")}
             />
           ))}
         </div>

@@ -7,15 +7,19 @@ interface ReadingContentProps {
   title: string;
   content: string;
   translation?: string;
+  onWordClick?: (word: string) => void;
 }
 
-export function ReadingContent({ title, content, translation }: ReadingContentProps) {
+export function ReadingContent({ title, content, translation, onWordClick }: ReadingContentProps) {
   const [showTranslation, setShowTranslation] = useState(false);
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   const handleWordClick = (word: string) => {
-    setSelectedWord(word);
-    console.log("Word clicked:", word);
+    const cleanWord = word.replace(/[.,;:!?"']/g, "").toLowerCase();
+    setSelectedWord(cleanWord);
+    if (onWordClick) {
+      onWordClick(cleanWord);
+    }
   };
 
   return (
@@ -25,15 +29,17 @@ export function ReadingContent({ title, content, translation }: ReadingContentPr
           <BookOpen className="h-6 w-6 text-skill-reading" />
           <h2 className="font-serif font-semibold text-2xl">{title}</h2>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowTranslation(!showTranslation)}
-          data-testid="button-toggle-translation"
-        >
-          <Languages className="h-4 w-4 mr-2" />
-          {showTranslation ? "Hide" : "Show"} Translation
-        </Button>
+        {translation && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowTranslation(!showTranslation)}
+            data-testid="button-toggle-translation"
+          >
+            <Languages className="h-4 w-4 mr-2" />
+            {showTranslation ? "Hide" : "Show"} Translation
+          </Button>
+        )}
       </div>
       <div className="prose prose-lg max-w-none">
         <p className="leading-loose text-base">
@@ -51,6 +57,13 @@ export function ReadingContent({ title, content, translation }: ReadingContentPr
       {showTranslation && translation && (
         <div className="p-4 bg-muted rounded-md">
           <p className="text-sm text-muted-foreground">{translation}</p>
+        </div>
+      )}
+      {selectedWord && (
+        <div className="p-3 bg-primary/10 border border-primary/20 rounded-md">
+          <p className="text-sm font-medium">
+            Word "{selectedWord}" added to vocabulary!
+          </p>
         </div>
       )}
     </Card>

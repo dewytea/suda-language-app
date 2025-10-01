@@ -16,6 +16,12 @@ export function VoiceRecorder({ onRecordingComplete }: VoiceRecorderProps) {
       setIsRecording(false);
       setHasRecording(true);
       console.log("Recording stopped");
+      
+      // Simulate audio blob creation
+      if (onRecordingComplete) {
+        const mockBlob = new Blob(["audio data"], { type: "audio/wav" });
+        onRecordingComplete(mockBlob);
+      }
     } else {
       setIsRecording(true);
       setHasRecording(false);
