@@ -14,6 +14,7 @@ import Listening from "@/pages/Listening";
 import Writing from "@/pages/Writing";
 import Review from "@/pages/Review";
 import Achievements from "@/pages/Achievements";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/writing" component={Writing} />
       <Route path="/review" component={Review} />
       <Route path="/achievements" component={Achievements} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

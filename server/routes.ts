@@ -13,9 +13,49 @@ import {
 } from "@shared/schema";
 
 // Using Gemini AI integration - see blueprint:javascript_gemini
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // API Key Health Check
+  app.get("/api/health/gemini", async (req, res) => {
+    try {
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({ 
+          status: "error",
+          message: "Gemini API 키가 설정되지 않았습니다. 환경 변수에서 GEMINI_API_KEY를 설정해주세요.",
+          configured: false
+        });
+      }
+
+      // Test API key validity with a simple request
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-exp",
+        contents: "Hello",
+      });
+
+      if (response.text) {
+        return res.json({ 
+          status: "ok",
+          message: "Gemini API가 정상적으로 작동합니다.",
+          configured: true
+        });
+      } else {
+        return res.status(503).json({ 
+          status: "error",
+          message: "Gemini API 응답이 올바르지 않습니다.",
+          configured: true
+        });
+      }
+    } catch (error: any) {
+      return res.status(503).json({ 
+        status: "error",
+        message: `Gemini API 오류: ${error.message}`,
+        configured: !!GEMINI_API_KEY
+      });
+    }
+  });
+
   // User Progress Routes
   app.get("/api/progress/:language", async (req, res) => {
     try {
