@@ -39,17 +39,31 @@ export default function Reading() {
     },
   });
 
+  const translateWord = useMutation({
+    mutationFn: async (word: string) => {
+      const res = await apiRequest("POST", "/api/translate", {
+        text: word,
+        targetLanguage: "Korean",
+        sourceLanguage: selectedLanguage
+      });
+      return await res.json();
+    },
+    onSuccess: (data, word) => {
+      const newVocab = {
+        word,
+        translation: data.translation,
+        language: selectedLanguage,
+      };
+      addVocabulary.mutate(newVocab);
+    },
+  });
+
   const handleDeleteWord = (id: number) => {
     deleteVocabulary.mutate(id);
   };
 
   const handleWordClick = (word: string) => {
-    const newVocab = {
-      word,
-      translation: "번역을 추가하려면 클릭하세요",
-      language: selectedLanguage,
-    };
-    addVocabulary.mutate(newVocab);
+    translateWord.mutate(word);
   };
 
   return (
