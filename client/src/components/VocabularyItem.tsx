@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Volume2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface VocabularyItemProps {
   word: string;
@@ -10,8 +12,47 @@ interface VocabularyItemProps {
 }
 
 export function VocabularyItem({ word, translation, example, onDelete }: VocabularyItemProps) {
-  const handleSpeak = () => {
-    console.log("Speaking word:", word);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const { toast } = useToast();
+
+  const handleSpeak = async () => {
+    if (isPlaying) return;
+    
+    setIsPlaying(true);
+    try {
+      const res = await fetch("/api/text-to-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: word })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to generate audio");
+      }
+      
+      const data = await res.json();
+      
+      // Create and play audio
+      const audio = new Audio(`data:audio/wav;base64,${data.audioData}`);
+      audio.onended = () => setIsPlaying(false);
+      audio.onerror = () => {
+        setIsPlaying(false);
+        toast({
+          title: "오디오 재생 실패",
+          description: "음성을 재생할 수 없습니다.",
+          variant: "destructive"
+        });
+      };
+      await audio.play();
+    } catch (error: any) {
+      setIsPlaying(false);
+      toast({
+        title: "음성 생성 실패",
+        description: error.message || "음성을 생성할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
