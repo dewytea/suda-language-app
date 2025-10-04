@@ -111,3 +111,25 @@ Preferred communication style: Simple, everyday language.
 
 **Design Rationale**
 The architecture separates concerns cleanly: React handles UI presentation, TanStack Query manages server state synchronization, Express provides API endpoints, Drizzle ORM abstracts database operations, and Gemini AI enhances learning through intelligent feedback. This allows each layer to be developed, tested, and scaled independently while maintaining clear contracts through TypeScript interfaces.
+
+## API Key Management
+
+**Security Features**
+- Google Gemini API key stored securely in Replit Secrets as `GEMINI_API_KEY`
+- Server-side API key validation with health check endpoint (`/api/health/gemini`)
+- Client-side API key status monitoring via Settings page
+- User-friendly error messages for API key issues
+- Automatic API key validation on server startup
+
+**Settings Page**
+- Real-time API key status check
+- Instructions for obtaining and configuring API key
+- Direct link to Google AI Studio for key generation
+- Visual indicators for API key health (configured/not configured, working/error)
+- Security information display for user confidence
+
+**Error Handling**
+- Graceful degradation when API key is missing or invalid
+- Clear error messages directing users to Settings page
+- API service availability check before making AI requests
+- Korean-language error messages for user accessibility

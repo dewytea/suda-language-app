@@ -16,6 +16,25 @@ import {
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+// Map API errors to Korean messages
+function getKoreanErrorMessage(error: any): string {
+  const errorMsg = (error.message || "").toLowerCase();
+  
+  if (errorMsg.includes("api key") || errorMsg.includes("api_key")) {
+    return "API 키가 유효하지 않습니다. 올바른 키를 설정해주세요.";
+  } else if (errorMsg.includes("quota") || errorMsg.includes("limit") || errorMsg.includes("exceeded")) {
+    return "API 사용 한도를 초과했습니다. Google AI Studio에서 할당량을 확인해주세요.";
+  } else if (errorMsg.includes("permission") || errorMsg.includes("403") || errorMsg.includes("denied")) {
+    return "API 키 권한이 부족합니다. Google AI Studio에서 권한을 확인해주세요.";
+  } else if (errorMsg.includes("network") || errorMsg.includes("enotfound")) {
+    return "네트워크 연결을 확인해주세요.";
+  } else if (errorMsg.includes("timeout")) {
+    return "API 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.";
+  } else {
+    return "AI 평가 서비스에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.";
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // API Key Health Check
   app.get("/api/health/gemini", async (req, res) => {
@@ -50,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       return res.status(503).json({ 
         status: "error",
-        message: `Gemini API 오류: ${error.message}`,
+        message: getKoreanErrorMessage(error),
         configured: !!GEMINI_API_KEY
       });
     }
@@ -240,8 +259,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 3. Compare against the target sentence
   app.post("/api/pronunciation/evaluate", async (req, res) => {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({ 
+          error: "Gemini API 키가 설정되지 않았습니다. 설정 페이지에서 API 키를 확인하세요." 
+        });
       }
 
       const { sentence, language, audioData } = req.body;
@@ -268,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const saved = await storage.savePronunciationResult(pronunciationResult);
       res.json(saved);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
   });
 
@@ -285,8 +306,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Writing Feedback with Gemini
   app.post("/api/writing/evaluate", async (req, res) => {
     try {
-      if (!process.env.GEMINI_API_KEY) {
-        return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({ 
+          error: "Gemini API 키가 설정되지 않았습니다. 설정 페이지에서 API 키를 확인하세요." 
+        });
       }
 
       const { prompt, userText, language } = req.body;
@@ -351,7 +374,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       const saved = await storage.saveWritingResult(writingResult);
       res.json(saved);
     } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
   });
 

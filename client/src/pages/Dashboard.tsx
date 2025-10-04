@@ -2,6 +2,7 @@ import { SkillCard } from "@/components/SkillCard";
 import { ScenarioCard } from "@/components/ScenarioCard";
 import { LevelProgress } from "@/components/LevelProgress";
 import { DailyGoalProgress } from "@/components/DailyGoalProgress";
+import { ApiKeyBanner } from "@/components/ApiKeyBanner";
 import { Mic, BookOpen, Headphones, PenLine } from "lucide-react";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useState } from "react";
@@ -66,6 +67,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <ApiKeyBanner />
 
       <section className="space-y-6">
         <h2 className="font-serif font-semibold text-3xl">언어 선택</h2>
