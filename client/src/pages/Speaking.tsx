@@ -3,16 +3,20 @@ import { PronunciationScore } from "@/components/PronunciationScore";
 import { KeySentenceCard } from "@/components/KeySentenceCard";
 import { LevelGuide } from "@/components/LevelGuide";
 import { Card } from "@/components/ui/card";
-import { Mic } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Mic, Volume2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { KeySentence, PronunciationResult, UserProgress } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Speaking() {
   const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [currentSentence, setCurrentSentence] = useState("Where is the boarding gate?");
   const [latestScore, setLatestScore] = useState<PronunciationResult | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const { toast } = useToast();
 
   const { data: progress } = useQuery<UserProgress>({
     queryKey: ["/api/progress", selectedLanguage],
@@ -76,6 +80,46 @@ export default function Speaking() {
     });
   };
 
+  const handlePlaySentence = async () => {
+    if (isPlayingAudio) return;
+    
+    setIsPlayingAudio(true);
+    try {
+      const res = await fetch("/api/text-to-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: currentSentence })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to generate audio");
+      }
+      
+      const data = await res.json();
+      
+      // Create and play audio
+      const audio = new Audio(`data:audio/wav;base64,${data.audioData}`);
+      audio.onended = () => setIsPlayingAudio(false);
+      audio.onerror = () => {
+        setIsPlayingAudio(false);
+        toast({
+          title: "오디오 재생 실패",
+          description: "음성을 재생할 수 없습니다.",
+          variant: "destructive"
+        });
+      };
+      await audio.play();
+    } catch (error: any) {
+      setIsPlayingAudio(false);
+      toast({
+        title: "음성 생성 실패",
+        description: error.message || "음성을 생성할 수 없습니다.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
@@ -96,9 +140,20 @@ export default function Speaking() {
               아래 문장을 따라 읽고 즉각적인 피드백을 받아보세요
             </p>
             <div className="p-4 bg-muted rounded-md mb-6">
-              <p className="text-lg font-medium text-center">
-                "{currentSentence}"
-              </p>
+              <div className="flex items-center justify-center gap-3">
+                <p className="text-lg font-medium text-center">
+                  "{currentSentence}"
+                </p>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  onClick={handlePlaySentence}
+                  disabled={isPlayingAudio}
+                  data-testid="button-play-sentence"
+                >
+                  <Volume2 className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
             <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
           </Card>
