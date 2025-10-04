@@ -7,9 +7,11 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Vocabulary, UserProgress } from "@shared/schema";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Reading() {
   const [selectedLanguage] = useState("en");
+  const { toast } = useToast();
 
   const { data: progress } = useQuery<UserProgress>({
     queryKey: ["/api/progress", selectedLanguage],
@@ -55,6 +57,13 @@ export default function Reading() {
         language: selectedLanguage,
       };
       addVocabulary.mutate(newVocab);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "번역 실패",
+        description: error.message || "단어를 번역할 수 없습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive"
+      });
     },
   });
 

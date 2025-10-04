@@ -35,7 +35,7 @@ export default function Listening() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
-          <AudioPlayer title="일상 대화" duration="5:30" />
+          <AudioPlayer title="일상 대화" duration="5:30" sentences={sentences} />
         </div>
         <div>
           <ListeningTranscript sentences={sentences} currentSentence={1} />
