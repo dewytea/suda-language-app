@@ -75,6 +75,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Translation API using Gemini
+  app.post("/api/translate", async (req, res) => {
+    try {
+      const { text, targetLanguage, sourceLanguage } = req.body;
+      
+      if (!text || !targetLanguage) {
+        return res.status(400).json({ error: "텍스트와 목표 언어를 입력해주세요." });
+      }
+
+      const prompt = sourceLanguage 
+        ? `Translate the following ${sourceLanguage} text to ${targetLanguage}. Only provide the translation, no explanations:\n\n${text}`
+        : `Translate the following text to ${targetLanguage}. Only provide the translation, no explanations:\n\n${text}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-exp",
+        contents: prompt,
+      });
+
+      const translation = response.text?.trim() || "";
+      res.json({ translation });
+    } catch (error: any) {
+      res.status(500).json({ error: getKoreanErrorMessage(error) });
+    }
+  });
+
+  // Text-to-Speech API using Gemini TTS
+  app.post("/api/text-to-speech", async (req, res) => {
+    try {
+      const { text, language = "en", voiceName = "Puck" } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "음성으로 변환할 텍스트를 입력해주세요." });
+      }
+
+      const prompt = `Say in a clear, natural voice: ${text}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName }
+            }
+          }
+        }
+      });
+
+      // Extract audio data from response
+      const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      
+      if (!audioData) {
+        return res.status(500).json({ error: "음성 생성에 실패했습니다." });
+      }
+
+      res.json({ audioData });
+    } catch (error: any) {
+      res.status(500).json({ error: getKoreanErrorMessage(error) });
+    }
+  });
+
   // User Progress Routes
   app.get("/api/progress/:language", async (req, res) => {
     try {
