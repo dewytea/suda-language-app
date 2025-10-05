@@ -124,14 +124,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      // Extract audio data from response
-      const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      // Extract audio data and mime type from response
+      const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+      const audioData = inlineData?.data;
+      const mimeType = inlineData?.mimeType || "audio/pcm";
       
       if (!audioData) {
         return res.status(500).json({ error: "음성 생성에 실패했습니다." });
       }
 
-      res.json({ audioData });
+      res.json({ audioData, mimeType });
     } catch (error: any) {
       res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
