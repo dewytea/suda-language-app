@@ -126,18 +126,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Extract audio data and mime type from response
       const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-      const audioData = inlineData?.data;
-      const mimeType = inlineData?.mimeType || "audio/pcm";
+      const pcmData = inlineData?.data;
       
-      if (!audioData) {
+      if (!pcmData) {
         return res.status(500).json({ error: "음성 생성에 실패했습니다." });
       }
 
-      res.json({ audioData, mimeType });
+      // Convert PCM to WAV format for browser compatibility
+      const pcmBuffer = Buffer.from(pcmData, 'base64');
+      const wavBuffer = convertPCMToWAV(pcmBuffer);
+      const audioData = wavBuffer.toString('base64');
+      
+      res.json({ audioData, mimeType: 'audio/wav' });
     } catch (error: any) {
       res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
   });
+
+  // Helper function to convert PCM to WAV
+  function convertPCMToWAV(pcmBuffer: Buffer): Buffer {
+    const sampleRate = 24000; // Gemini TTS uses 24kHz
+    const numChannels = 1; // Mono
+    const bitsPerSample = 16; // 16-bit PCM
+    
+    const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+    const blockAlign = numChannels * bitsPerSample / 8;
+    const dataSize = pcmBuffer.length;
+    const fileSize = 36 + dataSize;
+    
+    const header = Buffer.alloc(44);
+    
+    // RIFF chunk descriptor
+    header.write('RIFF', 0);
+    header.writeUInt32LE(fileSize, 4);
+    header.write('WAVE', 8);
+    
+    // fmt sub-chunk
+    header.write('fmt ', 12);
+    header.writeUInt32LE(16, 16); // Subchunk1Size (16 for PCM)
+    header.writeUInt16LE(1, 20); // AudioFormat (1 for PCM)
+    header.writeUInt16LE(numChannels, 22);
+    header.writeUInt32LE(sampleRate, 24);
+    header.writeUInt32LE(byteRate, 28);
+    header.writeUInt16LE(blockAlign, 32);
+    header.writeUInt16LE(bitsPerSample, 34);
+    
+    // data sub-chunk
+    header.write('data', 36);
+    header.writeUInt32LE(dataSize, 40);
+    
+    return Buffer.concat([header, pcmBuffer]);
+  }
 
   // User Progress Routes
   app.get("/api/progress/:language", async (req, res) => {

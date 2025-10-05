@@ -66,17 +66,7 @@ export function AudioPlayer({ title, duration = "5:00", sentences = [] }: AudioP
       }
 
       const data = await res.json();
-      
-      // Convert base64 to blob for better browser compatibility
-      const binaryString = atob(data.audioData);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: data.mimeType || 'audio/pcm' });
-      const audioUrl = URL.createObjectURL(blob);
-      
-      const audio = new Audio(audioUrl);
+      const audio = new Audio(`data:${data.mimeType};base64,${data.audioData}`);
       audioRef.current = audio;
 
       audio.onplay = () => {

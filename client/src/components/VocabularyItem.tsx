@@ -33,23 +33,10 @@ export function VocabularyItem({ word, translation, example, onDelete }: Vocabul
       
       const data = await res.json();
       
-      // Convert base64 to blob for better browser compatibility
-      const binaryString = atob(data.audioData);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: data.mimeType || 'audio/pcm' });
-      const audioUrl = URL.createObjectURL(blob);
-      
-      const audio = new Audio(audioUrl);
-      audio.onended = () => {
-        setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
-      };
+      const audio = new Audio(`data:${data.mimeType};base64,${data.audioData}`);
+      audio.onended = () => setIsPlaying(false);
       audio.onerror = () => {
         setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
         toast({
           title: "오디오 재생 실패",
           description: "음성을 재생할 수 없습니다.",
