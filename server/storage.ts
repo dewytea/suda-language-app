@@ -53,6 +53,7 @@ export interface IStorage {
   // Writing Results
   saveWritingResult(result: InsertWritingResult): Promise<WritingResult>;
   getWritingResults(language: string): Promise<WritingResult[]>;
+  updateWritingResult(id: number, updates: Partial<WritingResult>): Promise<WritingResult>;
 }
 
 export class MemStorage implements IStorage {
@@ -237,6 +238,16 @@ export class MemStorage implements IStorage {
 
   async getWritingResults(language: string): Promise<WritingResult[]> {
     return Array.from(this.writingResults.values()).filter((r) => r.language === language);
+  }
+
+  async updateWritingResult(id: number, updates: Partial<WritingResult>): Promise<WritingResult> {
+    const existing = this.writingResults.get(id);
+    if (!existing) {
+      throw new Error("Writing result not found");
+    }
+    const updated = { ...existing, ...updates };
+    this.writingResults.set(id, updated);
+    return updated;
   }
 }
 

@@ -106,6 +106,7 @@ export const insertWritingResultSchema = z.object({
   })),
   suggestions: z.array(z.string()),
   language: z.string(),
+  saved: z.boolean().default(false),
 });
 
 export type InsertWritingResult = z.infer<typeof insertWritingResultSchema>;

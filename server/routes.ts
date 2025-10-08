@@ -491,6 +491,21 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  app.post("/api/writing/save", async (req, res) => {
+    try {
+      const { writingId } = req.body;
+      
+      if (!writingId) {
+        return res.status(400).json({ error: "writingId is required" });
+      }
+
+      const updated = await storage.updateWritingResult(writingId, { saved: true });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
