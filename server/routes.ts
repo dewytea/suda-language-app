@@ -433,7 +433,7 @@ Language: ${language}
 Provide: score (0-100), corrections array with {original, corrected, type}, and 2-3 suggestions.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-2.0-flash-exp",
         config: {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
@@ -477,6 +477,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       const saved = await storage.saveWritingResult(writingResult);
       res.json(saved);
     } catch (error: any) {
+      console.error("Writing evaluation error:", error);
       res.status(500).json({ error: getKoreanErrorMessage(error) });
     }
   });
