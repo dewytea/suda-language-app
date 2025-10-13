@@ -10,6 +10,7 @@ import {
   insertReviewItemSchema,
   insertPronunciationResultSchema,
   insertWritingResultSchema,
+  insertSpeakingProgressSchema,
 } from "@shared/schema";
 
 // Using Gemini AI integration - see blueprint:javascript_gemini
@@ -249,8 +250,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sentences/:language", async (req, res) => {
     try {
       const { language } = req.params;
-      const { scenario } = req.query;
-      const sentences = await storage.getKeySentences(language, scenario as string);
+      const { scenario, category, difficulty } = req.query;
+      const filters: { scenario?: string; category?: string; difficulty?: number } = {};
+      
+      if (scenario) filters.scenario = scenario as string;
+      if (category) filters.category = category as string;
+      if (difficulty) filters.difficulty = parseInt(difficulty as string);
+      
+      const sentences = await storage.getKeySentences(language, filters);
       res.json(sentences);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -504,6 +511,39 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Speaking Progress Routes
+  app.get("/api/speaking-progress/:language", async (req, res) => {
+    try {
+      const { language } = req.params;
+      let progress = await storage.getSpeakingProgress(language);
+      
+      if (!progress) {
+        progress = await storage.createSpeakingProgress({
+          language,
+          completedSentences: 0,
+          averageScore: 0,
+          todayStudyTime: 0,
+          lastStudyDate: new Date().toISOString().split('T')[0],
+        });
+      }
+      
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/speaking-progress/:language", async (req, res) => {
+    try {
+      const { language } = req.params;
+      const updates = insertSpeakingProgressSchema.partial().parse(req.body);
+      const progress = await storage.updateSpeakingProgress(language, updates);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
     }
   });
 

@@ -44,6 +44,8 @@ export const insertKeySentenceSchema = z.object({
   translation: z.string(),
   language: z.string(),
   scenario: z.string().optional(),
+  category: z.enum(["daily", "travel", "business"]).default("daily"),
+  difficulty: z.number().min(1).max(5).default(1),
   memorized: z.boolean().default(false),
 });
 
@@ -111,3 +113,15 @@ export const insertWritingResultSchema = z.object({
 
 export type InsertWritingResult = z.infer<typeof insertWritingResultSchema>;
 export type WritingResult = InsertWritingResult & { id: number; createdAt: Date };
+
+// Speaking Progress
+export const insertSpeakingProgressSchema = z.object({
+  language: z.string(),
+  completedSentences: z.number().default(0),
+  averageScore: z.number().default(0),
+  todayStudyTime: z.number().default(0),
+  lastStudyDate: z.string().optional(),
+});
+
+export type InsertSpeakingProgress = z.infer<typeof insertSpeakingProgressSchema>;
+export type SpeakingProgress = InsertSpeakingProgress & { id: number };

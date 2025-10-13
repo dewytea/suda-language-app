@@ -15,6 +15,8 @@ import {
   type InsertPronunciationResult,
   type WritingResult,
   type InsertWritingResult,
+  type SpeakingProgress,
+  type InsertSpeakingProgress,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -29,7 +31,7 @@ export interface IStorage {
   deleteVocabulary(id: number): Promise<void>;
 
   // Key Sentences
-  getKeySentences(language: string, scenario?: string): Promise<KeySentence[]>;
+  getKeySentences(language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]>;
   addKeySentence(sentence: InsertKeySentence): Promise<KeySentence>;
   updateKeySentence(id: number, updates: Partial<KeySentence>): Promise<KeySentence>;
 
@@ -54,6 +56,11 @@ export interface IStorage {
   saveWritingResult(result: InsertWritingResult): Promise<WritingResult>;
   getWritingResults(language: string): Promise<WritingResult[]>;
   updateWritingResult(id: number, updates: Partial<WritingResult>): Promise<WritingResult>;
+
+  // Speaking Progress
+  getSpeakingProgress(language: string): Promise<SpeakingProgress | undefined>;
+  createSpeakingProgress(progress: InsertSpeakingProgress): Promise<SpeakingProgress>;
+  updateSpeakingProgress(language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress>;
 }
 
 export class MemStorage implements IStorage {
@@ -65,6 +72,7 @@ export class MemStorage implements IStorage {
   private achievements: Map<number, Achievement>;
   private pronunciationResults: Map<number, PronunciationResult>;
   private writingResults: Map<number, WritingResult>;
+  private speakingProgress: Map<string, SpeakingProgress>;
   private nextId: number;
 
   constructor() {
@@ -76,9 +84,11 @@ export class MemStorage implements IStorage {
     this.achievements = new Map();
     this.pronunciationResults = new Map();
     this.writingResults = new Map();
+    this.speakingProgress = new Map();
     this.nextId = 1;
 
     this.initializeAchievements();
+    this.initializeSentences();
   }
 
   private initializeAchievements() {
@@ -97,6 +107,49 @@ export class MemStorage implements IStorage {
     defaultAchievements.forEach((ach) => {
       const id = this.nextId++;
       this.achievements.set(id, { ...ach, id });
+    });
+  }
+
+  private initializeSentences() {
+    const sentences = [
+      { sentence: "How are you?", translation: "어떻게 지내세요?", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "Good morning!", translation: "좋은 아침입니다!", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "Thank you very much.", translation: "정말 감사합니다.", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "What's your name?", translation: "이름이 무엇인가요?", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "Nice to meet you.", translation: "만나서 반갑습니다.", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "Can you help me?", translation: "도와주실 수 있나요?", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "I don't understand.", translation: "이해가 안 됩니다.", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "Where is the bathroom?", translation: "화장실이 어디에 있나요?", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "Could you speak more slowly?", translation: "좀 더 천천히 말씀해 주시겠어요?", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "How much does this cost?", translation: "이것은 얼마인가요?", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "Where is the boarding gate?", translation: "탑승구가 어디에 있나요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "I need to check in for my flight.", translation: "항공편 체크인을 해야 합니다.", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "Can I see your passport, please?", translation: "여권을 보여주시겠어요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "What time does the flight depart?", translation: "비행기가 몇 시에 출발하나요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "I'd like to book a hotel room.", translation: "호텔 방을 예약하고 싶습니다.", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "Is breakfast included?", translation: "아침 식사가 포함되어 있나요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "How do I get to the city center?", translation: "시내 중심가에 어떻게 가나요?", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "Do you have any available seats?", translation: "빈 좌석이 있나요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "My luggage is missing.", translation: "제 짐이 없어졌습니다.", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "Can you recommend a good restaurant?", translation: "좋은 식당을 추천해 주시겠어요?", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "I have a meeting at 2 PM.", translation: "오후 2시에 회의가 있습니다.", language: "en", category: "business" as const, difficulty: 3 },
+      { sentence: "Could you send me the report?", translation: "보고서를 보내주시겠어요?", language: "en", category: "business" as const, difficulty: 3 },
+      { sentence: "Let's schedule a follow-up call.", translation: "후속 통화 일정을 잡읍시다.", language: "en", category: "business" as const, difficulty: 4 },
+      { sentence: "What's the deadline for this project?", translation: "이 프로젝트의 마감일이 언제인가요?", language: "en", category: "business" as const, difficulty: 3 },
+      { sentence: "I'll need to review the contract.", translation: "계약서를 검토해야 합니다.", language: "en", category: "business" as const, difficulty: 4 },
+      { sentence: "Can we discuss the budget?", translation: "예산에 대해 논의할 수 있을까요?", language: "en", category: "business" as const, difficulty: 4 },
+      { sentence: "The presentation went very well.", translation: "발표가 아주 잘 진행되었습니다.", language: "en", category: "business" as const, difficulty: 3 },
+      { sentence: "We need to increase our market share.", translation: "시장 점유율을 높여야 합니다.", language: "en", category: "business" as const, difficulty: 5 },
+      { sentence: "I'd like to propose a new strategy.", translation: "새로운 전략을 제안하고 싶습니다.", language: "en", category: "business" as const, difficulty: 4 },
+      { sentence: "Let's analyze the quarterly results.", translation: "분기 실적을 분석합시다.", language: "en", category: "business" as const, difficulty: 5 },
+      { sentence: "The project is behind schedule.", translation: "프로젝트가 일정보다 늦어지고 있습니다.", language: "en", category: "business" as const, difficulty: 4 },
+      { sentence: "We should focus on customer satisfaction.", translation: "고객 만족도에 집중해야 합니다.", language: "en", category: "business" as const, difficulty: 5 },
+      { sentence: "I appreciate your cooperation.", translation: "협조해 주셔서 감사합니다.", language: "en", category: "business" as const, difficulty: 3 },
+    ];
+
+    sentences.forEach((sent) => {
+      const id = this.nextId++;
+      this.keySentences.set(id, { ...sent, id, memorized: false });
     });
   }
 
@@ -139,10 +192,14 @@ export class MemStorage implements IStorage {
   }
 
   // Key Sentences
-  async getKeySentences(language: string, scenario?: string): Promise<KeySentence[]> {
-    return Array.from(this.keySentences.values()).filter(
-      (s) => s.language === language && (!scenario || s.scenario === scenario)
-    );
+  async getKeySentences(language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]> {
+    return Array.from(this.keySentences.values()).filter((s) => {
+      if (s.language !== language) return false;
+      if (filters?.scenario && s.scenario !== filters.scenario) return false;
+      if (filters?.category && s.category !== filters.category) return false;
+      if (filters?.difficulty && s.difficulty !== filters.difficulty) return false;
+      return true;
+    });
   }
 
   async addKeySentence(sentence: InsertKeySentence): Promise<KeySentence> {
@@ -247,6 +304,28 @@ export class MemStorage implements IStorage {
     }
     const updated = { ...existing, ...updates };
     this.writingResults.set(id, updated);
+    return updated;
+  }
+
+  // Speaking Progress
+  async getSpeakingProgress(language: string): Promise<SpeakingProgress | undefined> {
+    return this.speakingProgress.get(language);
+  }
+
+  async createSpeakingProgress(progress: InsertSpeakingProgress): Promise<SpeakingProgress> {
+    const id = this.nextId++;
+    const speakingProg: SpeakingProgress = { ...progress, id };
+    this.speakingProgress.set(progress.language, speakingProg);
+    return speakingProg;
+  }
+
+  async updateSpeakingProgress(language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress> {
+    const existing = this.speakingProgress.get(language);
+    if (!existing) {
+      throw new Error("Speaking progress not found");
+    }
+    const updated = { ...existing, ...updates };
+    this.speakingProgress.set(language, updated);
     return updated;
   }
 }
