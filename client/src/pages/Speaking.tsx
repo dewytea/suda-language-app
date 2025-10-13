@@ -3,12 +3,14 @@ import { PronunciationScore } from "@/components/PronunciationScore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, Volume2, Check, Clock, TrendingUp } from "lucide-react";
+import { Mic, Volume2, Check, Clock, TrendingUp, RotateCcw, ChevronRight } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { KeySentence, PronunciationResult, SpeakingProgress } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { compareText, type TextComparisonResult } from "@/lib/speech/compareText";
+import { calculateScore, getXPReward, type ScoringResult } from "@/lib/speech/calculateScore";
 
 const categoryLabels = {
   daily: "일상",
@@ -24,12 +26,18 @@ const difficultyColors = {
   5: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
 };
 
+interface AnalysisResult extends ScoringResult {
+  transcript: string;
+  comparison: TextComparisonResult;
+  confidence: number;
+}
+
 export default function Speaking() {
   const [selectedLanguage] = useState("en");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
   const [currentSentence, setCurrentSentence] = useState<KeySentence | null>(null);
-  const [latestScore, setLatestScore] = useState<PronunciationResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const lastUpdateTimeRef = useRef(Date.now());
   const { toast } = useToast();
@@ -58,53 +66,58 @@ export default function Speaking() {
     },
   });
 
-  const evaluatePronunciation = useMutation({
-    mutationFn: async ({ sentence, audioBlob }: { sentence: string; audioBlob?: Blob }) => {
-      let audioData = undefined;
-      if (audioBlob) {
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(audioBlob);
-        });
-        audioData = await base64Promise;
-      }
+  const handleTranscriptComplete = (transcript: string, confidence: number) => {
+    if (!currentSentence) return;
+    
+    const comparison = compareText(currentSentence.sentence, transcript);
+    
+    const originalWords = currentSentence.sentence.split(' ').filter(w => w.length > 0);
+    const spokenWords = transcript.split(' ').filter(w => w.length > 0);
+    
+    const scoringResult = calculateScore(
+      comparison.accuracy,
+      originalWords.length,
+      spokenWords.length,
+      confidence
+    );
+    
+    const result: AnalysisResult = {
+      transcript,
+      comparison,
+      confidence,
+      ...scoringResult
+    };
+    
+    setAnalysisResult(result);
+    
+    const newCompletedCount = (speakingProgress?.completedSentences || 0) + 1;
+    const currentAvg = speakingProgress?.averageScore || 0;
+    const newAverage = currentAvg === 0 
+      ? scoringResult.score 
+      : Math.round((currentAvg * (newCompletedCount - 1) + scoringResult.score) / newCompletedCount);
+    
+    const now = Date.now();
+    const deltaMinutes = Math.floor((now - lastUpdateTimeRef.current) / 1000 / 60);
+    lastUpdateTimeRef.current = now;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const todayStudyTime = speakingProgress?.lastStudyDate === today 
+      ? (speakingProgress?.todayStudyTime || 0) + deltaMinutes
+      : deltaMinutes;
 
-      const res = await apiRequest("POST", `/api/pronunciation/evaluate`, {
-        sentence,
-        language: selectedLanguage,
-        audioData,
-      });
-      return await res.json();
-    },
-    onSuccess: (data: PronunciationResult) => {
-      setLatestScore(data);
-      
-      const newCompletedCount = (speakingProgress?.completedSentences || 0) + 1;
-      const currentAvg = speakingProgress?.averageScore || 0;
-      const newAverage = currentAvg === 0 
-        ? data.score 
-        : Math.round((currentAvg * (newCompletedCount - 1) + data.score) / newCompletedCount);
-      
-      const now = Date.now();
-      const deltaMinutes = Math.floor((now - lastUpdateTimeRef.current) / 1000 / 60);
-      lastUpdateTimeRef.current = now;
-      
-      const today = new Date().toISOString().split('T')[0];
-      const todayStudyTime = speakingProgress?.lastStudyDate === today 
-        ? (speakingProgress?.todayStudyTime || 0) + deltaMinutes
-        : deltaMinutes;
-
-      updateSpeakingProgress.mutate({
-        completedSentences: newCompletedCount,
-        averageScore: newAverage,
-        todayStudyTime,
-        lastStudyDate: today,
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ["/api/pronunciation", selectedLanguage] });
-    },
-  });
+    updateSpeakingProgress.mutate({
+      completedSentences: newCompletedCount,
+      averageScore: newAverage,
+      todayStudyTime,
+      lastStudyDate: today,
+    });
+    
+    const xpReward = getXPReward(scoringResult.score);
+    toast({
+      title: `${scoringResult.emoji} ${scoringResult.feedback}`,
+      description: `+${xpReward} XP 획득!`,
+    });
+  };
 
   useEffect(() => {
     if (filteredSentences.length > 0 && !currentSentence) {
@@ -112,12 +125,25 @@ export default function Speaking() {
     }
   }, [filteredSentences, currentSentence]);
 
-  const handleRecordingComplete = (audioBlob: Blob) => {
-    if (currentSentence) {
-      evaluatePronunciation.mutate({
-        sentence: currentSentence.sentence,
-        audioBlob,
-      });
+  const handleError = (error: string) => {
+    toast({
+      title: "음성 인식 오류",
+      description: error,
+      variant: "destructive"
+    });
+  };
+
+  const handleRetry = () => {
+    setAnalysisResult(null);
+  };
+
+  const handleNext = () => {
+    setAnalysisResult(null);
+    const currentIndex = filteredSentences.findIndex(s => s.id === currentSentence?.id);
+    if (currentIndex < filteredSentences.length - 1) {
+      setCurrentSentence(filteredSentences[currentIndex + 1]);
+    } else {
+      setCurrentSentence(filteredSentences[0]);
     }
   };
 
@@ -255,7 +281,11 @@ export default function Speaking() {
                   </div>
                 </div>
 
-                <VoiceRecorder onRecordingComplete={handleRecordingComplete} />
+                <VoiceRecorder 
+                  language={selectedLanguage}
+                  onTranscriptComplete={handleTranscriptComplete}
+                  onError={handleError}
+                />
               </>
             ) : (
               <p className="text-center text-muted-foreground py-8">
@@ -270,27 +300,102 @@ export default function Speaking() {
             <CardTitle>발음 평가</CardTitle>
           </CardHeader>
           <CardContent>
-            {evaluatePronunciation.isPending && (
-              <p className="text-center text-muted-foreground py-8">발음을 평가하고 있습니다...</p>
-            )}
-            {latestScore && !evaluatePronunciation.isPending && (
-              <div className="space-y-4">
+            {analysisResult ? (
+              <div className="space-y-6">
                 <div className="text-center space-y-2">
-                  <div className="text-5xl font-bold text-primary" data-testid="text-pronunciation-score">
-                    {latestScore.score}
+                  <div className="text-6xl font-bold text-primary" data-testid="text-pronunciation-score">
+                    {analysisResult.score}
                   </div>
                   <p className="text-sm text-muted-foreground">점</p>
+                  <p className="text-lg font-semibold">{analysisResult.emoji} {analysisResult.feedback}</p>
                 </div>
-                {latestScore.feedback && (
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm" data-testid="text-feedback">
-                      {latestScore.feedback}
-                    </p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-2 text-sm">
+                      <span className="font-medium">정확도</span>
+                      <span className="text-muted-foreground">{analysisResult.comparison.accuracy}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ width: `${analysisResult.comparison.accuracy}%` }}
+                      />
+                    </div>
                   </div>
-                )}
+
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                    <h4 className="font-semibold text-sm">당신이 말한 내용:</h4>
+                    <p className="italic" data-testid="text-user-transcript">"{analysisResult.transcript}"</p>
+                  </div>
+
+                  <div className="p-4 bg-muted/50 rounded-lg space-y-2">
+                    <h4 className="font-semibold text-sm">원본 문장:</h4>
+                    <p data-testid="text-original-sentence">"{currentSentence?.sentence}"</p>
+                  </div>
+
+                  {analysisResult.comparison.missedWords.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-orange-600 dark:text-orange-400">
+                        놓친 단어:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {analysisResult.comparison.missedWords.map((word, i) => (
+                          <Badge 
+                            key={i}
+                            variant="outline"
+                            className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20"
+                            data-testid={`badge-missed-word-${i}`}
+                          >
+                            {word}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {analysisResult.comparison.extraWords.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2 text-red-600 dark:text-red-400">
+                        추가된 단어:
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {analysisResult.comparison.extraWords.map((word, i) => (
+                          <Badge 
+                            key={i}
+                            variant="outline"
+                            className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20"
+                            data-testid={`badge-extra-word-${i}`}
+                          >
+                            {word}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <Button 
+                    onClick={handleRetry}
+                    variant="outline"
+                    className="flex-1"
+                    data-testid="button-retry"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    다시 연습하기
+                  </Button>
+                  <Button 
+                    onClick={handleNext}
+                    className="flex-1"
+                    data-testid="button-next"
+                  >
+                    다음 문장
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
               </div>
-            )}
-            {!latestScore && !evaluatePronunciation.isPending && (
+            ) : (
               <p className="text-center text-muted-foreground py-8">
                 문장을 녹음하면 발음 평가가 표시됩니다
               </p>
