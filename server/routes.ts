@@ -413,6 +413,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Speaking Feedback with Gemini AI
+  app.post("/api/speaking/feedback", async (req, res) => {
+    try {
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({ 
+          error: "Gemini API 키가 설정되지 않았습니다. 설정 페이지에서 API 키를 확인하세요." 
+        });
+      }
+
+      const { originalText, spokenText, score, missedWords = [], extraWords = [] } = req.body;
+      
+      if (!originalText || !spokenText || score === undefined) {
+        return res.status(400).json({ error: "originalText, spokenText, and score are required" });
+      }
+
+      const prompt = `당신은 친근하고 격려적인 언어 학습 코치입니다.
+
+학습자가 다음 문장을 연습했습니다:
+원본: "${originalText}"
+학습자가 말한 것: "${spokenText}"
+점수: ${score}/100
+
+놓친 단어: ${missedWords.length > 0 ? missedWords.join(', ') : '없음'}
+추가된 단어: ${extraWords.length > 0 ? extraWords.join(', ') : '없음'}
+
+다음 형식으로 짧고 격려적인 피드백을 3줄로 작성해주세요:
+
+1. 칭찬 (한 줄) - 학습자가 잘한 점을 구체적으로 칭찬
+2. 개선점 (한 줄) - 있으면 개선할 점, 없으면 추가 격려
+3. 팁 (한 줄) - 💡로 시작하는 실용적인 연습 팁
+
+예시:
+발음이 명확했어요! 👍
+"business"의 발음에 조금 더 신경 쓰면 완벽할 거예요.
+💡 팁: 녹음을 들어보면서 원어민 발음과 비교해보세요!
+
+위 형식을 정확히 따라주세요.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-exp",
+        contents: prompt,
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 200,
+        }
+      });
+
+      const feedback = response.text?.trim() || "좋은 시도였어요! 💪\n계속 연습하면 발음이 더 좋아질 거예요!\n💡 팁: 천천히, 명확하게 발음하는 것이 중요해요!";
+      
+      res.json({ feedback });
+    } catch (error: any) {
+      console.error('Speaking feedback error:', error);
+      res.status(500).json({ 
+        error: getKoreanErrorMessage(error),
+        fallbackFeedback: "좋은 시도였어요! 💪\n계속 연습하면 발음이 더 좋아질 거예요!\n💡 팁: 천천히, 명확하게 발음하는 것이 중요해요!"
+      });
+    }
+  });
+
   // Writing Feedback with Gemini
   app.post("/api/writing/evaluate", async (req, res) => {
     try {
