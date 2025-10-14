@@ -1,4 +1,4 @@
-import { Home, Mic, BookOpen, Headphones, PenLine, BookMarked, Award, Settings } from "lucide-react";
+import { Home, Mic, BookOpen, Headphones, PenLine, BookMarked, Award, Settings, History, BarChart3, ChevronRight } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,9 +8,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { LevelBadge } from "./LevelBadge";
 import { StreakDisplay } from "./StreakDisplay";
 import { PointsDisplay } from "./PointsDisplay";
@@ -21,7 +29,15 @@ import { Link } from "wouter";
 
 const menuItems = [
   { title: "대시보드", url: "/", icon: Home },
-  { title: "말하기", url: "/speaking", icon: Mic },
+  { 
+    title: "말하기", 
+    url: "/speaking", 
+    icon: Mic,
+    subItems: [
+      { title: "학습 기록", url: "/speaking/history", icon: History },
+      { title: "통계", url: "/speaking/stats", icon: BarChart3 },
+    ]
+  },
   { title: "읽기", url: "/reading", icon: BookOpen },
   { title: "듣기", url: "/listening", icon: Headphones },
   { title: "쓰기", url: "/writing", icon: PenLine },
@@ -58,12 +74,46 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url} data-testid={`link-${item.url === '/' ? 'dashboard' : item.url.slice(1)}`}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                  {'subItems' in item ? (
+                    <Collapsible className="group/collapsible">
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <item.icon />
+                          <span>{item.title}</span>
+                          <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <Link href={item.url} data-testid={`link-${item.url.slice(1)}`}>
+                                <item.icon className="h-4 w-4" />
+                                <span>연습하기</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          {item.subItems?.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton asChild>
+                                <Link href={subItem.url} data-testid={`link-${subItem.url.slice(1).replace('/', '-')}`}>
+                                  <subItem.icon className="h-4 w-4" />
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuButton asChild>
+                      <Link href={item.url} data-testid={`link-${item.url === '/' ? 'dashboard' : item.url.slice(1)}`}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

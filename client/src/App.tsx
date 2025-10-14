@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Dashboard from "@/pages/Dashboard";
 import Speaking from "@/pages/Speaking";
+import SpeakingHistory from "@/pages/SpeakingHistory";
+import SpeakingStats from "@/pages/SpeakingStats";
 import Reading from "@/pages/Reading";
 import Listening from "@/pages/Listening";
 import Writing from "@/pages/Writing";
@@ -22,6 +24,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/speaking" component={Speaking} />
+      <Route path="/speaking/history" component={SpeakingHistory} />
+      <Route path="/speaking/stats" component={SpeakingStats} />
       <Route path="/reading" component={Reading} />
       <Route path="/listening" component={Listening} />
       <Route path="/writing" component={Writing} />
