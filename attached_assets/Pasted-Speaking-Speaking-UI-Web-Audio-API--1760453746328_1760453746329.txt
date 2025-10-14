@@ -1,0 +1,417 @@
+Speaking 모듈에 실제 음성 인식 기능을 추가해줘.
+
+=== 현재 상태 ===
+- 기본 Speaking UI 완성
+- 녹음 버튼 있음 (Web Audio API)
+- 문장 데이터베이스 있음
+- 하지만 녹음된 음성을 분석하지 못함
+
+=== 추가할 기능 ===
+
+1. 음성을 텍스트로 변환 (Speech-to-Text)
+2. 사용자가 말한 내용과 원본 문장 비교
+3. 정확도 점수 계산
+
+=== 1. Speech-to-Text 설정 ===
+
+1.1 환경 변수 추가 (.env.local)
+- Web Speech API 사용 (브라우저 내장, 무료)
+- 또는 OpenAI Whisper API (더 정확)
+
+Option A: Web Speech API (추천 - 무료)
+- 브라우저 내장 기능
+- 실시간 처리
+- API 키 불필요
+- Chrome, Edge에서 잘 작동
+
+Option B: OpenAI Whisper API (고급)
+NEXT_PUBLIC_OPENAI_API_KEY=your_api_key
+- 더 정확한 인식
+- 다국어 지원 우수
+- 비용 발생 (1분당 $0.006)
+
+→ 일단 Web Speech API로 시작하자!
+
+=== 2. 음성 인식 로직 ===
+
+2.1 lib/speech/ 폴더 생성
+├── speechRecognition.ts
+├── compareText.ts
+└── calculateScore.ts
+
+2.2 speechRecognition.ts
+export function startSpeechRecognition(
+  language: string, // 'en-US', 'ko-KR', etc.
+  onResult: (transcript: string) => void,
+  onError: (error: string) => void
+) {
+  // Web Speech API 사용
+  const SpeechRecognition = 
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+  
+  if (!SpeechRecognition) {
+    onError('음성 인식이 지원되지 않는 브라우저입니다.');
+    return;
+  }
+  
+  const recognition = new SpeechRecognition();
+  recognition.lang = language;
+  recognition.continuous = false; // 한 번만 인식
+  recognition.interimResults = false; // 최종 결과만
+  
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    onResult(transcript);
+  };
+  
+  recognition.onerror = (event) => {
+    onError(event.error);
+  };
+  
+  recognition.start();
+  return recognition;
+}
+
+2.3 compareText.ts
+export function compareText(
+  original: string,
+  spoken: string
+): {
+  accuracy: number;
+  matchedWords: string[];
+  missedWords: string[];
+  extraWords: string[];
+} {
+  // 대소문자 통일, 구두점 제거
+  const normalizeText = (text: string) => 
+    text.toLowerCase()
+        .replace(/[.,!?;:]/g, '')
+        .trim();
+  
+  const originalWords = normalizeText(original).split(' ');
+  const spokenWords = normalizeText(spoken).split(' ');
+  
+  // 정확히 일치하는 단어 찾기
+  const matchedWords = originalWords.filter((word, index) => 
+    word === spokenWords[index]
+  );
+  
+  // 놓친 단어 (원본에는 있지만 말하지 않음)
+  const missedWords = originalWords.filter(word => 
+    !spokenWords.includes(word)
+  );
+  
+  // 추가 단어 (말했지만 원본에 없음)
+  const extraWords = spokenWords.filter(word => 
+    !originalWords.includes(word)
+  );
+  
+  // 정확도 계산 (0-100)
+  const accuracy = Math.round(
+    (matchedWords.length / originalWords.length) * 100
+  );
+  
+  return { accuracy, matchedWords, missedWords, extraWords };
+}
+
+2.4 calculateScore.ts
+export function calculateScore(
+  accuracy: number,
+  originalLength: number,
+  spokenLength: number
+): number {
+  // 기본 점수: 정확도
+  let score = accuracy;
+  
+  // 길이 페널티 (너무 짧거나 길면 감점)
+  const lengthRatio = spokenLength / originalLength;
+  if (lengthRatio < 0.8 || lengthRatio > 1.2) {
+    score -= 10;
+  }
+  
+  // 최소 0점, 최대 100점
+  return Math.max(0, Math.min(100, score));
+}
+
+=== 3. Speaking 컴포넌트 업데이트 ===
+
+3.1 상태 추가
+const [isRecording, setIsRecording] = useState(false);
+const [transcript, setTranscript] = useState(''); // 인식된 텍스트
+const [analysisResult, setAnalysisResult] = useState(null);
+
+3.2 녹음 버튼 클릭 시
+const handleRecordClick = () => {
+  if (isRecording) {
+    // 녹음 중지
+    recognition?.stop();
+    setIsRecording(false);
+  } else {
+    // 녹음 시작
+    setIsRecording(true);
+    setTranscript('');
+    setAnalysisResult(null);
+    
+    recognition = startSpeechRecognition(
+      'en-US', // 학습 언어에 따라 변경
+      (transcript) => {
+        // 음성 인식 완료
+        setTranscript(transcript);
+        setIsRecording(false);
+        analyzeRecording(transcript);
+      },
+      (error) => {
+        console.error('Speech recognition error:', error);
+        setIsRecording(false);
+        toast.error('음성 인식 실패: ' + error);
+      }
+    );
+  }
+};
+
+3.3 분석 함수
+const analyzeRecording = (spokenText: string) => {
+  const currentSentence = sentences[currentIndex];
+  
+  // 텍스트 비교
+  const comparison = compareText(
+    currentSentence.text,
+    spokenText
+  );
+  
+  // 점수 계산
+  const score = calculateScore(
+    comparison.accuracy,
+    currentSentence.text.split(' ').length,
+    spokenText.split(' ').length
+  );
+  
+  // 결과 저장
+  setAnalysisResult({
+    score,
+    transcript: spokenText,
+    accuracy: comparison.accuracy,
+    matchedWords: comparison.matchedWords,
+    missedWords: comparison.missedWords,
+    extraWords: comparison.extraWords
+  });
+  
+  // XP 추가
+  if (score >= 70) {
+    addXP(20); // lib/gamification/addXP.ts 사용
+  }
+  
+  // 진도 저장
+  saveSpeakingProgress(
+    currentSentence.id,
+    score,
+    true // completed
+  );
+};
+
+=== 4. 결과 표시 UI ===
+
+4.1 분석 결과 카드
+{analysisResult && (
+  <div className="mt-6 p-6 bg-white rounded-xl shadow-lg">
+    {/* 점수 표시 */}
+    <div className="text-center mb-4">
+      <div className="text-6xl font-bold text-blue-600">
+        {analysisResult.score}
+      </div>
+      <div className="text-gray-600">점</div>
+    </div>
+    
+    {/* 정확도 */}
+    <div className="mb-4">
+      <div className="flex justify-between mb-2">
+        <span>정확도</span>
+        <span>{analysisResult.accuracy}%</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div 
+          className="bg-blue-600 h-2 rounded-full"
+          style={{ width: `${analysisResult.accuracy}%` }}
+        />
+      </div>
+    </div>
+    
+    {/* 당신이 말한 내용 */}
+    <div className="mb-4">
+      <h4 className="font-semibold mb-2">당신이 말한 내용:</h4>
+      <p className="text-gray-700 italic">
+        "{analysisResult.transcript}"
+      </p>
+    </div>
+    
+    {/* 원본 문장 */}
+    <div className="mb-4">
+      <h4 className="font-semibold mb-2">원본 문장:</h4>
+      <p className="text-gray-700">
+        "{currentSentence.text}"
+      </p>
+    </div>
+    
+    {/* 단어별 분석 */}
+    {analysisResult.missedWords.length > 0 && (
+      <div className="mb-4">
+        <h4 className="font-semibold mb-2 text-orange-600">
+          놓친 단어:
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {analysisResult.missedWords.map((word, i) => (
+            <span 
+              key={i}
+              className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full"
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    {analysisResult.extraWords.length > 0 && (
+      <div className="mb-4">
+        <h4 className="font-semibold mb-2 text-red-600">
+          추가된 단어:
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          {analysisResult.extraWords.map((word, i) => (
+            <span 
+              key={i}
+              className="px-3 py-1 bg-red-100 text-red-800 rounded-full"
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+      </div>
+    )}
+    
+    {/* 액션 버튼 */}
+    <div className="flex gap-3 mt-6">
+      <button 
+        onClick={handleRetry}
+        className="flex-1 py-3 bg-orange-500 text-white rounded-lg"
+      >
+        다시 연습하기
+      </button>
+      <button 
+        onClick={handleNext}
+        className="flex-1 py-3 bg-blue-600 text-white rounded-lg"
+      >
+        다음 문장
+      </button>
+    </div>
+  </div>
+)}
+
+=== 5. 언어 지원 ===
+
+5.1 언어 코드 매핑
+const LANGUAGE_CODES = {
+  'english': 'en-US',
+  'korean': 'ko-KR',
+  'spanish': 'es-ES',
+  'japanese': 'ja-JP',
+  'chinese': 'zh-CN',
+  'french': 'fr-FR',
+  'german': 'de-DE',
+  'arabic': 'ar-SA',
+  'hindi': 'hi-IN',
+  'portuguese': 'pt-BR'
+};
+
+5.2 사용자 학습 언어에 따라 자동 설정
+const userLanguage = user.learning_languages[0]; // 첫 번째 학습 언어
+const languageCode = LANGUAGE_CODES[userLanguage] || 'en-US';
+
+=== 6. 에러 처리 ===
+
+6.1 마이크 권한
+- 마이크 권한 요청
+- 거부 시 안내 메시지
+- "설정에서 마이크 권한을 허용해주세요"
+
+6.2 브라우저 지원
+- Web Speech API 미지원 브라우저 감지
+- 대체 안내 메시지
+- "Chrome이나 Edge 브라우저를 사용해주세요"
+
+6.3 인식 실패
+- 아무 말도 인식 못했을 때
+- "다시 시도해주세요" 버튼
+- 힌트: "더 크고 명확하게 말해보세요"
+
+=== 7. UX 개선 ===
+
+7.1 녹음 중 표시
+- 빨간 점 깜빡임
+- "듣고 있어요..." 텍스트
+- 파형 애니메이션
+
+7.2 성공/실패 피드백
+- 점수 90점 이상: "완벽해요! 🎉"
+- 점수 70-89점: "잘했어요! 👍"
+- 점수 50-69점: "괜찮아요! 다시 해볼까요?"
+- 점수 50점 미만: "다시 연습해봐요! 💪"
+
+7.3 XP 획득 애니메이션
+- "+20 XP" 토스트
+- 숫자 애니메이션
+
+=== 8. 데이터 저장 ===
+
+8.1 API 엔드포인트 (app/api/speaking/progress/route.ts)
+export async function POST(req: Request) {
+  const { userId, sentenceId, score, completed } = await req.json();
+  
+  const { data, error } = await supabase
+    .from('user_progress')
+    .upsert({
+      user_id: userId,
+      module_type: 'speaking',
+      lesson_id: sentenceId,
+      score: score,
+      completed: completed,
+      completed_at: new Date().toISOString()
+    });
+  
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+  
+  return Response.json({ success: true, data });
+}
+
+8.2 통계 업데이트
+- user_stats 테이블 업데이트
+- 오늘 날짜의 레코드에:
+  - xp_earned += 20
+  - time_spent += 실제 소요 시간
+  - lessons_completed += 1
+
+=== 출력 요구사항 ===
+1. 녹음 버튼 클릭 → 음성 인식 시작
+2. 말하기 완료 → 자동으로 분석
+3. 점수 표시 (0-100)
+4. 단어별 비교 결과 표시
+5. 놓친 단어 하이라이트
+6. 다시 하기 / 다음 문장 버튼
+7. 진도 자동 저장
+8. XP 자동 적립
+9. 에러 처리 완벽
+10. 모바일에서도 작동
+
+=== 테스트 시나리오 ===
+1. 문장 표시
+2. 녹음 버튼 클릭
+3. 마이크 권한 허용
+4. 문장 읽기
+5. 자동으로 분석 시작
+6. 결과 확인
+7. 점수 저장 확인
+8. XP 증가 확인
+
+지금 바로 추가해줘!

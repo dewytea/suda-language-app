@@ -1,0 +1,204 @@
+Speaking 모듈에 AI 피드백 기능을 추가해줘.
+
+=== 현재 상태 ===
+- 음성 인식 작동 ✅
+- 점수 계산 작동 ✅
+- 단어별 비교 작동 ✅
+
+=== 추가할 기능 ===
+사용자 발음에 대한 AI 피드백 생성
+
+=== 1. OpenAI API 설정 ===
+
+1.1 환경 변수 (.env.local)
+OPENAI_API_KEY=your_api_key
+
+1.2 API 엔드포인트 생성
+app/api/speaking/feedback/route.ts
+
+=== 2. AI 피드백 로직 ===
+
+2.1 route.ts
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+export async function POST(req: Request) {
+  const { 
+    originalText, 
+    spokenText, 
+    score, 
+    missedWords,
+    extraWords 
+  } = await req.json();
+  
+  const prompt = `
+당신은 친근한 언어 학습 코치입니다.
+
+학습자가 다음 문장을 연습했습니다:
+원본: "${originalText}"
+학습자가 말한 것: "${spokenText}"
+점수: ${score}/100
+
+놓친 단어: ${missedWords.join(', ') || '없음'}
+추가된 단어: ${extraWords.join(', ') || '없음'}
+
+다음 형식으로 짧고 격려적인 피드백을 작성해주세요:
+
+1. 칭찬 (한 줄)
+2. 개선점 (한 줄, 있으면)
+3. 팁 (한 줄)
+
+예시:
+발음이 명확했어요! 👍
+"business"의 발음에 조금 더 신경 쓰면 완벽할 거예요.
+💡 팁: 녹음을 들어보면서 원어민 발음과 비교해보세요!
+`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // 저렴한 모델
+      messages: [
+        {
+          role: "system",
+          content: "You are a friendly and encouraging language learning coach."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 200,
+    });
+    
+    const feedback = completion.choices[0].message.content;
+    
+    return Response.json({ feedback });
+    
+  } catch (error) {
+    console.error('OpenAI API error:', error);
+    return Response.json(
+      { error: 'Failed to generate feedback' },
+      { status: 500 }
+    );
+  }
+}
+
+=== 3. 프론트엔드 통합 ===
+
+3.1 분석 함수 업데이트
+const analyzeRecording = async (spokenText: string) => {
+  // ... 기존 분석 코드 ...
+  
+  setAnalysisResult({
+    score,
+    transcript: spokenText,
+    accuracy: comparison.accuracy,
+    matchedWords: comparison.matchedWords,
+    missedWords: comparison.missedWords,
+    extraWords: comparison.extraWords,
+    feedback: null, // 아직 없음
+    isLoadingFeedback: true // 로딩 중
+  });
+  
+  // AI 피드백 요청 (비동기)
+  try {
+    const response = await fetch('/api/speaking/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        originalText: currentSentence.text,
+        spokenText: spokenText,
+        score: score,
+        missedWords: comparison.missedWords,
+        extraWords: comparison.extraWords
+      })
+    });
+    
+    const { feedback } = await response.json();
+    
+    setAnalysisResult(prev => ({
+      ...prev,
+      feedback: feedback,
+      isLoadingFeedback: false
+    }));
+    
+  } catch (error) {
+    console.error('Failed to get AI feedback:', error);
+    setAnalysisResult(prev => ({
+      ...prev,
+      isLoadingFeedback: false
+    }));
+  }
+};
+
+=== 4. UI 업데이트 ===
+
+4.1 결과 카드에 피드백 섹션 추가
+{analysisResult && (
+  <div className="mt-6 p-6 bg-white rounded-xl shadow-lg">
+    {/* ... 기존 점수/정확도 UI ... */}
+    
+    {/* AI 피드백 섹션 */}
+    <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
+      <h4 className="font-semibold mb-2 flex items-center">
+        <span className="mr-2">🤖</span>
+        AI 코치의 피드백
+      </h4>
+      
+      {analysisResult.isLoadingFeedback ? (
+        <div className="flex items-center text-gray-500">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+          피드백 생성 중...
+        </div>
+      ) : analysisResult.feedback ? (
+        <div className="text-gray-700 whitespace-pre-line">
+          {analysisResult.feedback}
+        </div>
+      ) : (
+        <div className="text-gray-500">
+          피드백을 생성할 수 없습니다.
+        </div>
+      )}
+    </div>
+    
+    {/* ... 기존 액션 버튼 ... */}
+  </div>
+)}
+
+=== 5. 비용 절감 전략 ===
+
+5.1 조건부 피드백
+- 점수 80점 이상: AI 피드백 생략 (완벽하니까)
+- 점수 50-79점: AI 피드백 제공 (개선 필요)
+- 점수 50점 미만: AI 피드백 제공 (많은 도움 필요)
+
+5.2 캐싱
+- 같은 문장 + 비슷한 실수 = 캐시된 피드백 재사용
+- 데이터베이스에 common_feedback 테이블 생성
+
+5.3 로컬 피드백 우선
+- 간단한 실수: 로컬 피드백 (무료)
+- 복잡한 경우: AI 피드백 (유료)
+
+예시:
+if (missedWords.length === 0 && score >= 90) {
+  feedback = "완벽해요! 발음이 아주 정확합니다! 🎉";
+} else if (missedWords.length <= 2) {
+  feedback = `잘했어요! "${missedWords.join(', ')}" 부분만 다시 연습해보세요!`;
+} else {
+  // AI 피드백 요청
+  feedback = await getAIFeedback(...);
+}
+
+=== 출력 요구사항 ===
+1. AI 피드백이 분석 결과에 표시됨
+2. 로딩 상태 표시
+3. 에러 시 graceful degradation
+4. 피드백이 격려적이고 구체적임
+5. 비용 절감 로직 작동
+
+지금 바로 추가해줘!
