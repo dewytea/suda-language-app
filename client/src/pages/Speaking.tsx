@@ -11,6 +11,7 @@ import type { KeySentence, PronunciationResult, SpeakingProgress } from "@shared
 import { useToast } from "@/hooks/use-toast";
 import { compareText, type TextComparisonResult } from "@/lib/speech/compareText";
 import { calculateScore, getXPReward, type ScoringResult } from "@/lib/speech/calculateScore";
+import { getFeedback } from "@/lib/speech/generateFeedback";
 
 const categoryLabels = {
   daily: "일상",
@@ -30,6 +31,8 @@ interface AnalysisResult extends ScoringResult {
   transcript: string;
   comparison: TextComparisonResult;
   confidence: number;
+  aiFeedback?: string;
+  isLoadingFeedback?: boolean;
 }
 
 export default function Speaking() {
@@ -66,7 +69,7 @@ export default function Speaking() {
     },
   });
 
-  const handleTranscriptComplete = (transcript: string, confidence: number) => {
+  const handleTranscriptComplete = async (transcript: string, confidence: number) => {
     if (!currentSentence) return;
     
     const comparison = compareText(currentSentence.sentence, transcript);
@@ -81,11 +84,13 @@ export default function Speaking() {
       confidence
     );
     
+    // Set initial result with loading state for AI feedback
     const result: AnalysisResult = {
       transcript,
       comparison,
       confidence,
-      ...scoringResult
+      ...scoringResult,
+      isLoadingFeedback: true,
     };
     
     setAnalysisResult(result);
@@ -117,6 +122,30 @@ export default function Speaking() {
       title: `${scoringResult.emoji} ${scoringResult.feedback}`,
       description: `+${xpReward} XP 획득!`,
     });
+
+    // Get AI feedback asynchronously
+    try {
+      const feedbackResult = await getFeedback({
+        originalText: currentSentence.sentence,
+        spokenText: transcript,
+        score: scoringResult.score,
+        missedWords: comparison.missedWords,
+        extraWords: comparison.extraWords,
+        accuracy: comparison.accuracy,
+      });
+
+      setAnalysisResult(prev => prev ? {
+        ...prev,
+        aiFeedback: feedbackResult.feedback,
+        isLoadingFeedback: false,
+      } : null);
+    } catch (error) {
+      console.error('Failed to get feedback:', error);
+      setAnalysisResult(prev => prev ? {
+        ...prev,
+        isLoadingFeedback: false,
+      } : null);
+    }
   };
 
   useEffect(() => {
@@ -373,6 +402,29 @@ export default function Speaking() {
                       </div>
                     </div>
                   )}
+
+                  {/* AI 피드백 섹션 */}
+                  <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 dark:from-blue-500/5 dark:to-purple-500/5 rounded-lg border border-blue-500/20 dark:border-blue-500/10">
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <span className="text-lg">🤖</span>
+                      AI 코치의 피드백
+                    </h4>
+                    
+                    {analysisResult.isLoadingFeedback ? (
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm" data-testid="feedback-loading">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+                        피드백 생성 중...
+                      </div>
+                    ) : analysisResult.aiFeedback ? (
+                      <div className="text-sm whitespace-pre-line leading-relaxed" data-testid="text-ai-feedback">
+                        {analysisResult.aiFeedback}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground" data-testid="feedback-unavailable">
+                        피드백을 생성할 수 없습니다.
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex gap-3 mt-6">
