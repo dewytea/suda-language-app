@@ -17,6 +17,10 @@ import {
   type InsertWritingResult,
   type SpeakingProgress,
   type InsertSpeakingProgress,
+  type FavoriteSentence,
+  type InsertFavoriteSentence,
+  type SpeakingHistory,
+  type InsertSpeakingHistory,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -61,6 +65,23 @@ export interface IStorage {
   getSpeakingProgress(language: string): Promise<SpeakingProgress | undefined>;
   createSpeakingProgress(progress: InsertSpeakingProgress): Promise<SpeakingProgress>;
   updateSpeakingProgress(language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress>;
+
+  // Favorite Sentences
+  getFavoriteSentences(language: string): Promise<FavoriteSentence[]>;
+  addFavoriteSentence(favorite: InsertFavoriteSentence): Promise<FavoriteSentence>;
+  removeFavoriteSentence(sentenceId: number, language: string): Promise<void>;
+  isFavoriteSentence(sentenceId: number, language: string): Promise<boolean>;
+
+  // Speaking History
+  getSpeakingHistory(language: string, limit?: number): Promise<SpeakingHistory[]>;
+  addSpeakingHistory(history: InsertSpeakingHistory): Promise<SpeakingHistory>;
+  getSpeakingStats(language: string): Promise<{
+    totalPracticed: number;
+    averageScore: number;
+    categoryStats: { category: string; count: number; avgScore: number }[];
+    difficultyStats: { difficulty: number; count: number; avgScore: number }[];
+    recentDays: { date: string; count: number; avgScore: number }[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -73,6 +94,8 @@ export class MemStorage implements IStorage {
   private pronunciationResults: Map<number, PronunciationResult>;
   private writingResults: Map<number, WritingResult>;
   private speakingProgress: Map<string, SpeakingProgress>;
+  private favoriteSentences: Map<number, FavoriteSentence>;
+  private speakingHistory: Map<number, SpeakingHistory>;
   private nextId: number;
 
   constructor() {
@@ -85,6 +108,8 @@ export class MemStorage implements IStorage {
     this.pronunciationResults = new Map();
     this.writingResults = new Map();
     this.speakingProgress = new Map();
+    this.favoriteSentences = new Map();
+    this.speakingHistory = new Map();
     this.nextId = 1;
 
     this.initializeAchievements();
@@ -327,6 +352,145 @@ export class MemStorage implements IStorage {
     const updated = { ...existing, ...updates };
     this.speakingProgress.set(language, updated);
     return updated;
+  }
+
+  // Favorite Sentences
+  async getFavoriteSentences(language: string): Promise<FavoriteSentence[]> {
+    return Array.from(this.favoriteSentences.values()).filter(f => f.language === language);
+  }
+
+  async addFavoriteSentence(favorite: InsertFavoriteSentence): Promise<FavoriteSentence> {
+    // Check if already favorited
+    const existing = Array.from(this.favoriteSentences.values()).find(
+      f => f.sentenceId === favorite.sentenceId && f.language === favorite.language
+    );
+    if (existing) {
+      return existing;
+    }
+
+    const id = this.nextId++;
+    const newFavorite: FavoriteSentence = { ...favorite, id, createdAt: new Date() };
+    this.favoriteSentences.set(id, newFavorite);
+    return newFavorite;
+  }
+
+  async removeFavoriteSentence(sentenceId: number, language: string): Promise<void> {
+    const entry = Array.from(this.favoriteSentences.entries()).find(
+      ([_, f]) => f.sentenceId === sentenceId && f.language === language
+    );
+    if (entry) {
+      this.favoriteSentences.delete(entry[0]);
+    }
+  }
+
+  async isFavoriteSentence(sentenceId: number, language: string): Promise<boolean> {
+    return Array.from(this.favoriteSentences.values()).some(
+      f => f.sentenceId === sentenceId && f.language === language
+    );
+  }
+
+  // Speaking History
+  async getSpeakingHistory(language: string, limit: number = 50): Promise<SpeakingHistory[]> {
+    const history = Array.from(this.speakingHistory.values())
+      .filter(h => h.language === language)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return limit ? history.slice(0, limit) : history;
+  }
+
+  async addSpeakingHistory(history: InsertSpeakingHistory): Promise<SpeakingHistory> {
+    const id = this.nextId++;
+    const newHistory: SpeakingHistory = { ...history, id, createdAt: new Date() };
+    this.speakingHistory.set(id, newHistory);
+    return newHistory;
+  }
+
+  async getSpeakingStats(language: string): Promise<{
+    totalPracticed: number;
+    averageScore: number;
+    categoryStats: { category: string; count: number; avgScore: number }[];
+    difficultyStats: { difficulty: number; count: number; avgScore: number }[];
+    recentDays: { date: string; count: number; avgScore: number }[];
+  }> {
+    const history = Array.from(this.speakingHistory.values()).filter(h => h.language === language);
+    const sentences = Array.from(this.keySentences.values());
+
+    const totalPracticed = history.length;
+    const averageScore = totalPracticed > 0
+      ? Math.round(history.reduce((sum, h) => sum + h.score, 0) / totalPracticed)
+      : 0;
+
+    // Category stats
+    const categoryMap = new Map<string, { scores: number[]; count: number }>();
+    history.forEach(h => {
+      const sentence = sentences.find(s => s.id === h.sentenceId);
+      if (sentence) {
+        const cat = sentence.category;
+        if (!categoryMap.has(cat)) {
+          categoryMap.set(cat, { scores: [], count: 0 });
+        }
+        const data = categoryMap.get(cat)!;
+        data.scores.push(h.score);
+        data.count++;
+      }
+    });
+
+    const categoryStats = Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      count: data.count,
+      avgScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.count)
+    }));
+
+    // Difficulty stats
+    const difficultyMap = new Map<number, { scores: number[]; count: number }>();
+    history.forEach(h => {
+      const sentence = sentences.find(s => s.id === h.sentenceId);
+      if (sentence) {
+        const diff = sentence.difficulty;
+        if (!difficultyMap.has(diff)) {
+          difficultyMap.set(diff, { scores: [], count: 0 });
+        }
+        const data = difficultyMap.get(diff)!;
+        data.scores.push(h.score);
+        data.count++;
+      }
+    });
+
+    const difficultyStats = Array.from(difficultyMap.entries()).map(([difficulty, data]) => ({
+      difficulty,
+      count: data.count,
+      avgScore: Math.round(data.scores.reduce((a, b) => a + b, 0) / data.count)
+    })).sort((a, b) => a.difficulty - b.difficulty);
+
+    // Recent 7 days stats
+    const today = new Date();
+    const recentDays: { date: string; count: number; avgScore: number }[] = [];
+    
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dayHistory = history.filter(h => {
+        const hDate = h.createdAt.toISOString().split('T')[0];
+        return hDate === dateStr;
+      });
+
+      if (dayHistory.length > 0) {
+        recentDays.push({
+          date: dateStr,
+          count: dayHistory.length,
+          avgScore: Math.round(dayHistory.reduce((sum, h) => sum + h.score, 0) / dayHistory.length)
+        });
+      }
+    }
+
+    return {
+      totalPracticed,
+      averageScore,
+      categoryStats,
+      difficultyStats,
+      recentDays
+    };
   }
 }
 

@@ -606,6 +606,89 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // Favorite Sentences Routes
+  app.get("/api/favorites/:language", async (req, res) => {
+    try {
+      const { language } = req.params;
+      const favorites = await storage.getFavoriteSentences(language);
+      res.json(favorites);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/favorites", async (req, res) => {
+    try {
+      const { sentenceId, language } = req.body;
+      
+      if (!sentenceId || !language) {
+        return res.status(400).json({ error: "sentenceId and language are required" });
+      }
+
+      const favorite = await storage.addFavoriteSentence({ sentenceId, language });
+      res.json(favorite);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/favorites/:sentenceId/:language", async (req, res) => {
+    try {
+      const sentenceId = parseInt(req.params.sentenceId);
+      const { language } = req.params;
+      
+      await storage.removeFavoriteSentence(sentenceId, language);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/favorites/check/:sentenceId/:language", async (req, res) => {
+    try {
+      const sentenceId = parseInt(req.params.sentenceId);
+      const { language } = req.params;
+      
+      const isFavorite = await storage.isFavoriteSentence(sentenceId, language);
+      res.json({ isFavorite });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Speaking History Routes
+  app.get("/api/speaking-history/:language", async (req, res) => {
+    try {
+      const { language } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const history = await storage.getSpeakingHistory(language, limit);
+      res.json(history);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/speaking-history", async (req, res) => {
+    try {
+      const historyData = req.body;
+      const history = await storage.addSpeakingHistory(historyData);
+      res.json(history);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Speaking Stats Routes
+  app.get("/api/speaking-stats/:language", async (req, res) => {
+    try {
+      const { language } = req.params;
+      const stats = await storage.getSpeakingStats(language);
+      res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

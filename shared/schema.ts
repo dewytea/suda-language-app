@@ -125,3 +125,27 @@ export const insertSpeakingProgressSchema = z.object({
 
 export type InsertSpeakingProgress = z.infer<typeof insertSpeakingProgressSchema>;
 export type SpeakingProgress = InsertSpeakingProgress & { id: number };
+
+// Favorite Sentences
+export const insertFavoriteSentenceSchema = z.object({
+  sentenceId: z.number(),
+  language: z.string(),
+});
+
+export type InsertFavoriteSentence = z.infer<typeof insertFavoriteSentenceSchema>;
+export type FavoriteSentence = InsertFavoriteSentence & { id: number; createdAt: Date };
+
+// Speaking History (practice sessions)
+export const insertSpeakingHistorySchema = z.object({
+  sentenceId: z.number(),
+  sentence: z.string(),
+  language: z.string(),
+  score: z.number(),
+  transcript: z.string(),
+  accuracy: z.number(),
+  missedWords: z.array(z.string()).default([]),
+  extraWords: z.array(z.string()).default([]),
+});
+
+export type InsertSpeakingHistory = z.infer<typeof insertSpeakingHistorySchema>;
+export type SpeakingHistory = InsertSpeakingHistory & { id: number; createdAt: Date };

@@ -3,15 +3,22 @@ import { PronunciationScore } from "@/components/PronunciationScore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Mic, Volume2, Check, Clock, TrendingUp, RotateCcw, ChevronRight } from "lucide-react";
+import { Mic, Volume2, Check, Clock, TrendingUp, RotateCcw, ChevronRight, Heart, BarChart3, History } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { KeySentence, PronunciationResult, SpeakingProgress } from "@shared/schema";
+import type { KeySentence, PronunciationResult, SpeakingProgress, FavoriteSentence } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { compareText, type TextComparisonResult } from "@/lib/speech/compareText";
 import { calculateScore, getXPReward, type ScoringResult } from "@/lib/speech/calculateScore";
 import { getFeedback } from "@/lib/speech/generateFeedback";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const categoryLabels = {
   daily: "일상",
@@ -42,7 +49,9 @@ export default function Speaking() {
   const [currentSentence, setCurrentSentence] = useState<KeySentence | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState<number>(1.0);
   const lastUpdateTimeRef = useRef(Date.now());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
   const { data: speakingProgress } = useQuery<SpeakingProgress>({
@@ -51,6 +60,10 @@ export default function Speaking() {
 
   const { data: allSentences = [] } = useQuery<KeySentence[]>({
     queryKey: ["/api/sentences", selectedLanguage],
+  });
+
+  const { data: favoriteSentences = [] } = useQuery<FavoriteSentence[]>({
+    queryKey: ["/api/favorites", selectedLanguage],
   });
 
   const filteredSentences = allSentences.filter(s => {
@@ -66,6 +79,29 @@ export default function Speaking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/speaking-progress", selectedLanguage] });
+    },
+  });
+
+  const toggleFavorite = useMutation({
+    mutationFn: async (sentenceId: number) => {
+      const isFav = favoriteSentences.some(f => f.sentenceId === sentenceId);
+      if (isFav) {
+        const res = await apiRequest("DELETE", `/api/favorites/${sentenceId}/${selectedLanguage}`);
+        return await res.json();
+      } else {
+        const res = await apiRequest("POST", `/api/favorites`, { sentenceId, language: selectedLanguage });
+        return await res.json();
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites", selectedLanguage] });
+    },
+  });
+
+  const addHistory = useMutation({
+    mutationFn: async (historyData: any) => {
+      const res = await apiRequest("POST", "/api/speaking-history", historyData);
+      return await res.json();
     },
   });
 
@@ -121,6 +157,18 @@ export default function Speaking() {
     toast({
       title: `${scoringResult.emoji} ${scoringResult.feedback}`,
       description: `+${xpReward} XP 획득!`,
+    });
+
+    // Save to history
+    addHistory.mutate({
+      sentenceId: currentSentence.id,
+      sentence: currentSentence.sentence,
+      language: selectedLanguage,
+      score: scoringResult.score,
+      transcript,
+      accuracy: comparison.accuracy,
+      missedWords: comparison.missedWords,
+      extraWords: comparison.extraWords,
     });
 
     // Get AI feedback asynchronously
@@ -195,6 +243,7 @@ export default function Speaking() {
       const data = await res.json();
       
       const audio = new Audio(`data:${data.mimeType};base64,${data.audioData}`);
+      audio.playbackRate = playbackRate; // Apply playback speed
       audio.onended = () => setIsPlayingAudio(false);
       audio.onerror = () => {
         setIsPlayingAudio(false);
@@ -204,6 +253,7 @@ export default function Speaking() {
           variant: "destructive"
         });
       };
+      audioRef.current = audio;
       await audio.play();
     } catch (error: any) {
       setIsPlayingAudio(false);
@@ -214,6 +264,13 @@ export default function Speaking() {
       });
     }
   };
+
+  // Update playback rate when it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackRate;
+    }
+  }, [playbackRate]);
 
   return (
     <div className="space-y-6">
@@ -294,19 +351,43 @@ export default function Speaking() {
                       <p className="text-xl font-semibold flex-1" data-testid="text-current-sentence">
                         {currentSentence.sentence}
                       </p>
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        onClick={handlePlaySentence}
-                        disabled={isPlayingAudio}
-                        data-testid="button-play-sentence"
-                      >
-                        <Volume2 className="h-5 w-5" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          size="icon" 
+                          variant={favoriteSentences.some(f => f.sentenceId === currentSentence.id) ? "default" : "ghost"}
+                          onClick={() => toggleFavorite.mutate(currentSentence.id)}
+                          data-testid="button-favorite"
+                        >
+                          <Heart className={`h-5 w-5 ${favoriteSentences.some(f => f.sentenceId === currentSentence.id) ? 'fill-current' : ''}`} />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={handlePlaySentence}
+                          disabled={isPlayingAudio}
+                          data-testid="button-play-sentence"
+                        >
+                          <Volume2 className="h-5 w-5" />
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-muted-foreground" data-testid="text-translation">
                       {currentSentence.translation}
                     </p>
+                    
+                    <div className="flex items-center gap-2 pt-2">
+                      <span className="text-sm text-muted-foreground">재생 속도:</span>
+                      <Select value={playbackRate.toString()} onValueChange={(v) => setPlaybackRate(parseFloat(v))}>
+                        <SelectTrigger className="w-32" data-testid="select-playback-speed">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0.75">느리게 (0.75x)</SelectItem>
+                          <SelectItem value="1.0">보통 (1.0x)</SelectItem>
+                          <SelectItem value="1.25">빠르게 (1.25x)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
