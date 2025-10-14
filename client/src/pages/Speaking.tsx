@@ -155,8 +155,8 @@ export default function Speaking() {
     
     const xpReward = getXPReward(scoringResult.score);
     toast({
-      title: `${scoringResult.emoji} ${scoringResult.feedback}`,
-      description: `+${xpReward} XP 획득!`,
+      title: scoringResult.feedback,
+      description: `점수: ${scoringResult.score}점 | +${xpReward} XP 획득!`,
     });
 
     // Save to history

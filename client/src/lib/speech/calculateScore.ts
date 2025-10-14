@@ -1,7 +1,6 @@
 export interface ScoringResult {
   score: number;
   feedback: string;
-  emoji: string;
 }
 
 export function calculateScore(
@@ -27,23 +26,18 @@ export function calculateScore(
   score = Math.max(0, Math.min(100, Math.round(score)));
   
   let feedback = '';
-  let emoji = '';
   
   if (score >= 90) {
     feedback = '완벽해요!';
-    emoji = '🎉';
   } else if (score >= 70) {
     feedback = '잘했어요!';
-    emoji = '👍';
   } else if (score >= 50) {
     feedback = '괜찮아요! 다시 해볼까요?';
-    emoji = '😊';
   } else {
     feedback = '다시 연습해봐요!';
-    emoji = '💪';
   }
   
-  return { score, feedback, emoji };
+  return { score, feedback };
 }
 
 export function getXPReward(score: number): number {
