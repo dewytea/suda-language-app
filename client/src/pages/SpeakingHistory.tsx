@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, Calendar, Target, TrendingUp, Volume2, Clock } from "lucide-react";
+import { History, Calendar, Target, TrendingUp, Volume2, Clock, Trophy, ThumbsUp, Zap, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { SpeakingHistory } from "@shared/schema";
@@ -28,11 +28,11 @@ export default function SpeakingHistoryPage() {
     return "text-red-500";
   };
 
-  const getScoreEmoji = (score: number) => {
-    if (score >= 90) return "🎉";
-    if (score >= 70) return "👍";
-    if (score >= 50) return "💪";
-    return "📚";
+  const getScoreIcon = (score: number) => {
+    if (score >= 90) return Trophy;
+    if (score >= 70) return ThumbsUp;
+    if (score >= 50) return Zap;
+    return BookOpen;
   };
 
   const groupedHistory = history.reduce((acc, item) => {
@@ -119,8 +119,12 @@ export default function SpeakingHistoryPage() {
                           </div>
                           
                           <div className="flex flex-col items-end gap-2">
-                            <div className={`text-3xl font-bold ${getScoreColor(item.score)}`} data-testid={`text-score-${item.id}`}>
-                              {getScoreEmoji(item.score)} {item.score}
+                            <div className={`flex items-center gap-2 text-3xl font-bold ${getScoreColor(item.score)}`} data-testid={`text-score-${item.id}`}>
+                              {(() => {
+                                const IconComponent = getScoreIcon(item.score);
+                                return <IconComponent className="h-8 w-8" />;
+                              })()}
+                              {item.score}
                             </div>
                             <Badge variant="outline" className="border">
                               정확도: {item.accuracy}%
