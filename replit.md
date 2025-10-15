@@ -9,6 +9,7 @@ A gamified language learning web application inspired by Duolingo's engagement m
 - UI: Shadcn/ui components, Tailwind CSS
 - Backend: Express.js, Node.js
 - Database: PostgreSQL with Drizzle ORM
+- Authentication: Supabase Auth (email/password, Google OAuth)
 - AI Integration: Google Gemini AI for pronunciation and writing evaluation
 - Styling: Custom theme system with dark/light modes
 
@@ -34,7 +35,9 @@ Preferred communication style: Simple, everyday language.
 
 **Routing**
 - Wouter for lightweight client-side routing
-- Main routes: Dashboard, Speaking, Reading, Listening, Writing, Review, Achievements
+- Public routes: Login (/login), Signup (/signup), Password Reset (/reset-password)
+- Protected routes: Dashboard, Speaking, Reading, Listening, Writing, Review, Achievements, Settings
+- Route protection via ProtectedRoute component (redirects to /login if not authenticated)
 - Custom 404 page handling
 
 **Design System**
@@ -112,10 +115,45 @@ Preferred communication style: Simple, everyday language.
 **Design Rationale**
 The architecture separates concerns cleanly: React handles UI presentation, TanStack Query manages server state synchronization, Express provides API endpoints, Drizzle ORM abstracts database operations, and Gemini AI enhances learning through intelligent feedback. This allows each layer to be developed, tested, and scaled independently while maintaining clear contracts through TypeScript interfaces.
 
-## API Key Management
+## Authentication System
+
+**Supabase Authentication**
+- Email/password authentication with secure password requirements (minimum 8 characters)
+- Google OAuth integration for social login
+- Password reset via email with magic link
+- Session management with automatic token refresh
+- Row-Level Security (RLS) policies for data access control
+
+**Authentication Flow**
+1. **Signup**: Email, password, name, native language, learning languages
+2. **Login**: Email/password or Google OAuth
+3. **Session**: Persistent sessions with automatic refresh
+4. **Protected Routes**: All app pages require authentication
+5. **Logout**: Clear session and redirect to login
+
+**User Profile Management**
+- Profiles table in Supabase extends auth.users
+- Stores: full_name, native_language, learning_languages, level, XP, streak
+- Auto-created on user signup via database trigger
+- Users can only access their own profile data (RLS policies)
 
 **Security Features**
-- Google Gemini API key stored securely in Replit Secrets as `GEMINI_API_KEY`
+- Row-Level Security (RLS) on all user data
+- Secure password hashing (handled by Supabase Auth)
+- JWT tokens for session management
+- HTTPS-only communication
+- Environment variables for sensitive credentials
+
+## API Key Management
+
+**Supabase Credentials**
+- Supabase URL stored as `VITE_SUPABASE_URL` (public)
+- Supabase anon key stored as `VITE_SUPABASE_ANON_KEY` (public)
+- Keys configured in Replit Secrets
+- Client-side initialization with auto-refresh enabled
+
+**Google Gemini AI**
+- API key stored securely in Replit Secrets as `GEMINI_API_KEY`
 - Server-side API key validation with health check endpoint (`/api/health/gemini`)
 - Client-side API key status monitoring via Settings page
 - User-friendly error messages for API key issues
