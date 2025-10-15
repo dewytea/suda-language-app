@@ -57,6 +57,13 @@ export default function Writing() {
     onSuccess: (data: WritingResult) => {
       setLatestResult(data);
     },
+    onError: (error: any) => {
+      toast({
+        title: "평가 실패",
+        description: "AI 서비스가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    },
   });
 
   const saveWriting = useMutation({
