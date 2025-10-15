@@ -1,0 +1,297 @@
+Suda 언어 학습 플랫폼의 기반을 만들어줘.
+
+=== 프로젝트 개요 ===
+- 이름: Suda (수다)
+- 목적: AI 기반 언어 학습 플랫폼
+- 모듈식 구조: Speaking, Listening, Reading, Writing, AI Chat
+- 이번 단계: 기반 시스템만 구축
+
+=== 기술 스택 ===
+- Frontend: Next.js 14 (App Router)
+- Language: TypeScript
+- Styling: Tailwind CSS
+- Database: Supabase (PostgreSQL)
+- Authentication: Supabase Auth
+- Deployment: Vercel
+
+=== 폴더 구조 ===
+src/
+├── app/
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   ├── signup/page.tsx
+│   │   └── reset-password/page.tsx
+│   ├── (dashboard)/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx (대시보드)
+│   │   ├── profile/page.tsx
+│   │   └── settings/page.tsx
+│   └── learn/
+│       ├── speaking/page.tsx (준비 중)
+│       ├── listening/page.tsx (준비 중)
+│       ├── reading/page.tsx (준비 중)
+│       └── writing/page.tsx (준비 중)
+├── components/
+│   ├── layout/
+│   │   ├── Header.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── MobileMenu.tsx
+│   ├── auth/
+│   │   ├── LoginForm.tsx
+│   │   ├── SignupForm.tsx
+│   │   └── OAuthButtons.tsx
+│   └── ui/
+│       ├── Button.tsx
+│       ├── Input.tsx
+│       ├── Card.tsx
+│       ├── Modal.tsx
+│       └── Toast.tsx
+├── lib/
+│   ├── supabase/
+│   │   ├── client.ts
+│   │   └── server.ts
+│   └── utils/
+│       └── cn.ts (classnames helper)
+└── types/
+    └── database.ts
+
+=== 1. 인증 시스템 ===
+
+1.1 Supabase 설정
+- Supabase 프로젝트 생성
+- 환경 변수 설정 (.env.local):
+  NEXT_PUBLIC_SUPABASE_URL=
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+1.2 회원가입 페이지 (/signup)
+- 이메일 입력
+- 비밀번호 입력 (최소 8자)
+- 비밀번호 확인
+- 이름 입력
+- 모국어 선택 (드롭다운)
+  - 한국어, 영어, 중국어, 일본어, 스페인어, 프랑스어, 독일어, 아랍어, 힌디어, 포르투갈어
+- 학습할 언어 선택 (다중 선택 가능)
+- 이용약관 동의 체크박스
+- "가입하기" 버튼
+- "이미 계정이 있나요? 로그인" 링크
+- Google 계정으로 가입 버튼
+
+1.3 로그인 페이지 (/login)
+- 이메일 입력
+- 비밀번호 입력
+- "로그인 유지" 체크박스
+- "로그인" 버튼
+- "비밀번호를 잊으셨나요?" 링크
+- "계정이 없나요? 가입하기" 링크
+- Google 계정으로 로그인 버튼
+
+1.4 비밀번호 재설정 (/reset-password)
+- 이메일 입력
+- "재설정 링크 보내기" 버튼
+- 성공 메시지 표시
+
+1.5 인증 상태 관리
+- 로그인 시 대시보드로 리다이렉트
+- 비로그인 시 로그인 페이지로 리다이렉트
+- 세션 유지 및 자동 갱신
+
+=== 2. 레이아웃 시스템 ===
+
+2.1 헤더 (Header.tsx)
+- 왼쪽: Suda 로고
+- 중앙: 검색바 (나중에 활성화)
+- 오른쪽:
+  - Streak 표시 (🔥 7일)
+  - XP 표시 (⭐ 2,450 XP)
+  - 알림 아이콘 (🔔)
+  - 프로필 아이콘 (클릭 시 드롭다운)
+    - 프로필 보기
+    - 설정
+    - 로그아웃
+
+2.2 사이드바 (Sidebar.tsx)
+- 네비게이션 메뉴:
+  - 🏠 대시보드 (/)
+  - 🎤 Speaking (/learn/speaking) - "Coming Soon" 뱃지
+  - 👂 Listening (/learn/listening) - "Coming Soon" 뱃지
+  - 📖 Reading (/learn/reading) - "Coming Soon" 뱃지
+  - ✍️ Writing (/learn/writing) - "Coming Soon" 뱃지
+  - 🤖 AI 대화 - "Coming Soon" 뱃지
+  - 💬 채팅 - "Coming Soon" 뱃지
+  - 📚 단어장 - "Coming Soon" 뱃지
+  - 📊 통계 - "Coming Soon" 뱃지
+- 하단:
+  - 현재 레벨 (Level 12)
+  - 다음 레벨까지 진행 바
+
+2.3 모바일 메뉴 (MobileMenu.tsx)
+- 햄버거 메뉴 아이콘 (모바일에만 표시)
+- 사이드바와 동일한 메뉴
+- 스와이프로 열고 닫기
+
+=== 3. 데이터베이스 스키마 ===
+
+Supabase에서 다음 테이블 생성:
+
+3.1 users 테이블 (Supabase Auth 확장)
+CREATE TABLE profiles (
+  id UUID REFERENCES auth.users PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  avatar_url TEXT,
+  native_language TEXT NOT NULL,
+  learning_languages TEXT[] NOT NULL,
+  level INTEGER DEFAULT 1,
+  total_xp INTEGER DEFAULT 0,
+  streak_count INTEGER DEFAULT 0,
+  last_activity_date DATE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+3.2 user_stats 테이블
+CREATE TABLE user_stats (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  xp_earned INTEGER DEFAULT 0,
+  time_spent INTEGER DEFAULT 0, -- 분 단위
+  lessons_completed INTEGER DEFAULT 0,
+  words_learned INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, date)
+);
+
+3.3 user_progress 테이블
+CREATE TABLE user_progress (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  module_type TEXT NOT NULL, -- 'speaking', 'listening', 'reading', 'writing'
+  lesson_id TEXT NOT NULL,
+  score INTEGER,
+  completed BOOLEAN DEFAULT FALSE,
+  completed_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, module_type, lesson_id)
+);
+
+=== 4. 공통 UI 컴포넌트 ===
+
+4.1 Button 컴포넌트
+- Variants: primary, secondary, outline, ghost, danger
+- Sizes: sm, md, lg
+- States: default, hover, active, disabled
+- 로딩 상태 지원
+
+4.2 Input 컴포넌트
+- Type: text, email, password, number
+- 에러 상태 표시
+- 라벨 및 헬퍼 텍스트
+- 아이콘 지원
+
+4.3 Card 컴포넌트
+- 그림자 효과
+- 호버 애니메이션
+- 다양한 패딩 옵션
+
+4.4 Modal 컴포넌트
+- 배경 오버레이
+- 닫기 버튼
+- 제목, 본문, 액션 영역
+- ESC 키로 닫기
+
+4.5 Toast 컴포넌트
+- 성공, 에러, 경고, 정보 타입
+- 자동 사라짐 (3초)
+- 우측 상단 위치
+
+=== 5. 디자인 시스템 ===
+
+5.1 색상
+- Primary: #2E5CFF (파란색)
+- Secondary: #FF9447 (오렌지)
+- Success: #34C759 (초록색)
+- Warning: #FFCC00 (노란색)
+- Error: #FF3B30 (빨간색)
+- Background: #FFFFFF (흰색)
+- Surface: #F5F7FA (연한 회색)
+- Text: #1A1A1A (거의 검정)
+- Text Secondary: #666666 (회색)
+- Border: #E5E5E5 (연한 회색)
+
+5.2 타이포그래피
+- Font Family: Inter (Google Fonts)
+- Heading 1: 32px, Bold
+- Heading 2: 24px, Bold
+- Heading 3: 20px, SemiBold
+- Body: 16px, Regular
+- Small: 14px, Regular
+- Tiny: 12px, Regular
+
+5.3 간격
+- xs: 4px
+- sm: 8px
+- md: 16px
+- lg: 24px
+- xl: 32px
+- 2xl: 48px
+
+5.4 모서리
+- 기본: 8px
+- 카드: 12px
+- 버튼: 8px
+- 입력: 8px
+
+=== 6. 반응형 디자인 ===
+- 모바일: < 640px
+- 태블릿: 640px - 1024px
+- 데스크톱: > 1024px
+
+모바일에서:
+- 사이드바 숨김 (햄버거 메뉴로 대체)
+- 헤더 간소화
+- 카드 레이아웃 1열
+- 터치 친화적 버튼 크기
+
+=== 7. 에러 처리 ===
+- 네트워크 에러 처리
+- 인증 에러 처리
+- 폼 유효성 검사
+- 사용자 친화적 에러 메시지
+
+=== 8. 로딩 상태 ===
+- 페이지 전환 로딩
+- 버튼 로딩 스피너
+- 스켈레톤 UI (콘텐츠 로딩 중)
+
+=== 9. 보안 ===
+- CSRF 보호
+- XSS 방지
+- SQL Injection 방지 (Supabase가 자동 처리)
+- 환경 변수로 민감 정보 관리
+
+=== 10. 테스트 데이터 ===
+- 테스트 사용자 생성 기능
+- 샘플 데이터 시드
+
+=== 출력 요구사항 ===
+1. 완전히 작동하는 프로젝트
+2. 로그인/회원가입 가능
+3. 대시보드 접속 가능
+4. 모든 페이지 반응형
+5. 에러 없이 실행됨
+6. 코드 주석 포함
+7. README.md 작성
+   - 설치 방법
+   - 환경 변수 설정
+   - 실행 방법
+
+=== 중요 사항 ===
+- TypeScript 타입 안전성 유지
+- ESLint 및 Prettier 설정
+- 코드 재사용성 극대화
+- 성능 최적화 (이미지, 코드 스플리팅)
+- 접근성 (a11y) 고려
+- SEO 기본 설정
+
+지금 바로 시작해줘!
