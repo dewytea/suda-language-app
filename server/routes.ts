@@ -184,10 +184,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      let progress = await storage.getUserProgress(language);
+      const userId = req.user!.id;
+      let progress = await storage.getUserProgress(userId, language);
       
       if (!progress) {
         progress = await storage.createUserProgress({
+          userId,
           language,
           level: 1,
           totalPoints: 0,
@@ -208,8 +210,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
+      const userId = req.user!.id;
       const updates = insertUserProgressSchema.partial().parse(req.body);
-      const progress = await storage.updateUserProgress(language, updates);
+      const progress = await storage.updateUserProgress(userId, language, updates);
       res.json(progress);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -220,7 +223,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/vocabulary/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const vocabulary = await storage.getVocabulary(language);
+      const userId = req.user!.id;
+      const vocabulary = await storage.getVocabulary(userId, language);
       res.json(vocabulary);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -229,7 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/vocabulary", requireAuth, async (req, res) => {
     try {
-      const vocab = insertVocabularySchema.parse(req.body);
+      const userId = req.user!.id;
+      const vocab = insertVocabularySchema.parse({ ...req.body, userId });
       const created = await storage.addVocabulary(vocab);
       res.json(created);
     } catch (error: any) {
@@ -240,7 +245,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/vocabulary/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      await storage.deleteVocabulary(id);
+      const userId = req.user!.id;
+      await storage.deleteVocabulary(userId, id);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -291,7 +297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { language } = req.params;
       const { skill } = req.query;
-      const notes = await storage.getNotes(language, skill as string);
+      const userId = req.user!.id;
+      const notes = await storage.getNotes(userId, language, skill as string);
       res.json(notes);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -300,7 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/notes", requireAuth, async (req, res) => {
     try {
-      const note = insertNoteSchema.parse(req.body);
+      const userId = req.user!.id;
+      const note = insertNoteSchema.parse({ ...req.body, userId });
       const saved = await storage.saveNote(note);
       res.json(saved);
     } catch (error: any) {
@@ -312,7 +320,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/review/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const items = await storage.getReviewItems(language);
+      const userId = req.user!.id;
+      const items = await storage.getReviewItems(userId, language);
       res.json(items);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -321,7 +330,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/review", requireAuth, async (req, res) => {
     try {
-      const item = insertReviewItemSchema.parse(req.body);
+      const userId = req.user!.id;
+      const item = insertReviewItemSchema.parse({ ...req.body, userId });
       const created = await storage.addReviewItem(item);
       res.json(created);
     } catch (error: any) {
@@ -332,11 +342,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/review/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user!.id;
       const { nextReview } = req.body;
       if (!nextReview || isNaN(new Date(nextReview).getTime())) {
         return res.status(400).json({ error: "Invalid nextReview date" });
       }
-      const updated = await storage.updateReviewItem(id, new Date(nextReview));
+      const updated = await storage.updateReviewItem(userId, id, new Date(nextReview));
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -346,7 +357,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Achievements Routes
   app.get("/api/achievements", requireAuth, async (req, res) => {
     try {
-      const achievements = await storage.getAchievements();
+      const userId = req.user!.id;
+      const achievements = await storage.getAchievements(userId);
       res.json(achievements);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -356,7 +368,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/achievements/:id/unlock", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const achievement = await storage.unlockAchievement(id);
+      const userId = req.user!.id;
+      const achievement = await storage.unlockAchievement(userId, id);
       res.json(achievement);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -390,7 +403,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? "Good effort on this longer sentence. Focus on pronunciation of longer words."
         : "Good pronunciation! Keep practicing for consistency.";
       
+      const userId = req.user!.id;
       const pronunciationResult = insertPronunciationResultSchema.parse({
+        userId,
         sentence,
         language,
         score: simulatedScore,
@@ -407,7 +422,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/pronunciation/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const results = await storage.getPronunciationResults(language);
+      const userId = req.user!.id;
+      const results = await storage.getPronunciationResults(userId, language);
       res.json(results);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -532,7 +548,9 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       
       const evaluation = JSON.parse(response.text || "{}");
       
+      const userId = req.user!.id;
       const writingResult = insertWritingResultSchema.parse({
+        userId,
         prompt,
         userText,
         language,
@@ -552,7 +570,8 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/writing/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const results = await storage.getWritingResults(language);
+      const userId = req.user!.id;
+      const results = await storage.getWritingResults(userId, language);
       res.json(results);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -562,12 +581,13 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.post("/api/writing/save", requireAuth, async (req, res) => {
     try {
       const { writingId } = req.body;
+      const userId = req.user!.id;
       
       if (!writingId) {
         return res.status(400).json({ error: "writingId is required" });
       }
 
-      const updated = await storage.updateWritingResult(writingId, { saved: true });
+      const updated = await storage.updateWritingResult(userId, writingId, { saved: true });
       res.json(updated);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -578,10 +598,12 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/speaking-progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      let progress = await storage.getSpeakingProgress(language);
+      const userId = req.user!.id;
+      let progress = await storage.getSpeakingProgress(userId, language);
       
       if (!progress) {
         progress = await storage.createSpeakingProgress({
+          userId,
           language,
           completedSentences: 0,
           averageScore: 0,
@@ -599,8 +621,9 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.patch("/api/speaking-progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
+      const userId = req.user!.id;
       const updates = insertSpeakingProgressSchema.partial().parse(req.body);
-      const progress = await storage.updateSpeakingProgress(language, updates);
+      const progress = await storage.updateSpeakingProgress(userId, language, updates);
       res.json(progress);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -611,7 +634,8 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/favorites/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const favorites = await storage.getFavoriteSentences(language);
+      const userId = req.user!.id;
+      const favorites = await storage.getFavoriteSentences(userId, language);
       res.json(favorites);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -621,12 +645,13 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.post("/api/favorites", requireAuth, async (req, res) => {
     try {
       const { sentenceId, language } = req.body;
+      const userId = req.user!.id;
       
       if (!sentenceId || !language) {
         return res.status(400).json({ error: "sentenceId and language are required" });
       }
 
-      const favorite = await storage.addFavoriteSentence({ sentenceId, language });
+      const favorite = await storage.addFavoriteSentence({ userId, sentenceId, language });
       res.json(favorite);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -637,8 +662,9 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     try {
       const sentenceId = parseInt(req.params.sentenceId);
       const { language } = req.params;
+      const userId = req.user!.id;
       
-      await storage.removeFavoriteSentence(sentenceId, language);
+      await storage.removeFavoriteSentence(userId, sentenceId, language);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -649,8 +675,9 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     try {
       const sentenceId = parseInt(req.params.sentenceId);
       const { language } = req.params;
+      const userId = req.user!.id;
       
-      const isFavorite = await storage.isFavoriteSentence(sentenceId, language);
+      const isFavorite = await storage.isFavoriteSentence(userId, sentenceId, language);
       res.json({ isFavorite });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -661,8 +688,9 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/speaking-history/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
+      const userId = req.user!.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const history = await storage.getSpeakingHistory(language, limit);
+      const history = await storage.getSpeakingHistory(userId, language, limit);
       res.json(history);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -671,7 +699,8 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
 
   app.post("/api/speaking-history", requireAuth, async (req, res) => {
     try {
-      const historyData = req.body;
+      const userId = req.user!.id;
+      const historyData = { ...req.body, userId };
       const history = await storage.addSpeakingHistory(historyData);
       res.json(history);
     } catch (error: any) {
@@ -683,7 +712,8 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/speaking-stats/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
-      const stats = await storage.getSpeakingStats(language);
+      const userId = req.user!.id;
+      const stats = await storage.getSpeakingStats(userId, language);
       res.json(stats);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
