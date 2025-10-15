@@ -35,9 +35,9 @@ export interface IStorage {
   deleteVocabulary(userId: string, id: number): Promise<void>;
 
   // Key Sentences
-  getKeySentences(language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]>;
+  getKeySentences(userId: string, language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]>;
   addKeySentence(sentence: InsertKeySentence): Promise<KeySentence>;
-  updateKeySentence(id: number, updates: Partial<KeySentence>): Promise<KeySentence>;
+  updateKeySentence(userId: string, id: number, updates: Partial<KeySentence>): Promise<KeySentence>;
 
   // Notes
   getNotes(userId: string, language: string, skill?: string): Promise<Note[]>;
@@ -91,6 +91,8 @@ export class MemStorage implements IStorage {
   private notes: Map<number, Note>;
   private reviewItems: Map<number, ReviewItem>;
   private achievements: Map<number, Achievement>;
+  private achievementTemplates: Array<{ title: string; description: string; icon: string }>;
+  private userAchievementsInitialized: Set<string>;
   private pronunciationResults: Map<number, PronunciationResult>;
   private writingResults: Map<number, WritingResult>;
   private speakingProgress: Map<string, SpeakingProgress>;
@@ -105,6 +107,8 @@ export class MemStorage implements IStorage {
     this.notes = new Map();
     this.reviewItems = new Map();
     this.achievements = new Map();
+    this.achievementTemplates = [];
+    this.userAchievementsInitialized = new Set();
     this.pronunciationResults = new Map();
     this.writingResults = new Map();
     this.speakingProgress = new Map();
@@ -112,27 +116,39 @@ export class MemStorage implements IStorage {
     this.speakingHistory = new Map();
     this.nextId = 1;
 
-    this.initializeAchievements();
+    this.initializeAchievementTemplates();
     this.initializeSentences();
   }
 
-  private initializeAchievements() {
-    const defaultAchievements = [
-      { title: "First Steps", description: "Complete your first lesson", icon: "🎯", unlocked: false },
-      { title: "Week Warrior", description: "Maintain a 7-day streak", icon: "🔥", unlocked: false },
-      { title: "Speaking Star", description: "Complete 10 speaking lessons", icon: "🎤", unlocked: false },
-      { title: "Bookworm", description: "Read 5 stories", icon: "📚", unlocked: false },
-      { title: "Good Listener", description: "Complete 10 listening exercises", icon: "👂", unlocked: false },
-      { title: "Master Writer", description: "Write 20 essays", icon: "✍️", unlocked: false },
-      { title: "Polyglot", description: "Learn 3 languages", icon: "🌍", unlocked: false },
-      { title: "Century Club", description: "Earn 100 points", icon: "💯", unlocked: false },
-      { title: "Dedication", description: "30-day streak", icon: "⭐", unlocked: false },
+  private initializeAchievementTemplates() {
+    this.achievementTemplates = [
+      { title: "First Steps", description: "Complete your first lesson", icon: "trophy" },
+      { title: "Week Warrior", description: "Maintain a 7-day streak", icon: "flame" },
+      { title: "Speaking Star", description: "Complete 10 speaking lessons", icon: "mic" },
+      { title: "Bookworm", description: "Read 5 stories", icon: "book-open" },
+      { title: "Good Listener", description: "Complete 10 listening exercises", icon: "headphones" },
+      { title: "Master Writer", description: "Write 20 essays", icon: "pen-tool" },
+      { title: "Polyglot", description: "Learn 3 languages", icon: "globe" },
+      { title: "Century Club", description: "Earn 100 points", icon: "award" },
+      { title: "Dedication", description: "30-day streak", icon: "star" },
     ];
+  }
 
-    defaultAchievements.forEach((ach) => {
-      const id = this.nextId++;
-      this.achievements.set(id, { ...ach, id });
-    });
+  private ensureUserAchievements(userId: string) {
+    if (!this.userAchievementsInitialized.has(userId)) {
+      this.achievementTemplates.forEach((template) => {
+        const id = this.nextId++;
+        this.achievements.set(id, {
+          userId,
+          title: template.title,
+          description: template.description,
+          icon: template.icon,
+          unlocked: false,
+          id,
+        });
+      });
+      this.userAchievementsInitialized.add(userId);
+    }
   }
 
   private initializeSentences() {
@@ -223,8 +239,10 @@ export class MemStorage implements IStorage {
   }
 
   // Key Sentences
-  async getKeySentences(language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]> {
+  async getKeySentences(userId: string, language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]> {
     return Array.from(this.keySentences.values()).filter((s) => {
+      // Include system sentences (no userId) and user's own sentences
+      if (s.userId && s.userId !== userId) return false;
       if (s.language !== language) return false;
       if (filters?.scenario && s.scenario !== filters.scenario) return false;
       if (filters?.category && s.category !== filters.category) return false;
@@ -240,10 +258,14 @@ export class MemStorage implements IStorage {
     return keySentence;
   }
 
-  async updateKeySentence(id: number, updates: Partial<KeySentence>): Promise<KeySentence> {
+  async updateKeySentence(userId: string, id: number, updates: Partial<KeySentence>): Promise<KeySentence> {
     const existing = this.keySentences.get(id);
     if (!existing) {
       throw new Error("Key sentence not found");
+    }
+    // Only allow updating user's own sentences or system sentences if user is admin
+    if (existing.userId && existing.userId !== userId) {
+      throw new Error("Not authorized to update this sentence");
     }
     const updated = { ...existing, ...updates };
     this.keySentences.set(id, updated);
@@ -291,10 +313,12 @@ export class MemStorage implements IStorage {
 
   // Achievements
   async getAchievements(userId: string): Promise<Achievement[]> {
+    this.ensureUserAchievements(userId);
     return Array.from(this.achievements.values()).filter(a => a.userId === userId);
   }
 
   async unlockAchievement(userId: string, id: number): Promise<Achievement> {
+    this.ensureUserAchievements(userId);
     const existing = this.achievements.get(id);
     if (!existing || existing.userId !== userId) {
       throw new Error("Achievement not found");

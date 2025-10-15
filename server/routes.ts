@@ -257,6 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/sentences/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
+      const userId = req.user!.id;
       const { scenario, category, difficulty } = req.query;
       const filters: { scenario?: string; category?: string; difficulty?: number } = {};
       
@@ -264,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (category) filters.category = category as string;
       if (difficulty) filters.difficulty = parseInt(difficulty as string);
       
-      const sentences = await storage.getKeySentences(language, filters);
+      const sentences = await storage.getKeySentences(userId, language, filters);
       res.json(sentences);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -273,7 +274,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/sentences", requireAuth, async (req, res) => {
     try {
-      const sentence = insertKeySentenceSchema.parse(req.body);
+      const userId = req.user!.id;
+      const sentence = insertKeySentenceSchema.parse({ ...req.body, userId });
       const created = await storage.addKeySentence(sentence);
       res.json(created);
     } catch (error: any) {
@@ -284,8 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/sentences/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const userId = req.user!.id;
       const updates = insertKeySentenceSchema.partial().parse(req.body);
-      const updated = await storage.updateKeySentence(id, updates);
+      const updated = await storage.updateKeySentence(userId, id, updates);
       res.json(updated);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

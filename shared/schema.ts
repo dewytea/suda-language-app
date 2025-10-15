@@ -43,6 +43,7 @@ export type Vocabulary = InsertVocabulary & { id: number };
 
 // Key Sentences
 export const insertKeySentenceSchema = z.object({
+  userId: z.string().optional(), // Optional: system sentences have no userId (shared), user sentences have userId
   sentence: z.string(),
   translation: z.string(),
   language: z.string(),
