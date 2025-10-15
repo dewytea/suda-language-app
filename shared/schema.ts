@@ -3,6 +3,7 @@ import { z } from "zod";
 // User Progress
 export const userProgress = {
   id: z.number(),
+  userId: z.string(),
   language: z.string(),
   level: z.number(),
   totalPoints: z.number(),
@@ -14,6 +15,7 @@ export const userProgress = {
 };
 
 export const insertUserProgressSchema = z.object({
+  userId: z.string(),
   language: z.string(),
   level: z.number().default(1),
   totalPoints: z.number().default(0),
@@ -29,6 +31,7 @@ export type UserProgress = InsertUserProgress & { id: number };
 
 // Vocabulary Items
 export const insertVocabularySchema = z.object({
+  userId: z.string(),
   word: z.string(),
   translation: z.string(),
   example: z.string().optional(),
@@ -54,6 +57,7 @@ export type KeySentence = InsertKeySentence & { id: number };
 
 // Notes
 export const insertNoteSchema = z.object({
+  userId: z.string(),
   content: z.string(),
   skill: z.enum(["speaking", "reading", "listening", "writing"]),
   language: z.string(),
@@ -64,6 +68,7 @@ export type Note = InsertNote & { id: number; createdAt: Date };
 
 // Review Items
 export const insertReviewItemSchema = z.object({
+  userId: z.string(),
   question: z.string(),
   answer: z.string(),
   language: z.string(),
@@ -75,6 +80,7 @@ export type ReviewItem = InsertReviewItem & { id: number; nextReview: Date };
 
 // Achievements
 export const insertAchievementSchema = z.object({
+  userId: z.string(),
   title: z.string(),
   description: z.string(),
   icon: z.string(),
@@ -87,6 +93,7 @@ export type Achievement = InsertAchievement & { id: number };
 
 // Pronunciation Results
 export const insertPronunciationResultSchema = z.object({
+  userId: z.string(),
   sentence: z.string(),
   score: z.number(),
   language: z.string(),
@@ -98,6 +105,7 @@ export type PronunciationResult = InsertPronunciationResult & { id: number; crea
 
 // Writing Results
 export const insertWritingResultSchema = z.object({
+  userId: z.string(),
   prompt: z.string(),
   userText: z.string(),
   score: z.number(),
@@ -116,6 +124,7 @@ export type WritingResult = InsertWritingResult & { id: number; createdAt: Date 
 
 // Speaking Progress
 export const insertSpeakingProgressSchema = z.object({
+  userId: z.string(),
   language: z.string(),
   completedSentences: z.number().default(0),
   averageScore: z.number().default(0),
@@ -128,6 +137,7 @@ export type SpeakingProgress = InsertSpeakingProgress & { id: number };
 
 // Favorite Sentences
 export const insertFavoriteSentenceSchema = z.object({
+  userId: z.string(),
   sentenceId: z.number(),
   language: z.string(),
 });
@@ -137,6 +147,7 @@ export type FavoriteSentence = InsertFavoriteSentence & { id: number; createdAt:
 
 // Speaking History (practice sessions)
 export const insertSpeakingHistorySchema = z.object({
+  userId: z.string(),
   sentenceId: z.number(),
   sentence: z.string(),
   language: z.string(),
