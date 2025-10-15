@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { GoogleGenAI } from "@google/genai";
+import { requireAuth } from "./middleware/auth";
 import {
   insertUserProgressSchema,
   insertVocabularySchema,
@@ -180,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // User Progress Routes
-  app.get("/api/progress/:language", async (req, res) => {
+  app.get("/api/progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       let progress = await storage.getUserProgress(language);
@@ -204,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/progress/:language", async (req, res) => {
+  app.patch("/api/progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const updates = insertUserProgressSchema.partial().parse(req.body);
@@ -216,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vocabulary Routes
-  app.get("/api/vocabulary/:language", async (req, res) => {
+  app.get("/api/vocabulary/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const vocabulary = await storage.getVocabulary(language);
@@ -226,7 +227,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/vocabulary", async (req, res) => {
+  app.post("/api/vocabulary", requireAuth, async (req, res) => {
     try {
       const vocab = insertVocabularySchema.parse(req.body);
       const created = await storage.addVocabulary(vocab);
@@ -236,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/vocabulary/:id", async (req, res) => {
+  app.delete("/api/vocabulary/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteVocabulary(id);
@@ -247,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Key Sentences Routes
-  app.get("/api/sentences/:language", async (req, res) => {
+  app.get("/api/sentences/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const { scenario, category, difficulty } = req.query;
@@ -264,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/sentences", async (req, res) => {
+  app.post("/api/sentences", requireAuth, async (req, res) => {
     try {
       const sentence = insertKeySentenceSchema.parse(req.body);
       const created = await storage.addKeySentence(sentence);
@@ -274,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/sentences/:id", async (req, res) => {
+  app.patch("/api/sentences/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates = insertKeySentenceSchema.partial().parse(req.body);
@@ -286,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notes Routes
-  app.get("/api/notes/:language", async (req, res) => {
+  app.get("/api/notes/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const { skill } = req.query;
@@ -297,7 +298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/notes", async (req, res) => {
+  app.post("/api/notes", requireAuth, async (req, res) => {
     try {
       const note = insertNoteSchema.parse(req.body);
       const saved = await storage.saveNote(note);
@@ -308,7 +309,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Review Items Routes
-  app.get("/api/review/:language", async (req, res) => {
+  app.get("/api/review/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const items = await storage.getReviewItems(language);
@@ -318,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/review", async (req, res) => {
+  app.post("/api/review", requireAuth, async (req, res) => {
     try {
       const item = insertReviewItemSchema.parse(req.body);
       const created = await storage.addReviewItem(item);
@@ -328,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/review/:id", async (req, res) => {
+  app.patch("/api/review/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const { nextReview } = req.body;
@@ -343,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Achievements Routes
-  app.get("/api/achievements", async (req, res) => {
+  app.get("/api/achievements", requireAuth, async (req, res) => {
     try {
       const achievements = await storage.getAchievements();
       res.json(achievements);
@@ -352,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/achievements/:id/unlock", async (req, res) => {
+  app.post("/api/achievements/:id/unlock", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const achievement = await storage.unlockAchievement(id);
@@ -367,7 +368,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // 1. Accept audio data (base64 or file upload)
   // 2. Use Gemini's multimodal capabilities to analyze the audio
   // 3. Compare against the target sentence
-  app.post("/api/pronunciation/evaluate", async (req, res) => {
+  app.post("/api/pronunciation/evaluate", requireAuth, async (req, res) => {
     try {
       if (!GEMINI_API_KEY) {
         return res.status(503).json({ 
@@ -403,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/pronunciation/:language", async (req, res) => {
+  app.get("/api/pronunciation/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const results = await storage.getPronunciationResults(language);
@@ -414,7 +415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Speaking Feedback with Gemini AI
-  app.post("/api/speaking/feedback", async (req, res) => {
+  app.post("/api/speaking/feedback", requireAuth, async (req, res) => {
     try {
       if (!GEMINI_API_KEY) {
         return res.status(503).json({ 
@@ -473,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Writing Feedback with Gemini
-  app.post("/api/writing/evaluate", async (req, res) => {
+  app.post("/api/writing/evaluate", requireAuth, async (req, res) => {
     try {
       if (!GEMINI_API_KEY) {
         return res.status(503).json({ 
@@ -548,7 +549,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.get("/api/writing/:language", async (req, res) => {
+  app.get("/api/writing/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const results = await storage.getWritingResults(language);
@@ -558,7 +559,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.post("/api/writing/save", async (req, res) => {
+  app.post("/api/writing/save", requireAuth, async (req, res) => {
     try {
       const { writingId } = req.body;
       
@@ -574,7 +575,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   });
 
   // Speaking Progress Routes
-  app.get("/api/speaking-progress/:language", async (req, res) => {
+  app.get("/api/speaking-progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       let progress = await storage.getSpeakingProgress(language);
@@ -595,7 +596,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.patch("/api/speaking-progress/:language", async (req, res) => {
+  app.patch("/api/speaking-progress/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const updates = insertSpeakingProgressSchema.partial().parse(req.body);
@@ -607,7 +608,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   });
 
   // Favorite Sentences Routes
-  app.get("/api/favorites/:language", async (req, res) => {
+  app.get("/api/favorites/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const favorites = await storage.getFavoriteSentences(language);
@@ -617,7 +618,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.post("/api/favorites", async (req, res) => {
+  app.post("/api/favorites", requireAuth, async (req, res) => {
     try {
       const { sentenceId, language } = req.body;
       
@@ -632,7 +633,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.delete("/api/favorites/:sentenceId/:language", async (req, res) => {
+  app.delete("/api/favorites/:sentenceId/:language", requireAuth, async (req, res) => {
     try {
       const sentenceId = parseInt(req.params.sentenceId);
       const { language } = req.params;
@@ -644,7 +645,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.get("/api/favorites/check/:sentenceId/:language", async (req, res) => {
+  app.get("/api/favorites/check/:sentenceId/:language", requireAuth, async (req, res) => {
     try {
       const sentenceId = parseInt(req.params.sentenceId);
       const { language } = req.params;
@@ -657,7 +658,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   });
 
   // Speaking History Routes
-  app.get("/api/speaking-history/:language", async (req, res) => {
+  app.get("/api/speaking-history/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
@@ -668,7 +669,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
-  app.post("/api/speaking-history", async (req, res) => {
+  app.post("/api/speaking-history", requireAuth, async (req, res) => {
     try {
       const historyData = req.body;
       const history = await storage.addSpeakingHistory(historyData);
@@ -679,7 +680,7 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   });
 
   // Speaking Stats Routes
-  app.get("/api/speaking-stats/:language", async (req, res) => {
+  app.get("/api/speaking-stats/:language", requireAuth, async (req, res) => {
     try {
       const { language } = req.params;
       const stats = await storage.getSpeakingStats(language);
