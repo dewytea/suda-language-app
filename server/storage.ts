@@ -25,14 +25,14 @@ import {
 
 export interface IStorage {
   // User Progress
-  getUserProgress(language: string): Promise<UserProgress | undefined>;
+  getUserProgress(userId: string, language: string): Promise<UserProgress | undefined>;
   createUserProgress(progress: InsertUserProgress): Promise<UserProgress>;
-  updateUserProgress(language: string, updates: Partial<UserProgress>): Promise<UserProgress>;
+  updateUserProgress(userId: string, language: string, updates: Partial<UserProgress>): Promise<UserProgress>;
 
   // Vocabulary
-  getVocabulary(language: string): Promise<Vocabulary[]>;
+  getVocabulary(userId: string, language: string): Promise<Vocabulary[]>;
   addVocabulary(vocab: InsertVocabulary): Promise<Vocabulary>;
-  deleteVocabulary(id: number): Promise<void>;
+  deleteVocabulary(userId: string, id: number): Promise<void>;
 
   // Key Sentences
   getKeySentences(language: string, filters?: { scenario?: string; category?: string; difficulty?: number }): Promise<KeySentence[]>;
@@ -40,42 +40,42 @@ export interface IStorage {
   updateKeySentence(id: number, updates: Partial<KeySentence>): Promise<KeySentence>;
 
   // Notes
-  getNotes(language: string, skill?: string): Promise<Note[]>;
+  getNotes(userId: string, language: string, skill?: string): Promise<Note[]>;
   saveNote(note: InsertNote): Promise<Note>;
 
   // Review Items
-  getReviewItems(language: string): Promise<ReviewItem[]>;
+  getReviewItems(userId: string, language: string): Promise<ReviewItem[]>;
   addReviewItem(item: InsertReviewItem): Promise<ReviewItem>;
-  updateReviewItem(id: number, nextReview: Date): Promise<ReviewItem>;
+  updateReviewItem(userId: string, id: number, nextReview: Date): Promise<ReviewItem>;
 
   // Achievements
-  getAchievements(): Promise<Achievement[]>;
-  unlockAchievement(id: number): Promise<Achievement>;
+  getAchievements(userId: string): Promise<Achievement[]>;
+  unlockAchievement(userId: string, id: number): Promise<Achievement>;
 
   // Pronunciation Results
   savePronunciationResult(result: InsertPronunciationResult): Promise<PronunciationResult>;
-  getPronunciationResults(language: string): Promise<PronunciationResult[]>;
+  getPronunciationResults(userId: string, language: string): Promise<PronunciationResult[]>;
 
   // Writing Results
   saveWritingResult(result: InsertWritingResult): Promise<WritingResult>;
-  getWritingResults(language: string): Promise<WritingResult[]>;
-  updateWritingResult(id: number, updates: Partial<WritingResult>): Promise<WritingResult>;
+  getWritingResults(userId: string, language: string): Promise<WritingResult[]>;
+  updateWritingResult(userId: string, id: number, updates: Partial<WritingResult>): Promise<WritingResult>;
 
   // Speaking Progress
-  getSpeakingProgress(language: string): Promise<SpeakingProgress | undefined>;
+  getSpeakingProgress(userId: string, language: string): Promise<SpeakingProgress | undefined>;
   createSpeakingProgress(progress: InsertSpeakingProgress): Promise<SpeakingProgress>;
-  updateSpeakingProgress(language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress>;
+  updateSpeakingProgress(userId: string, language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress>;
 
   // Favorite Sentences
-  getFavoriteSentences(language: string): Promise<FavoriteSentence[]>;
+  getFavoriteSentences(userId: string, language: string): Promise<FavoriteSentence[]>;
   addFavoriteSentence(favorite: InsertFavoriteSentence): Promise<FavoriteSentence>;
-  removeFavoriteSentence(sentenceId: number, language: string): Promise<void>;
-  isFavoriteSentence(sentenceId: number, language: string): Promise<boolean>;
+  removeFavoriteSentence(userId: string, sentenceId: number, language: string): Promise<void>;
+  isFavoriteSentence(userId: string, sentenceId: number, language: string): Promise<boolean>;
 
   // Speaking History
-  getSpeakingHistory(language: string, limit?: number): Promise<SpeakingHistory[]>;
+  getSpeakingHistory(userId: string, language: string, limit?: number): Promise<SpeakingHistory[]>;
   addSpeakingHistory(history: InsertSpeakingHistory): Promise<SpeakingHistory>;
-  getSpeakingStats(language: string): Promise<{
+  getSpeakingStats(userId: string, language: string): Promise<{
     totalPracticed: number;
     averageScore: number;
     categoryStats: { category: string; count: number; avgScore: number }[];
@@ -179,30 +179,33 @@ export class MemStorage implements IStorage {
   }
 
   // User Progress
-  async getUserProgress(language: string): Promise<UserProgress | undefined> {
-    return this.userProgress.get(language);
+  async getUserProgress(userId: string, language: string): Promise<UserProgress | undefined> {
+    const key = `${userId}:${language}`;
+    return this.userProgress.get(key);
   }
 
   async createUserProgress(progress: InsertUserProgress): Promise<UserProgress> {
     const id = this.nextId++;
     const userProg: UserProgress = { ...progress, id };
-    this.userProgress.set(progress.language, userProg);
+    const key = `${progress.userId}:${progress.language}`;
+    this.userProgress.set(key, userProg);
     return userProg;
   }
 
-  async updateUserProgress(language: string, updates: Partial<UserProgress>): Promise<UserProgress> {
-    const existing = this.userProgress.get(language);
+  async updateUserProgress(userId: string, language: string, updates: Partial<UserProgress>): Promise<UserProgress> {
+    const key = `${userId}:${language}`;
+    const existing = this.userProgress.get(key);
     if (!existing) {
       throw new Error("User progress not found");
     }
     const updated = { ...existing, ...updates };
-    this.userProgress.set(language, updated);
+    this.userProgress.set(key, updated);
     return updated;
   }
 
   // Vocabulary
-  async getVocabulary(language: string): Promise<Vocabulary[]> {
-    return Array.from(this.vocabulary.values()).filter((v) => v.language === language);
+  async getVocabulary(userId: string, language: string): Promise<Vocabulary[]> {
+    return Array.from(this.vocabulary.values()).filter((v) => v.userId === userId && v.language === language);
   }
 
   async addVocabulary(vocab: InsertVocabulary): Promise<Vocabulary> {
@@ -212,8 +215,11 @@ export class MemStorage implements IStorage {
     return vocabulary;
   }
 
-  async deleteVocabulary(id: number): Promise<void> {
-    this.vocabulary.delete(id);
+  async deleteVocabulary(userId: string, id: number): Promise<void> {
+    const vocab = this.vocabulary.get(id);
+    if (vocab && vocab.userId === userId) {
+      this.vocabulary.delete(id);
+    }
   }
 
   // Key Sentences
@@ -245,9 +251,9 @@ export class MemStorage implements IStorage {
   }
 
   // Notes
-  async getNotes(language: string, skill?: string): Promise<Note[]> {
+  async getNotes(userId: string, language: string, skill?: string): Promise<Note[]> {
     return Array.from(this.notes.values()).filter(
-      (n) => n.language === language && (!skill || n.skill === skill)
+      (n) => n.userId === userId && n.language === language && (!skill || n.skill === skill)
     );
   }
 
@@ -259,10 +265,10 @@ export class MemStorage implements IStorage {
   }
 
   // Review Items
-  async getReviewItems(language: string): Promise<ReviewItem[]> {
+  async getReviewItems(userId: string, language: string): Promise<ReviewItem[]> {
     const now = new Date();
     return Array.from(this.reviewItems.values()).filter(
-      (r) => r.language === language && r.nextReview <= now
+      (r) => r.userId === userId && r.language === language && r.nextReview <= now
     );
   }
 
@@ -273,9 +279,9 @@ export class MemStorage implements IStorage {
     return reviewItem;
   }
 
-  async updateReviewItem(id: number, nextReview: Date): Promise<ReviewItem> {
+  async updateReviewItem(userId: string, id: number, nextReview: Date): Promise<ReviewItem> {
     const existing = this.reviewItems.get(id);
-    if (!existing) {
+    if (!existing || existing.userId !== userId) {
       throw new Error("Review item not found");
     }
     const updated = { ...existing, nextReview };
@@ -284,13 +290,13 @@ export class MemStorage implements IStorage {
   }
 
   // Achievements
-  async getAchievements(): Promise<Achievement[]> {
-    return Array.from(this.achievements.values());
+  async getAchievements(userId: string): Promise<Achievement[]> {
+    return Array.from(this.achievements.values()).filter(a => a.userId === userId);
   }
 
-  async unlockAchievement(id: number): Promise<Achievement> {
+  async unlockAchievement(userId: string, id: number): Promise<Achievement> {
     const existing = this.achievements.get(id);
-    if (!existing) {
+    if (!existing || existing.userId !== userId) {
       throw new Error("Achievement not found");
     }
     const updated = { ...existing, unlocked: true, unlockedAt: new Date() };
@@ -306,8 +312,8 @@ export class MemStorage implements IStorage {
     return savedResult;
   }
 
-  async getPronunciationResults(language: string): Promise<PronunciationResult[]> {
-    return Array.from(this.pronunciationResults.values()).filter((r) => r.language === language);
+  async getPronunciationResults(userId: string, language: string): Promise<PronunciationResult[]> {
+    return Array.from(this.pronunciationResults.values()).filter((r) => r.userId === userId && r.language === language);
   }
 
   // Writing Results
@@ -318,13 +324,13 @@ export class MemStorage implements IStorage {
     return savedResult;
   }
 
-  async getWritingResults(language: string): Promise<WritingResult[]> {
-    return Array.from(this.writingResults.values()).filter((r) => r.language === language);
+  async getWritingResults(userId: string, language: string): Promise<WritingResult[]> {
+    return Array.from(this.writingResults.values()).filter((r) => r.userId === userId && r.language === language);
   }
 
-  async updateWritingResult(id: number, updates: Partial<WritingResult>): Promise<WritingResult> {
+  async updateWritingResult(userId: string, id: number, updates: Partial<WritingResult>): Promise<WritingResult> {
     const existing = this.writingResults.get(id);
-    if (!existing) {
+    if (!existing || existing.userId !== userId) {
       throw new Error("Writing result not found");
     }
     const updated = { ...existing, ...updates };
@@ -333,36 +339,39 @@ export class MemStorage implements IStorage {
   }
 
   // Speaking Progress
-  async getSpeakingProgress(language: string): Promise<SpeakingProgress | undefined> {
-    return this.speakingProgress.get(language);
+  async getSpeakingProgress(userId: string, language: string): Promise<SpeakingProgress | undefined> {
+    const key = `${userId}:${language}`;
+    return this.speakingProgress.get(key);
   }
 
   async createSpeakingProgress(progress: InsertSpeakingProgress): Promise<SpeakingProgress> {
     const id = this.nextId++;
     const speakingProg: SpeakingProgress = { ...progress, id };
-    this.speakingProgress.set(progress.language, speakingProg);
+    const key = `${progress.userId}:${progress.language}`;
+    this.speakingProgress.set(key, speakingProg);
     return speakingProg;
   }
 
-  async updateSpeakingProgress(language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress> {
-    const existing = this.speakingProgress.get(language);
+  async updateSpeakingProgress(userId: string, language: string, updates: Partial<SpeakingProgress>): Promise<SpeakingProgress> {
+    const key = `${userId}:${language}`;
+    const existing = this.speakingProgress.get(key);
     if (!existing) {
       throw new Error("Speaking progress not found");
     }
     const updated = { ...existing, ...updates };
-    this.speakingProgress.set(language, updated);
+    this.speakingProgress.set(key, updated);
     return updated;
   }
 
   // Favorite Sentences
-  async getFavoriteSentences(language: string): Promise<FavoriteSentence[]> {
-    return Array.from(this.favoriteSentences.values()).filter(f => f.language === language);
+  async getFavoriteSentences(userId: string, language: string): Promise<FavoriteSentence[]> {
+    return Array.from(this.favoriteSentences.values()).filter(f => f.userId === userId && f.language === language);
   }
 
   async addFavoriteSentence(favorite: InsertFavoriteSentence): Promise<FavoriteSentence> {
     // Check if already favorited
     const existing = Array.from(this.favoriteSentences.values()).find(
-      f => f.sentenceId === favorite.sentenceId && f.language === favorite.language
+      f => f.userId === favorite.userId && f.sentenceId === favorite.sentenceId && f.language === favorite.language
     );
     if (existing) {
       return existing;
@@ -374,25 +383,25 @@ export class MemStorage implements IStorage {
     return newFavorite;
   }
 
-  async removeFavoriteSentence(sentenceId: number, language: string): Promise<void> {
+  async removeFavoriteSentence(userId: string, sentenceId: number, language: string): Promise<void> {
     const entry = Array.from(this.favoriteSentences.entries()).find(
-      ([_, f]) => f.sentenceId === sentenceId && f.language === language
+      ([_, f]) => f.userId === userId && f.sentenceId === sentenceId && f.language === language
     );
     if (entry) {
       this.favoriteSentences.delete(entry[0]);
     }
   }
 
-  async isFavoriteSentence(sentenceId: number, language: string): Promise<boolean> {
+  async isFavoriteSentence(userId: string, sentenceId: number, language: string): Promise<boolean> {
     return Array.from(this.favoriteSentences.values()).some(
-      f => f.sentenceId === sentenceId && f.language === language
+      f => f.userId === userId && f.sentenceId === sentenceId && f.language === language
     );
   }
 
   // Speaking History
-  async getSpeakingHistory(language: string, limit: number = 50): Promise<SpeakingHistory[]> {
+  async getSpeakingHistory(userId: string, language: string, limit: number = 50): Promise<SpeakingHistory[]> {
     const history = Array.from(this.speakingHistory.values())
-      .filter(h => h.language === language)
+      .filter(h => h.userId === userId && h.language === language)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     return limit ? history.slice(0, limit) : history;
   }
@@ -404,14 +413,14 @@ export class MemStorage implements IStorage {
     return newHistory;
   }
 
-  async getSpeakingStats(language: string): Promise<{
+  async getSpeakingStats(userId: string, language: string): Promise<{
     totalPracticed: number;
     averageScore: number;
     categoryStats: { category: string; count: number; avgScore: number }[];
     difficultyStats: { difficulty: number; count: number; avgScore: number }[];
     recentDays: { date: string; count: number; avgScore: number }[];
   }> {
-    const history = Array.from(this.speakingHistory.values()).filter(h => h.language === language);
+    const history = Array.from(this.speakingHistory.values()).filter(h => h.userId === userId && h.language === language);
     const sentences = Array.from(this.keySentences.values());
 
     const totalPracticed = history.length;
