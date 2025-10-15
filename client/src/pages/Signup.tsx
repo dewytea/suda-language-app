@@ -298,10 +298,8 @@ export default function Signup() {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             이미 계정이 있나요?{' '}
-            <Link href="/login">
-              <a className="text-primary hover:underline font-medium" data-testid="link-login">
-                로그인
-              </a>
+            <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-login">
+              로그인
             </Link>
           </p>
         </CardFooter>

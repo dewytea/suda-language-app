@@ -113,11 +113,9 @@ export default function ResetPassword() {
         </CardContent>
         {!sent && (
           <CardFooter className="flex justify-center">
-            <Link href="/login">
-              <a className="text-sm text-muted-foreground hover:text-primary flex items-center" data-testid="link-back-to-login">
-                <ArrowLeft className="mr-1 h-3 w-3" />
-                로그인으로 돌아가기
-              </a>
+            <Link href="/login" className="text-sm text-muted-foreground hover:text-primary flex items-center" data-testid="link-back-to-login">
+              <ArrowLeft className="mr-1 h-3 w-3" />
+              로그인으로 돌아가기
             </Link>
           </CardFooter>
         )}

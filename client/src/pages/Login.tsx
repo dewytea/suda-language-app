@@ -148,10 +148,8 @@ export default function Login() {
                   로그인 유지
                 </Label>
               </div>
-              <Link href="/reset-password">
-                <a className="text-sm text-primary hover:underline" data-testid="link-reset-password">
-                  비밀번호 찾기
-                </a>
+              <Link href="/reset-password" className="text-sm text-primary hover:underline" data-testid="link-reset-password">
+                비밀번호 찾기
               </Link>
             </div>
 
@@ -175,10 +173,8 @@ export default function Login() {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             계정이 없나요?{' '}
-            <Link href="/signup">
-              <a className="text-primary hover:underline font-medium" data-testid="link-signup">
-                가입하기
-              </a>
+            <Link href="/signup" className="text-primary hover:underline font-medium" data-testid="link-signup">
+              가입하기
             </Link>
           </p>
         </CardFooter>
