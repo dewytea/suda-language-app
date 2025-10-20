@@ -1,0 +1,713 @@
+Suda 앱에 AI 자유 대화 모듈을 추가해줘.
+
+=== Phase 1: 기본 채팅 UI 구조 ===
+
+이번 단계에서는 OpenAI API 없이
+UI만 먼저 완성할 거야.
+실제 AI 응답은 다음 단계에서!
+
+=== 파일 구조 ===
+
+app/
+├── learn/
+│   └── ai-chat/
+│       ├── page.tsx (메인 채팅 페이지)
+│       └── layout.tsx (AI Chat 레이아웃)
+├── components/
+│   └── ai-chat/
+│       ├── ChatInterface.tsx (채팅 인터페이스)
+│       ├── MessageBubble.tsx (메시지 말풍선)
+│       ├── ChatInput.tsx (입력 영역)
+│       ├── TypingIndicator.tsx (타이핑 중 표시)
+│       └── ScenarioSelector.tsx (시나리오 선택)
+└── lib/
+    └── ai-chat/
+        └── utils.ts (유틸리티 함수)
+
+=== 데이터베이스 테이블 생성 ===
+
+Supabase에 2개 테이블 추가:
+
+1. ai_chat_sessions 테이블:
+```sql
+CREATE TABLE ai_chat_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  scenario TEXT DEFAULT 'free' NOT NULL,
+  started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  ended_at TIMESTAMP WITH TIME ZONE,
+  message_count INTEGER DEFAULT 0,
+  duration INTEGER DEFAULT 0, -- 초 단위
+  xp_earned INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_ai_chat_sessions_user_id ON ai_chat_sessions(user_id);
+CREATE INDEX idx_ai_chat_sessions_created_at ON ai_chat_sessions(created_at);
+```
+
+2. ai_chat_messages 테이블:
+```sql
+CREATE TABLE ai_chat_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  session_id UUID REFERENCES ai_chat_sessions(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_ai_chat_messages_session_id ON ai_chat_messages(session_id);
+CREATE INDEX idx_ai_chat_messages_created_at ON ai_chat_messages(created_at);
+```
+
+=== 페이지 레이아웃 ===
+
+app/learn/ai-chat/layout.tsx:
+```tsx
+export default function AIChatLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="h-screen flex flex-col bg-gray-50">
+      {children}
+    </div>
+  )
+}
+```
+
+=== 메인 페이지 ===
+
+app/learn/ai-chat/page.tsx:
+```tsx
+import ChatInterface from '@/components/ai-chat/ChatInterface'
+
+export default function AIChatPage() {
+  return (
+    <div className="flex-1 flex flex-col">
+      <ChatInterface />
+    </div>
+  )
+}
+```
+
+=== 채팅 인터페이스 컴포넌트 ===
+
+components/ai-chat/ChatInterface.tsx:
+
+전체 레이아웃:
+┌──────────────────────────────────────┐
+│  Header (헤더)                        │
+│  [시나리오 선택] [설정]               │
+├──────────────────────────────────────┤
+│                                      │
+│  Chat Area (채팅 영역)               │
+│  스크롤 가능                          │
+│                                      │
+│  AI: 안녕하세요! 👋                 │
+│      무엇을 도와드릴까요?             │
+│                                      │
+│           User: Hello! 💬            │
+│                                      │
+│  AI: Great! Let's practice...        │
+│                                      │
+│  [타이핑 중 표시...]                 │
+│                                      │
+├──────────────────────────────────────┤
+│  Input Area (입력 영역)              │
+│  [텍스트 입력창]  [🎤] [전송]       │
+└──────────────────────────────────────┘
+
+구현:
+```tsx
+'use client'
+
+import { useState, useEffect, useRef } from 'react'
+import { Send, Mic, Settings } from 'lucide-react'
+import MessageBubble from './MessageBubble'
+import ChatInput from './ChatInput'
+import TypingIndicator from './TypingIndicator'
+import ScenarioSelector from './ScenarioSelector'
+
+interface Message {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+}
+
+export default function ChatInterface() {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      role: 'assistant',
+      content: '안녕하세요! 👋 영어로 대화해볼까요? 무엇을 이야기하고 싶으세요?',
+      timestamp: new Date()
+    }
+  ])
+  const [input, setInput] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [scenario, setScenario] = useState('free')
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [startTime, setStartTime] = useState<Date>(new Date())
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // 자동 스크롤
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  // 세션 생성
+  useEffect(() => {
+    createSession()
+  }, [])
+
+  const createSession = async () => {
+    try {
+      const response = await fetch('/api/ai-chat/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenario: scenario
+        })
+      })
+      const data = await response.json()
+      setSessionId(data.sessionId)
+      setStartTime(new Date())
+    } catch (error) {
+      console.error('Failed to create session:', error)
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (!input.trim() || isLoading) return
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input,
+      timestamp: new Date()
+    }
+
+    setMessages(prev => [...prev, userMessage])
+    setInput('')
+    setIsLoading(true)
+
+    try {
+      // 임시 응답 (OpenAI 연동 전)
+      // 다음 단계에서 실제 API 호출로 교체할 예정
+      
+      setTimeout(() => {
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: "That's interesting! Tell me more about it. (This is a temporary response. AI integration coming next!)",
+          timestamp: new Date()
+        }
+        
+        setMessages(prev => [...prev, aiMessage])
+        setIsLoading(false)
+        
+        // 메시지 저장
+        saveMessages(sessionId, [userMessage, aiMessage])
+      }, 1500)
+      
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      setIsLoading(false)
+    }
+  }
+
+  const saveMessages = async (sessionId: string | null, messages: Message[]) => {
+    if (!sessionId) return
+    
+    try {
+      await fetch('/api/ai-chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        })
+      })
+    } catch (error) {
+      console.error('Failed to save messages:', error)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
+    }
+  }
+
+  return (
+    <div className="flex-1 flex flex-col h-full max-w-4xl mx-auto w-full">
+      {/* Header */}
+      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-xl">🤖</span>
+          </div>
+          <div>
+            <h1 className="font-semibold text-lg">AI 대화 파트너</h1>
+            <p className="text-sm text-gray-500">자유롭게 대화해보세요</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <ScenarioSelector 
+            value={scenario} 
+            onChange={setScenario}
+          />
+          <button className="p-2 hover:bg-gray-100 rounded-lg">
+            <Settings className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+      </div>
+
+      {/* Chat Area */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+      >
+        {messages.map((message) => (
+          <MessageBubble key={message.id} message={message} />
+        ))}
+        
+        {isLoading && <TypingIndicator />}
+        
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <div className="bg-white border-t px-4 py-4">
+        <div className="max-w-4xl mx-auto flex items-end gap-2">
+          <div className="flex-1">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="메시지를 입력하세요..."
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows={1}
+              style={{
+                minHeight: '52px',
+                maxHeight: '200px'
+              }}
+            />
+            <div className="text-xs text-gray-500 mt-1 px-1">
+              {input.length}/500 • Enter로 전송, Shift+Enter로 줄바꿈
+            </div>
+          </div>
+          
+          <button
+            className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
+            title="음성 입력 (곧 출시)"
+            disabled
+          >
+            <Mic className="w-6 h-6 text-gray-400" />
+          </button>
+          
+          <button
+            onClick={handleSendMessage}
+            disabled={!input.trim() || isLoading}
+            className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            <Send className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 메시지 말풍선 컴포넌트 ===
+
+components/ai-chat/MessageBubble.tsx:
+```tsx
+import { cn } from '@/lib/utils'
+
+interface MessageBubbleProps {
+  message: {
+    id: string
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: Date
+  }
+}
+
+export default function MessageBubble({ message }: MessageBubbleProps) {
+  const isUser = message.role === 'user'
+  
+  return (
+    <div
+      className={cn(
+        'flex gap-3 animate-fade-in',
+        isUser ? 'justify-end' : 'justify-start'
+      )}
+    >
+      {!isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-sm">🤖</span>
+        </div>
+      )}
+      
+      <div
+        className={cn(
+          'max-w-[70%] rounded-2xl px-4 py-3 shadow-sm',
+          isUser
+            ? 'bg-blue-600 text-white rounded-tr-none'
+            : 'bg-white text-gray-800 rounded-tl-none'
+        )}
+      >
+        <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+          {message.content}
+        </p>
+        <p
+          className={cn(
+            'text-xs mt-1',
+            isUser ? 'text-blue-100' : 'text-gray-400'
+          )}
+        >
+          {message.timestamp.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })}
+        </p>
+      </div>
+      
+      {isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-sm">😊</span>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+=== 타이핑 인디케이터 ===
+
+components/ai-chat/TypingIndicator.tsx:
+```tsx
+export default function TypingIndicator() {
+  return (
+    <div className="flex gap-3">
+      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center flex-shrink-0">
+        <span className="text-white text-sm">🤖</span>
+      </div>
+      
+      <div className="bg-white rounded-2xl rounded-tl-none px-4 py-3 shadow-sm">
+        <div className="flex gap-1">
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 시나리오 선택 컴포넌트 ===
+
+components/ai-chat/ScenarioSelector.tsx:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+
+const scenarios = [
+  { id: 'free', name: '자유 대화', icon: '🗣️' },
+  { id: 'restaurant', name: '식당', icon: '🍽️' },
+  { id: 'hotel', name: '호텔', icon: '🏨' },
+  { id: 'shopping', name: '쇼핑', icon: '🛍️' },
+  { id: 'interview', name: '면접', icon: '💼' },
+  { id: 'travel', name: '여행', icon: '✈️' },
+]
+
+interface ScenarioSelectorProps {
+  value: string
+  onChange: (value: string) => void
+}
+
+export default function ScenarioSelector({ value, onChange }: ScenarioSelectorProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  
+  const selected = scenarios.find(s => s.id === value) || scenarios[0]
+  
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+      >
+        <span>{selected.icon}</span>
+        <span className="text-sm font-medium">{selected.name}</span>
+        <ChevronDown className="w-4 h-4" />
+      </button>
+      
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border z-20 py-1">
+            {scenarios.map((scenario) => (
+              <button
+                key={scenario.id}
+                onClick={() => {
+                  onChange(scenario.id)
+                  setIsOpen(false)
+                }}
+                className={`w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2 ${
+                  value === scenario.id ? 'bg-blue-50 text-blue-600' : ''
+                }`}
+              >
+                <span>{scenario.icon}</span>
+                <span className="text-sm">{scenario.name}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+```
+
+=== API 엔드포인트 (세션 생성) ===
+
+app/api/ai-chat/session/route.ts:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { scenario = 'free' } = await req.json()
+
+    const { data, error } = await supabase
+      .from('ai_chat_sessions')
+      .insert({
+        user_id: session.user.id,
+        scenario: scenario,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({
+      sessionId: data.id,
+      scenario: data.scenario
+    })
+  } catch (error) {
+    console.error('Session creation error:', error)
+    return NextResponse.json(
+      { error: 'Failed to create session' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== API 엔드포인트 (메시지 저장) ===
+
+app/api/ai-chat/messages/route.ts:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { sessionId, messages } = await req.json()
+
+    // 메시지 저장
+    const messagesToInsert = messages.map((msg: any) => ({
+      session_id: sessionId,
+      role: msg.role,
+      content: msg.content,
+    }))
+
+    const { error } = await supabase
+      .from('ai_chat_messages')
+      .insert(messagesToInsert)
+
+    if (error) throw error
+
+    // 세션 업데이트 (메시지 카운트)
+    const { error: updateError } = await supabase
+      .from('ai_chat_sessions')
+      .update({
+        message_count: supabase.raw('message_count + ?', [messages.length])
+      })
+      .eq('id', sessionId)
+
+    if (updateError) throw updateError
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Message save error:', error)
+    return NextResponse.json(
+      { error: 'Failed to save messages' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 사이드바 메뉴 업데이트 ===
+
+기존 사이드바에서 AI 대화 메뉴 활성화:
+
+AI 대화 항목:
+- "Coming Soon" 뱃지 제거
+- 링크: /learn/ai-chat
+- 아이콘: 💬 또는 🤖
+- 활성화 상태로 변경
+
+=== 애니메이션 CSS ===
+
+globals.css에 추가:
+```css
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+```
+
+=== 출력 요구사항 ===
+
+1. ✅ AI Chat 페이지 접근 가능 (/learn/ai-chat)
+2. ✅ 채팅 UI 완성 (메신저 스타일)
+3. ✅ 메시지 전송/표시 작동
+4. ✅ 자동 스크롤 작동
+5. ✅ 타이핑 인디케이터 애니메이션
+6. ✅ 시나리오 선택 드롭다운 작동
+7. ✅ 세션 생성 API 작동
+8. ✅ 메시지 저장 API 작동
+9. ✅ Enter로 전송, Shift+Enter로 줄바꿈
+10. ✅ 모바일 반응형
+11. ✅ 임시 AI 응답 표시 (1.5초 지연)
+12. ✅ 사이드바 메뉴 업데이트
+
+완성 후:
+- 채팅 페이지 접속 가능
+- 메시지 주고받기 가능 (임시 응답)
+- UI/UX 완성
+- 다음 단계(OpenAI 연동) 준비 완료
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 3-4시간
+- 완성 알림 받으면: 테스트
+
+---
+
+## ☕ **구현하는 동안**
+
+**편하게 쉬세요!**
+- 점심 식사
+- 산책
+- 스트레칭
+- 커피
+
+**또는:**
+- Day 4-5 계획 생각하기
+- OpenAI API 키 준비하기 (다음에 필요)
+
+---
+
+## ✅ **완성 확인하기**
+
+Replit Agent가 "완성!" 하면:
+
+**테스트 체크리스트:**
+```
+1. AI Chat 페이지 접속
+   ✅ /learn/ai-chat 열리나?
+   ✅ 채팅 UI 보이나?
+   
+2. 메시지 전송
+   ✅ 텍스트 입력 가능?
+   ✅ Enter로 전송되나?
+   ✅ 내 메시지 오른쪽에 표시?
+   
+3. AI 응답 (임시)
+   ✅ 타이핑 인디케이터 보이나?
+   ✅ 1.5초 후 AI 응답 나오나?
+   ✅ AI 메시지 왼쪽에 표시?
+   
+4. 시나리오 선택
+   ✅ 드롭다운 열리나?
+   ✅ 시나리오 변경 가능?
+   
+5. 스크롤
+   ✅ 새 메시지 시 자동 스크롤?
+   ✅ 긴 대화도 스크롤 가능?
+   
+6. 모바일
+   ✅ 스마트폰에서 잘 보임?
+   ✅ 입력창 키보드에 안 가려짐?

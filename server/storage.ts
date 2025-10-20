@@ -82,6 +82,10 @@ export interface IStorage {
     difficultyStats: { difficulty: number; count: number; avgScore: number }[];
     recentDays: { date: string; count: number; avgScore: number }[];
   }>;
+
+  // AI Chat
+  createAIChatSession(data: { userId: string; scenario: string }): Promise<string>;
+  saveAIChatMessages(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -98,6 +102,8 @@ export class MemStorage implements IStorage {
   private speakingProgress: Map<string, SpeakingProgress>;
   private favoriteSentences: Map<number, FavoriteSentence>;
   private speakingHistory: Map<number, SpeakingHistory>;
+  private aiChatSessions: Map<string, any>;
+  private aiChatMessages: Map<string, any[]>;
   private nextId: number;
 
   constructor() {
@@ -114,6 +120,8 @@ export class MemStorage implements IStorage {
     this.speakingProgress = new Map();
     this.favoriteSentences = new Map();
     this.speakingHistory = new Map();
+    this.aiChatSessions = new Map();
+    this.aiChatMessages = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
@@ -524,6 +532,40 @@ export class MemStorage implements IStorage {
       difficultyStats,
       recentDays
     };
+  }
+
+  // AI Chat methods
+  async createAIChatSession(data: { userId: string; scenario: string }): Promise<string> {
+    const sessionId = `session_${this.nextId++}`;
+    const session = {
+      id: sessionId,
+      userId: data.userId,
+      scenario: data.scenario,
+      started_at: new Date(),
+      message_count: 0,
+      created_at: new Date()
+    };
+    this.aiChatSessions.set(sessionId, session);
+    this.aiChatMessages.set(sessionId, []);
+    return sessionId;
+  }
+
+  async saveAIChatMessages(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void> {
+    const existingMessages = this.aiChatMessages.get(sessionId) || [];
+    const newMessages = messages.map(msg => ({
+      ...msg,
+      id: `msg_${this.nextId++}`,
+      session_id: sessionId,
+      created_at: new Date()
+    }));
+    
+    this.aiChatMessages.set(sessionId, [...existingMessages, ...newMessages]);
+    
+    // Update session message count
+    const session = this.aiChatSessions.get(sessionId);
+    if (session) {
+      session.message_count += messages.length;
+    }
   }
 }
 

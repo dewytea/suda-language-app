@@ -723,6 +723,36 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // AI Chat Routes
+  app.post("/api/ai-chat/session", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { scenario = 'free' } = req.body;
+
+      const sessionId = await storage.createAIChatSession({ userId, scenario });
+      res.json({ sessionId, scenario });
+    } catch (error: any) {
+      console.error('AI Chat session creation error:', error);
+      res.status(500).json({ error: 'Failed to create session' });
+    }
+  });
+
+  app.post("/api/ai-chat/messages", requireAuth, async (req, res) => {
+    try {
+      const { sessionId, messages } = req.body;
+
+      if (!sessionId || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Invalid request data' });
+      }
+
+      await storage.saveAIChatMessages(sessionId, messages);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('AI Chat message save error:', error);
+      res.status(500).json({ error: 'Failed to save messages' });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

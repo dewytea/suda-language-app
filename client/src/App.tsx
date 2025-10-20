@@ -18,6 +18,7 @@ import Reading from "@/pages/Reading";
 import Listening from "@/pages/Listening";
 import Writing from "@/pages/Writing";
 import Review from "@/pages/Review";
+import AIChat from "@/pages/AIChat";
 import Achievements from "@/pages/Achievements";
 import Settings from "@/pages/Settings";
 import Landing from "@/pages/Landing";
@@ -95,6 +96,7 @@ function AppLayout() {
                 <Route path="/learn/listening" component={Listening} />
                 <Route path="/learn/writing" component={Writing} />
                 <Route path="/learn/review" component={Review} />
+                <Route path="/learn/ai-chat" component={AIChat} />
                 <Route path="/achievements" component={Achievements} />
                 <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />
