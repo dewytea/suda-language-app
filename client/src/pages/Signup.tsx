@@ -29,7 +29,11 @@ export default function Signup() {
   const { signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
   
-  const [email, setEmail] = useState('');
+  // Get email from query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const emailParam = urlParams.get('email') || '';
+  
+  const [email, setEmail] = useState(emailParam);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');

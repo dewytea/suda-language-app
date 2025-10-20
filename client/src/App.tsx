@@ -20,6 +20,7 @@ import Writing from "@/pages/Writing";
 import Review from "@/pages/Review";
 import Achievements from "@/pages/Achievements";
 import Settings from "@/pages/Settings";
+import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import ResetPassword from "@/pages/ResetPassword";
@@ -28,16 +29,39 @@ import NotFound from "@/pages/not-found";
 function AuthRouter() {
   return (
     <Switch>
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/reset-password" component={ResetPassword} />
-      <Route>
+      <Route path="/dashboard">
         {() => (
           <ProtectedRoute>
             <AppLayout />
           </ProtectedRoute>
         )}
       </Route>
+      <Route path="/learn/:rest*">
+        {() => (
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/achievements">
+        {() => (
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/settings">
+        {() => (
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route component={NotFound} />
     </Switch>
   );
 }
@@ -63,14 +87,14 @@ function AppLayout() {
           <main className="flex-1 overflow-auto p-8">
             <div className="max-w-7xl mx-auto">
               <Switch>
-                <Route path="/" component={Dashboard} />
-                <Route path="/speaking" component={Speaking} />
-                <Route path="/speaking/history" component={SpeakingHistory} />
-                <Route path="/speaking/stats" component={SpeakingStats} />
-                <Route path="/reading" component={Reading} />
-                <Route path="/listening" component={Listening} />
-                <Route path="/writing" component={Writing} />
-                <Route path="/review" component={Review} />
+                <Route path="/dashboard" component={Dashboard} />
+                <Route path="/learn/speaking" component={Speaking} />
+                <Route path="/learn/speaking/history" component={SpeakingHistory} />
+                <Route path="/learn/speaking/stats" component={SpeakingStats} />
+                <Route path="/learn/reading" component={Reading} />
+                <Route path="/learn/listening" component={Listening} />
+                <Route path="/learn/writing" component={Writing} />
+                <Route path="/learn/review" component={Review} />
                 <Route path="/achievements" component={Achievements} />
                 <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />

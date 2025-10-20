@@ -28,20 +28,20 @@ import { useState } from "react";
 import { Link } from "wouter";
 
 const menuItems = [
-  { title: "대시보드", url: "/", icon: Home },
+  { title: "대시보드", url: "/dashboard", icon: Home },
   { 
     title: "말하기", 
-    url: "/speaking", 
+    url: "/learn/speaking", 
     icon: Mic,
     subItems: [
-      { title: "학습 기록", url: "/speaking/history", icon: History },
-      { title: "통계", url: "/speaking/stats", icon: BarChart3 },
+      { title: "학습 기록", url: "/learn/speaking/history", icon: History },
+      { title: "통계", url: "/learn/speaking/stats", icon: BarChart3 },
     ]
   },
-  { title: "읽기", url: "/reading", icon: BookOpen },
-  { title: "듣기", url: "/listening", icon: Headphones },
-  { title: "쓰기", url: "/writing", icon: PenLine },
-  { title: "어휘", url: "/vocabulary", icon: BookMarked },
+  { title: "읽기", url: "/learn/reading", icon: BookOpen },
+  { title: "듣기", url: "/learn/listening", icon: Headphones },
+  { title: "쓰기", url: "/learn/writing", icon: PenLine },
+  { title: "복습", url: "/learn/review", icon: BookMarked },
   { title: "업적", url: "/achievements", icon: Award },
 ];
 
