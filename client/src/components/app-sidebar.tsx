@@ -108,7 +108,7 @@ export function AppSidebar() {
                     </Collapsible>
                   ) : (
                     <SidebarMenuButton asChild>
-                      <Link href={item.url} data-testid={`link-${item.url === '/' ? 'dashboard' : item.url.slice(1)}`}>
+                      <Link href={item.url} data-testid={`link-${item.url.slice(1).replace(/\//g, '-')}`}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
