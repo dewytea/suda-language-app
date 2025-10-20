@@ -43,8 +43,10 @@ export default function ChatInterface() {
   }, [messages]);
 
   useEffect(() => {
-    createSession();
-  }, []);
+    if (user) {
+      createSession();
+    }
+  }, [user, scenario]);
 
   const createSession = async () => {
     if (!user) return;
@@ -63,6 +65,23 @@ export default function ChatInterface() {
       
       const data = await response.json();
       setSessionId(data.sessionId);
+      
+      // Reset messages when scenario changes
+      const scenarioMessages: Record<string, string> = {
+        free: '안녕하세요! 영어로 대화해볼까요? 무엇을 이야기하고 싶으세요?',
+        restaurant: 'Welcome to the restaurant! What would you like to order?',
+        hotel: 'Hello! Welcome to our hotel. How may I assist you today?',
+        shopping: 'Hi! Welcome to our store. What are you looking for?',
+        interview: 'Good morning! Thank you for coming. Shall we start the interview?',
+        travel: 'Hello! Planning a trip? Where would you like to go?'
+      };
+      
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: scenarioMessages[scenario] || scenarioMessages.free,
+        timestamp: new Date()
+      }]);
     } catch (error) {
       console.error('Failed to create session:', error);
       toast({
