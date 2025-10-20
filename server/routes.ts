@@ -753,6 +753,46 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  app.post("/api/ai-chat/chat", requireAuth, async (req, res) => {
+    try {
+      const { messages, scenario = 'free' } = req.body;
+
+      if (!Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Messages are required' });
+      }
+
+      const { getChatResponse } = await import('./openai');
+      const aiResponse = await getChatResponse(messages, scenario);
+      
+      res.json({ response: aiResponse });
+    } catch (error: any) {
+      console.error('AI Chat error:', error);
+      
+      if (error.message.includes('OPENAI_API_KEY')) {
+        return res.status(500).json({ 
+          error: 'OpenAI API 키가 설정되지 않았습니다. Settings 페이지에서 API 키를 확인해주세요.' 
+        });
+      }
+      
+      res.status(500).json({ 
+        error: error.message || 'AI 응답을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.' 
+      });
+    }
+  });
+
+  app.get("/api/health/openai", async (req, res) => {
+    try {
+      const { checkOpenAIHealth } = await import('./openai');
+      const health = await checkOpenAIHealth();
+      res.json(health);
+    } catch (error: any) {
+      res.json({ 
+        status: 'error', 
+        message: error.message || 'OpenAI 상태 확인 실패' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
