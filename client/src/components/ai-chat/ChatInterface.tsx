@@ -26,6 +26,7 @@ export default function ChatInterface() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [scenario, setScenario] = useState('free');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [startTime] = useState<Date>(new Date());
@@ -50,6 +51,8 @@ export default function ChatInterface() {
 
   const createSession = async () => {
     if (!user) return;
+    
+    setIsCreatingSession(true);
     
     try {
       const response = await fetch('/api/ai-chat/session', {
@@ -82,11 +85,15 @@ export default function ChatInterface() {
         content: scenarioMessages[scenario] || scenarioMessages.free,
         timestamp: new Date()
       }]);
+      
+      setIsCreatingSession(false);
     } catch (error) {
       console.error('Failed to create session:', error);
+      setIsCreatingSession(false);
+      
       toast({
         title: '세션 생성 실패',
-        description: '채팅 세션을 시작할 수 없습니다.',
+        description: '채팅 세션을 시작할 수 없습니다. 다시 시도해주세요.',
         variant: 'destructive'
       });
     }
@@ -111,36 +118,46 @@ export default function ChatInterface() {
     }
 
     try {
-      setTimeout(() => {
-        const responses = [
-          "That's interesting! Tell me more about it.",
-          "I understand. Could you explain that in different words?",
-          "Great! How do you feel about that?",
-          "That sounds nice. What happened next?",
-          "I see. Can you give me an example?",
-        ];
-        
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: `${randomResponse}\n\n(This is a temporary response. AI integration coming next!)`,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, aiMessage]);
-        setIsLoading(false);
-        
-        saveMessages(sessionId, [userMessage, aiMessage]);
-      }, 1500);
+      const response = await fetch('/api/ai-chat/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage).map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          scenario: scenario
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get AI response');
+      }
+
+      const data = await response.json();
       
-    } catch (error) {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+      
+      saveMessages(sessionId, [userMessage, aiMessage]);
+      
+    } catch (error: any) {
       console.error('Failed to send message:', error);
       setIsLoading(false);
+      
+      const errorMessage = error.message || '메시지 전송에 실패했습니다.';
+      
       toast({
-        title: '메시지 전송 실패',
-        description: '다시 시도해주세요.',
+        title: 'AI 응답 실패',
+        description: errorMessage,
         variant: 'destructive'
       });
     }
@@ -216,13 +233,24 @@ export default function ChatInterface() {
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
       >
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
-        
-        {isLoading && <TypingIndicator />}
-        
-        <div ref={messagesEndRef} />
+        {isCreatingSession ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-sm text-muted-foreground">세션을 준비하는 중...</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} />
+            ))}
+            
+            {isLoading && <TypingIndicator />}
+            
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
       {/* Input Area */}
@@ -234,8 +262,9 @@ export default function ChatInterface() {
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="메시지를 입력하세요..."
-              className="w-full px-4 py-3 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              placeholder={isCreatingSession ? "세션 준비 중..." : "메시지를 입력하세요..."}
+              disabled={isCreatingSession}
+              className="w-full px-4 py-3 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary resize-none disabled:opacity-50 disabled:cursor-not-allowed"
               rows={1}
               style={{
                 minHeight: '52px',
@@ -260,7 +289,7 @@ export default function ChatInterface() {
           
           <button
             onClick={handleSendMessage}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || isCreatingSession}
             className="p-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors"
             data-testid="button-send"
           >
