@@ -161,3 +161,45 @@ export const insertSpeakingHistorySchema = z.object({
 
 export type InsertSpeakingHistory = z.infer<typeof insertSpeakingHistorySchema>;
 export type SpeakingHistory = InsertSpeakingHistory & { id: number; createdAt: Date };
+
+// AI Chat Sessions
+export const insertAIChatSessionSchema = z.object({
+  userId: z.string(),
+  scenario: z.enum(["free", "restaurant", "hotel", "shopping", "interview", "travel"]),
+  language: z.string().default("en"),
+  grammarCorrectionEnabled: z.boolean().default(false),
+  messageCount: z.number().default(0),
+  duration: z.number().default(0),
+  completed: z.boolean().default(false),
+});
+
+export type InsertAIChatSession = z.infer<typeof insertAIChatSessionSchema>;
+export type AIChatSession = InsertAIChatSession & { id: number; createdAt: Date; updatedAt: Date };
+
+// AI Chat Messages
+export const insertAIChatMessageSchema = z.object({
+  sessionId: z.number(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+  correctedContent: z.string().optional(),
+  hasGrammarErrors: z.boolean().default(false),
+});
+
+export type InsertAIChatMessage = z.infer<typeof insertAIChatMessageSchema>;
+export type AIChatMessage = InsertAIChatMessage & { id: number; createdAt: Date };
+
+// AI Chat Stats
+export const insertAIChatStatsSchema = z.object({
+  userId: z.string(),
+  language: z.string().default("en"),
+  totalSessions: z.number().default(0),
+  totalMessages: z.number().default(0),
+  totalDuration: z.number().default(0),
+  longestStreak: z.number().default(0),
+  currentStreak: z.number().default(0),
+  lastChatDate: z.string().optional(),
+  achievements: z.array(z.string()).default([]),
+});
+
+export type InsertAIChatStats = z.infer<typeof insertAIChatStatsSchema>;
+export type AIChatStats = InsertAIChatStats & { id: number };

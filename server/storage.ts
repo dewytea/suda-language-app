@@ -21,6 +21,12 @@ import {
   type InsertFavoriteSentence,
   type SpeakingHistory,
   type InsertSpeakingHistory,
+  type AIChatSession,
+  type InsertAIChatSession,
+  type AIChatMessage,
+  type InsertAIChatMessage,
+  type AIChatStats,
+  type InsertAIChatStats,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -83,9 +89,19 @@ export interface IStorage {
     recentDays: { date: string; count: number; avgScore: number }[];
   }>;
 
-  // AI Chat
-  createAIChatSession(data: { userId: string; scenario: string }): Promise<string>;
-  saveAIChatMessages(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void>;
+  // AI Chat Sessions
+  createAIChatSession(data: InsertAIChatSession): Promise<AIChatSession>;
+  getAIChatSessions(userId: string, language?: string): Promise<AIChatSession[]>;
+  getAIChatSession(sessionId: number): Promise<AIChatSession | undefined>;
+  updateAIChatSession(sessionId: number, updates: Partial<AIChatSession>): Promise<AIChatSession>;
+  
+  // AI Chat Messages
+  saveAIChatMessage(message: InsertAIChatMessage): Promise<AIChatMessage>;
+  getAIChatMessages(sessionId: number): Promise<AIChatMessage[]>;
+  
+  // AI Chat Stats
+  getAIChatStats(userId: string, language?: string): Promise<AIChatStats | undefined>;
+  updateAIChatStats(userId: string, language: string, updates: Partial<AIChatStats>): Promise<AIChatStats>;
 }
 
 export class MemStorage implements IStorage {
