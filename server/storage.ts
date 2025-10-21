@@ -118,8 +118,9 @@ export class MemStorage implements IStorage {
   private speakingProgress: Map<string, SpeakingProgress>;
   private favoriteSentences: Map<number, FavoriteSentence>;
   private speakingHistory: Map<number, SpeakingHistory>;
-  private aiChatSessions: Map<string, any>;
-  private aiChatMessages: Map<string, any[]>;
+  private aiChatSessions: Map<number, AIChatSession>;
+  private aiChatMessages: Map<number, AIChatMessage>;
+  private aiChatStats: Map<string, AIChatStats>;
   private nextId: number;
 
   constructor() {
@@ -138,6 +139,7 @@ export class MemStorage implements IStorage {
     this.speakingHistory = new Map();
     this.aiChatSessions = new Map();
     this.aiChatMessages = new Map();
+    this.aiChatStats = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
@@ -550,38 +552,99 @@ export class MemStorage implements IStorage {
     };
   }
 
-  // AI Chat methods
-  async createAIChatSession(data: { userId: string; scenario: string }): Promise<string> {
-    const sessionId = `session_${this.nextId++}`;
-    const session = {
-      id: sessionId,
+  // AI Chat Sessions
+  async createAIChatSession(data: InsertAIChatSession): Promise<AIChatSession> {
+    const id = this.nextId++;
+    const session: AIChatSession = {
+      id,
       userId: data.userId,
       scenario: data.scenario,
-      started_at: new Date(),
-      message_count: 0,
-      created_at: new Date()
+      language: data.language || 'en',
+      grammarCorrectionEnabled: data.grammarCorrectionEnabled || false,
+      messageCount: data.messageCount || 0,
+      duration: data.duration || 0,
+      completed: data.completed || false,
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
-    this.aiChatSessions.set(sessionId, session);
-    this.aiChatMessages.set(sessionId, []);
-    return sessionId;
+    this.aiChatSessions.set(id, session);
+    return session;
   }
 
-  async saveAIChatMessages(sessionId: string, messages: Array<{ role: string; content: string }>): Promise<void> {
-    const existingMessages = this.aiChatMessages.get(sessionId) || [];
-    const newMessages = messages.map(msg => ({
-      ...msg,
-      id: `msg_${this.nextId++}`,
-      session_id: sessionId,
-      created_at: new Date()
-    }));
-    
-    this.aiChatMessages.set(sessionId, [...existingMessages, ...newMessages]);
-    
-    // Update session message count
+  async getAIChatSessions(userId: string, language?: string): Promise<AIChatSession[]> {
+    const sessions = Array.from(this.aiChatSessions.values())
+      .filter(s => s.userId === userId && (!language || s.language === language))
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return sessions;
+  }
+
+  async getAIChatSession(sessionId: number): Promise<AIChatSession | undefined> {
+    return this.aiChatSessions.get(sessionId);
+  }
+
+  async updateAIChatSession(sessionId: number, updates: Partial<AIChatSession>): Promise<AIChatSession> {
     const session = this.aiChatSessions.get(sessionId);
-    if (session) {
-      session.message_count += messages.length;
+    if (!session) {
+      throw new Error(`Session ${sessionId} not found`);
     }
+    
+    const updated: AIChatSession = {
+      ...session,
+      ...updates,
+      updatedAt: new Date()
+    };
+    this.aiChatSessions.set(sessionId, updated);
+    return updated;
+  }
+
+  // AI Chat Messages
+  async saveAIChatMessage(message: InsertAIChatMessage): Promise<AIChatMessage> {
+    const id = this.nextId++;
+    const chatMessage: AIChatMessage = {
+      id,
+      sessionId: message.sessionId,
+      role: message.role,
+      content: message.content,
+      correctedContent: message.correctedContent,
+      hasGrammarErrors: message.hasGrammarErrors || false,
+      createdAt: new Date()
+    };
+    this.aiChatMessages.set(id, chatMessage);
+    return chatMessage;
+  }
+
+  async getAIChatMessages(sessionId: number): Promise<AIChatMessage[]> {
+    const messages = Array.from(this.aiChatMessages.values())
+      .filter(m => m.sessionId === sessionId)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    return messages;
+  }
+
+  // AI Chat Stats
+  async getAIChatStats(userId: string, language?: string): Promise<AIChatStats | undefined> {
+    const key = `${userId}_${language || 'en'}`;
+    return this.aiChatStats.get(key);
+  }
+
+  async updateAIChatStats(userId: string, language: string, updates: Partial<AIChatStats>): Promise<AIChatStats> {
+    const key = `${userId}_${language}`;
+    const existing = this.aiChatStats.get(key);
+    
+    const stats: AIChatStats = {
+      id: existing?.id || this.nextId++,
+      userId,
+      language,
+      totalSessions: updates.totalSessions ?? existing?.totalSessions ?? 0,
+      totalMessages: updates.totalMessages ?? existing?.totalMessages ?? 0,
+      totalDuration: updates.totalDuration ?? existing?.totalDuration ?? 0,
+      longestStreak: updates.longestStreak ?? existing?.longestStreak ?? 0,
+      currentStreak: updates.currentStreak ?? existing?.currentStreak ?? 0,
+      lastChatDate: updates.lastChatDate ?? existing?.lastChatDate,
+      achievements: updates.achievements ?? existing?.achievements ?? []
+    };
+    
+    this.aiChatStats.set(key, stats);
+    return stats;
   }
 }
 
