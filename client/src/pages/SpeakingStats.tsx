@@ -12,8 +12,8 @@ export default function SpeakingStatsPage() {
   const [selectedLanguage] = useState("en");
   const [, setLocation] = useLocation();
 
-  const { data: history = [], isLoading } = useQuery<SpeakingHistory[]>({
-    queryKey: ["/api/speaking-history", selectedLanguage],
+  const { data: history = [], isLoading, error, isError } = useQuery<SpeakingHistory[]>({
+    queryKey: [`/api/speaking-history/${selectedLanguage}`],
   });
 
   // Calculate statistics from history
@@ -75,6 +75,33 @@ export default function SpeakingStatsPage() {
               </Card>
             ))}
           </div>
+        </div>
+      </>
+    );
+  }
+
+  if (isError) {
+    return (
+      <>
+        <LoadingBar isLoading={false} />
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <BarChart3 className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="font-serif font-bold text-3xl">학습 통계</h1>
+              <p className="text-muted-foreground">데이터를 불러오는 중 오류가 발생했습니다</p>
+            </div>
+          </div>
+
+          <EmptyState
+            icon={BarChart3}
+            title="통계를 불러올 수 없습니다"
+            description={`데이터를 불러오는 중 문제가 발생했습니다.\n${error instanceof Error ? error.message : '알 수 없는 오류'}`}
+            actionLabel="다시 시도"
+            onAction={() => window.location.reload()}
+          />
         </div>
       </>
     );
