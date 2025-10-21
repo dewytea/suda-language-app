@@ -1,0 +1,824 @@
+Day 5 (오늘):
+├─ Phase 1: 기본 구조 + 오디오 재생 (4시간)
+└─ Phase 2: 받아쓰기 + 정답 확인 (4시간)
+
+Day 6 (내일):
+├─ Phase 3: 점수 계산 + 진도 저장 (4시간)
+└─ Phase 4: 통계 + 기록 페이지 (4시간)
+
+Day 7-8:
+├─ 추가 기능 (속도 조절, 반복)
+├─ 콘텐츠 추가
+└─ 버그 수정 + 마무리
+
+→ 3-4일 내 완성!
+```
+
+---
+
+## 🎯 **Phase 1: 기본 구조 + 오디오 재생 (지금 시작!)**
+
+### ⏰ **예상 소요 시간: 3-4시간**
+
+---
+
+## 📝 **Replit Agent에 바로 붙여넣으세요!**
+```
+Suda 앱에 Listening (듣기) 모듈을 추가해줘.
+
+=== Phase 1: 기본 구조 + 오디오 재생 시스템 ===
+
+이번 단계에서는 Listening의 기본 UI와
+오디오 재생 시스템을 만들 거야.
+
+=== 파일 구조 ===
+
+app/
+├── learn/
+│   └── listening/
+│       ├── page.tsx (메인 리스닝 페이지)
+│       ├── history/
+│       │   └── page.tsx (학습 기록)
+│       └── stats/
+│           └── page.tsx (통계)
+├── components/
+│   └── listening/
+│       ├── AudioPlayer.tsx (오디오 플레이어)
+│       ├── ListeningCard.tsx (리스닝 카드)
+│       ├── DictationInput.tsx (받아쓰기 입력)
+│       └── ResultModal.tsx (결과 모달)
+└── lib/
+    └── listening/
+        ├── audioUtils.ts (오디오 유틸)
+        └── scoreUtils.ts (점수 계산)
+
+=== 데이터베이스 테이블 생성 ===
+
+Supabase에 2개 테이블 추가:
+
+1. listening_lessons 테이블:
+```sql
+CREATE TABLE listening_lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  text TEXT NOT NULL,
+  translation TEXT NOT NULL,
+  audio_url TEXT, -- 나중에 추가
+  difficulty INTEGER NOT NULL CHECK (difficulty BETWEEN 1 AND 5),
+  category TEXT NOT NULL,
+  duration INTEGER, -- 초 단위
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_listening_lessons_difficulty ON listening_lessons(difficulty);
+CREATE INDEX idx_listening_lessons_category ON listening_lessons(category);
+
+-- 초기 데이터 (30개)
+INSERT INTO listening_lessons (text, translation, difficulty, category, duration) VALUES
+-- Difficulty 1: 일상 (초급)
+('Hello, how are you?', '안녕하세요, 어떻게 지내세요?', 1, '일상', 3),
+('Good morning!', '좋은 아침이에요!', 1, '일상', 2),
+('Thank you very much.', '정말 감사합니다.', 1, '일상', 3),
+('Nice to meet you.', '만나서 반가워요.', 1, '일상', 3),
+('Have a great day!', '좋은 하루 보내세요!', 1, '일상', 3),
+('See you later.', '나중에 봐요.', 1, '일상', 2),
+('What is your name?', '이름이 뭐예요?', 1, '일상', 3),
+('Where are you from?', '어디서 왔어요?', 1, '일상', 3),
+('I am fine, thank you.', '잘 지내요, 감사해요.', 1, '일상', 3),
+('How old are you?', '몇 살이에요?', 1, '일상', 3),
+
+-- Difficulty 2: 일상 (기초)
+('What time is it?', '몇 시예요?', 2, '일상', 3),
+('Can you help me?', '도와주실 수 있나요?', 2, '일상', 3),
+('I would like some water.', '물 좀 주세요.', 2, '일상', 4),
+('Where is the bathroom?', '화장실이 어디예요?', 2, '일상', 4),
+('How much does this cost?', '이거 얼마예요?', 2, '일상', 4),
+('I do not understand.', '이해가 안 돼요.', 2, '일상', 3),
+('Could you repeat that?', '다시 말씀해 주시겠어요?', 2, '일상', 4),
+('I am looking for a hotel.', '호텔을 찾고 있어요.', 2, '일상', 4),
+('What do you recommend?', '뭘 추천하시나요?', 2, '일상', 4),
+('Can I have the menu?', '메뉴판 주시겠어요?', 2, '일상', 4),
+
+-- Difficulty 2: 여행
+('Where is the train station?', '기차역이 어디예요?', 2, '여행', 4),
+('I need a taxi.', '택시가 필요해요.', 2, '여행', 3),
+('How do I get to the airport?', '공항에 어떻게 가나요?', 2, '여행', 5),
+('Is there a bus stop nearby?', '근처에 버스 정류장이 있나요?', 2, '여행', 5),
+('I would like to buy a ticket.', '표를 사고 싶어요.', 2, '여행', 5),
+
+-- Difficulty 3: 비즈니스 (중급)
+('I have a meeting at three.', '3시에 회의가 있어요.', 3, '비즈니스', 5),
+('Could you send me the report?', '보고서를 보내주시겠어요?', 3, '비즈니스', 5),
+('Let me check my schedule.', '제 일정을 확인해볼게요.', 3, '비즈니스', 5),
+('We need to discuss this further.', '이것에 대해 더 논의해야 해요.', 3, '비즈니스', 6),
+('I will get back to you soon.', '곧 연락드릴게요.', 3, '비즈니스', 5);
+```
+
+2. listening_progress 테이블:
+```sql
+CREATE TABLE listening_progress (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  lesson_id UUID REFERENCES listening_lessons(id) ON DELETE CASCADE,
+  user_answer TEXT,
+  score INTEGER CHECK (score BETWEEN 0 AND 100),
+  accuracy FLOAT,
+  completed BOOLEAN DEFAULT false,
+  completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, lesson_id, created_at)
+);
+
+-- 인덱스
+CREATE INDEX idx_listening_progress_user_id ON listening_progress(user_id);
+CREATE INDEX idx_listening_progress_lesson_id ON listening_progress(lesson_id);
+CREATE INDEX idx_listening_progress_completed_at ON listening_progress(completed_at);
+```
+
+=== 메인 페이지 ===
+
+app/learn/listening/page.tsx:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Volume2, Clock, TrendingUp, BookOpen } from 'lucide-react'
+import ListeningCard from '@/components/listening/ListeningCard'
+
+interface Lesson {
+  id: string
+  text: string
+  translation: string
+  audio_url: string | null
+  difficulty: number
+  category: string
+  duration: number
+}
+
+export default function ListeningPage() {
+  const [lessons, setLessons] = useState<Lesson[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null)
+  
+  useEffect(() => {
+    fetchLessons()
+  }, [selectedDifficulty, selectedCategory])
+  
+  const fetchLessons = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (selectedDifficulty) params.append('difficulty', selectedDifficulty.toString())
+      if (selectedCategory) params.append('category', selectedCategory)
+      
+      const response = await fetch(`/api/listening/lessons?${params}`)
+      const data = await response.json()
+      setLessons(data.lessons || [])
+    } catch (error) {
+      console.error('Failed to fetch lessons:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const categories = ['일상', '여행', '비즈니스']
+  const difficulties = [1, 2, 3, 4, 5]
+  
+  if (currentLesson) {
+    return (
+      <ListeningCard
+        lesson={currentLesson}
+        onClose={() => setCurrentLesson(null)}
+        onComplete={() => {
+          setCurrentLesson(null)
+          fetchLessons()
+        }}
+      />
+    )
+  }
+  
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
+            <Volume2 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Listening</h1>
+            <p className="text-gray-600">듣고 받아쓰며 청취력을 키워요</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* 필터 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="space-y-4">
+          {/* 난이도 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">난이도</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedDifficulty(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedDifficulty === null
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                전체
+              </button>
+              {difficulties.map((diff) => (
+                <button
+                  key={diff}
+                  onClick={() => setSelectedDifficulty(diff)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedDifficulty === diff
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Level {diff}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 카테고리 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">카테고리</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === null
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                전체
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 레슨 리스트 */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        </div>
+      ) : lessons.length === 0 ? (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">선택한 조건의 레슨이 없어요</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {lessons.map((lesson) => (
+            <button
+              key={lesson.id}
+              onClick={() => setCurrentLesson(lesson)}
+              className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-lg transition-all text-left"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Volume2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">
+                      Level {lesson.difficulty}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      {lesson.category}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-gray-900 font-medium mb-2 line-clamp-2">
+                {lesson.text}
+              </p>
+              
+              <p className="text-sm text-gray-500 mb-3 line-clamp-1">
+                {lesson.translation}
+              </p>
+              
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lesson.duration}초
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+=== 오디오 플레이어 컴포넌트 ===
+
+components/listening/AudioPlayer.tsx:
+```tsx
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Play, Pause, RotateCcw, Volume2 } from 'lucide-react'
+
+interface AudioPlayerProps {
+  text: string
+  onPlayComplete?: () => void
+}
+
+export default function AudioPlayer({ text, onPlayComplete }: AudioPlayerProps) {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  useEffect(() => {
+    // Web Speech API 초기화
+    if ('speechSynthesis' in window) {
+      utteranceRef.current = new SpeechSynthesisUtterance(text)
+      utteranceRef.current.lang = 'en-US'
+      utteranceRef.current.rate = 0.9 // 약간 느리게
+      utteranceRef.current.pitch = 1
+      
+      utteranceRef.current.onend = () => {
+        setIsPlaying(false)
+        setProgress(100)
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+        onPlayComplete?.()
+      }
+    }
+    
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    }
+  }, [text])
+  
+  const handlePlay = () => {
+    if (!utteranceRef.current) return
+    
+    if (isPlaying) {
+      // 일시정지
+      window.speechSynthesis.cancel()
+      setIsPlaying(false)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    } else {
+      // 재생
+      setProgress(0)
+      window.speechSynthesis.speak(utteranceRef.current)
+      setIsPlaying(true)
+      
+      // 진행률 시뮬레이션 (실제 진행률 추적은 어려움)
+      const words = text.split(' ').length
+      const estimatedDuration = words * 0.5 * 1000 // 단어당 0.5초 추정
+      const interval = estimatedDuration / 100
+      
+      progressIntervalRef.current = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current)
+            }
+            return 100
+          }
+          return prev + 1
+        })
+      }, interval)
+    }
+  }
+  
+  const handleRestart = () => {
+    window.speechSynthesis.cancel()
+    setProgress(0)
+    setIsPlaying(false)
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current)
+    }
+  }
+  
+  return (
+    <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl border border-green-200 p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Volume2 className="w-5 h-5 text-green-600" />
+        <h3 className="font-semibold text-gray-900">오디오</h3>
+      </div>
+      
+      {/* 진행 바 */}
+      <div className="mb-4">
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-green-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+      
+      {/* 컨트롤 */}
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={handleRestart}
+          className="p-3 bg-white hover:bg-gray-50 rounded-lg transition-colors"
+          title="처음부터"
+        >
+          <RotateCcw className="w-5 h-5 text-gray-700" />
+        </button>
+        
+        <button
+          onClick={handlePlay}
+          className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors shadow-lg"
+          title={isPlaying ? '일시정지' : '재생'}
+        >
+          {isPlaying ? (
+            <Pause className="w-6 h-6 text-white" />
+          ) : (
+            <Play className="w-6 h-6 text-white ml-0.5" />
+          )}
+        </button>
+      </div>
+      
+      <p className="text-xs text-center text-gray-500 mt-3">
+        {isPlaying ? '재생 중...' : '재생 버튼을 눌러 시작하세요'}
+      </p>
+    </div>
+  )
+}
+```
+
+=== 받아쓰기 입력 컴포넌트 ===
+
+components/listening/DictationInput.tsx:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { Keyboard, Eraser } from 'lucide-react'
+
+interface DictationInputProps {
+  onSubmit: (answer: string) => void
+  disabled?: boolean
+}
+
+export default function DictationInput({ onSubmit, disabled }: DictationInputProps) {
+  const [input, setInput] = useState('')
+  
+  const handleSubmit = () => {
+    if (input.trim()) {
+      onSubmit(input.trim())
+    }
+  }
+  
+  const handleClear = () => {
+    setInput('')
+  }
+  
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <Keyboard className="w-5 h-5 text-blue-600" />
+        <h3 className="font-semibold text-gray-900">받아쓰기</h3>
+      </div>
+      
+      <textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        disabled={disabled}
+        placeholder="들은 내용을 정확하게 입력하세요..."
+        className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none disabled:bg-gray-50 disabled:text-gray-500"
+      />
+      
+      <div className="flex items-center justify-between mt-3">
+        <span className="text-sm text-gray-500">
+          {input.length} 글자
+        </span>
+        
+        <div className="flex gap-2">
+          <button
+            onClick={handleClear}
+            disabled={disabled || !input}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Eraser className="w-4 h-4" />
+            지우기
+          </button>
+          
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || !input.trim()}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            제출하기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 리스닝 카드 (메인 연습 화면) ===
+
+components/listening/ListeningCard.tsx:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { X, Eye, EyeOff } from 'lucide-react'
+import AudioPlayer from './AudioPlayer'
+import DictationInput from './DictationInput'
+
+interface Lesson {
+  id: string
+  text: string
+  translation: string
+  difficulty: number
+  category: string
+}
+
+interface ListeningCardProps {
+  lesson: Lesson
+  onClose: () => void
+  onComplete: () => void
+}
+
+export default function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProps) {
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [userAnswer, setUserAnswer] = useState('')
+  
+  const handleSubmit = async (answer: string) => {
+    setUserAnswer(answer)
+    setSubmitted(true)
+    
+    // 다음 Phase에서 점수 계산 추가 예정
+    // 지금은 제출만 처리
+  }
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        {/* 헤더 */}
+        <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Listening 연습</h2>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="text-sm text-gray-600">
+                Level {lesson.difficulty}
+              </span>
+              <span className="text-sm text-gray-400">•</span>
+              <span className="text-sm text-gray-600">
+                {lesson.category}
+              </span>
+            </div>
+          </div>
+          
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        {/* 콘텐츠 */}
+        <div className="p-6 space-y-6">
+          {/* 번역 토글 */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowTranslation(!showTranslation)}
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              {showTranslation ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  번역 숨기기
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  번역 보기
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* 번역 */}
+          {showTranslation && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-gray-700 text-center">
+                {lesson.translation}
+              </p>
+            </div>
+          )}
+          
+          {/* 오디오 플레이어 */}
+          <AudioPlayer text={lesson.text} />
+          
+          {/* 받아쓰기 입력 */}
+          {!submitted ? (
+            <DictationInput
+              onSubmit={handleSubmit}
+            />
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">제출 완료!</h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">당신의 답변:</p>
+                  <p className="text-gray-900 bg-gray-50 p-4 rounded-lg">
+                    {userAnswer}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">정답:</p>
+                  <p className="text-gray-900 bg-green-50 p-4 rounded-lg">
+                    {lesson.text}
+                  </p>
+                </div>
+              </div>
+              
+              {/* 다음 Phase에서 점수 표시 추가 예정 */}
+              
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setSubmitted(false)
+                    setUserAnswer('')
+                  }}
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  다시 연습하기
+                </button>
+                <button
+                  onClick={onComplete}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  다음 레슨
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== API 엔드포인트 ===
+
+app/api/listening/lessons/route.ts:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const { searchParams } = new URL(req.url)
+    const difficulty = searchParams.get('difficulty')
+    const category = searchParams.get('category')
+    
+    let query = supabase
+      .from('listening_lessons')
+      .select('*')
+      .order('difficulty', { ascending: true })
+    
+    if (difficulty) {
+      query = query.eq('difficulty', parseInt(difficulty))
+    }
+    
+    if (category) {
+      query = query.eq('category', category)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    
+    return NextResponse.json({ lessons: data })
+  } catch (error) {
+    console.error('Lessons fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch lessons' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 사이드바 메뉴 업데이트 ===
+
+기존 사이드바에 Listening 메뉴 추가:
+
+Listening 메뉴:
+- 아이콘: 🎧 또는 <Volume2 />
+- 링크: /learn/listening
+- 하위 메뉴:
+  ├─ 연습하기 (/learn/listening)
+  ├─ 학습 기록 (/learn/listening/history)
+  └─ 통계 (/learn/listening/stats)
+
+=== 출력 요구사항 ===
+
+1. ✅ Listening 페이지 접근 가능 (/learn/listening)
+2. ✅ 레슨 리스트 표시
+3. ✅ 난이도/카테고리 필터 작동
+4. ✅ 레슨 카드 클릭 시 연습 화면
+5. ✅ 오디오 재생 작동 (Web Speech API)
+6. ✅ 재생/일시정지/처음부터 버튼
+7. ✅ 진행 바 표시
+8. ✅ 번역 보기/숨기기
+9. ✅ 받아쓰기 입력창
+10. ✅ 제출 후 정답 비교 표시
+11. ✅ 다시 연습하기/다음 레슨 버튼
+12. ✅ 모바일 반응형
+
+완성 후:
+- Listening 기본 UI 완성
+- 오디오 재생 시스템 작동
+- 받아쓰기 기능 작동
+- 다음 Phase(점수 계산) 준비 완료
+
+중요:
+- Web Speech API 사용 (무료, 브라우저 내장)
+- Chrome/Edge에서 잘 작동
+- 실제 오디오 파일은 나중에 추가 가능
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 3-4시간
+
+---
+
+## ☕ **구현하는 동안**
+
+**편하게 쉬세요!**
+- 저녁/야식
+- 게임
+- 영화/드라마
+- 휴식
+
+---
+
+## ✅ **완성 확인하기**
+
+**테스트 체크리스트:**
+```
+1. Listening 페이지
+   ✅ /learn/listening 열리나?
+   ✅ 레슨 카드들 보이나?
+   
+2. 필터
+   ✅ 난이도 필터 작동?
+   ✅ 카테고리 필터 작동?
+   
+3. 오디오
+   ✅ 재생 버튼 클릭 시 음성 나오나?
+   ✅ 일시정지 작동?
+   ✅ 처음부터 버튼 작동?
+   
+4. 받아쓰기
+   ✅ 입력창에 타이핑 가능?
+   ✅ 제출 버튼 작동?
+   ✅ 정답 비교 표시?

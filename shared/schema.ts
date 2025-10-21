@@ -203,3 +203,29 @@ export const insertAIChatStatsSchema = z.object({
 
 export type InsertAIChatStats = z.infer<typeof insertAIChatStatsSchema>;
 export type AIChatStats = InsertAIChatStats & { id: number };
+
+// Listening Lessons
+export const insertListeningLessonSchema = z.object({
+  text: z.string(),
+  translation: z.string(),
+  audioUrl: z.string().optional(),
+  difficulty: z.number().min(1).max(5),
+  category: z.enum(["일상", "여행", "비즈니스"]),
+  duration: z.number(), // seconds
+});
+
+export type InsertListeningLesson = z.infer<typeof insertListeningLessonSchema>;
+export type ListeningLesson = InsertListeningLesson & { id: number; createdAt: Date };
+
+// Listening Progress
+export const insertListeningProgressSchema = z.object({
+  userId: z.string(),
+  lessonId: z.number(),
+  userAnswer: z.string(),
+  score: z.number().min(0).max(100),
+  accuracy: z.number().min(0).max(100),
+  completed: z.boolean().default(true),
+});
+
+export type InsertListeningProgress = z.infer<typeof insertListeningProgressSchema>;
+export type ListeningProgress = InsertListeningProgress & { id: number; completedAt: Date; createdAt: Date };
