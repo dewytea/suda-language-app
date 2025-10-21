@@ -94,7 +94,7 @@ export default function SessionSummaryModal({ isOpen, onClose, summary }: Sessio
         {/* 버튼 */}
         <div className="flex gap-3">
           <Link
-            href="/ai-chat/stats"
+            href="/learn/ai-chat/stats"
             className="flex-1 py-3 border border-border text-foreground rounded-lg hover-elevate active-elevate-2 text-center font-medium"
             data-testid="button-view-stats"
           >

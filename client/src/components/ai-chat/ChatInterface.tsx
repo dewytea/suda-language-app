@@ -118,7 +118,7 @@ export default function ChatInterface() {
       });
       
       const data = await response.json();
-      setSessionId(data.sessionId);
+      setSessionId(data.id?.toString() || null);
       
       // Reset messages when scenario changes
       const scenarioMessages: Record<string, string> = {
@@ -215,13 +215,14 @@ export default function ChatInterface() {
     if (!sessionId) return;
     
     try {
-      await apiRequest('POST', '/api/ai-chat/messages', {
-        sessionId,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content
-        }))
-      });
+      // Save each message individually
+      for (const message of messages) {
+        await apiRequest('POST', '/api/ai-chat/messages', {
+          sessionId: parseInt(sessionId),
+          role: message.role,
+          content: message.content
+        });
+      }
     } catch (error) {
       console.error('Failed to save messages:', error);
     }

@@ -94,7 +94,7 @@ export default function AIChatStats() {
       {/* Header */}
       <div className="bg-card border-b px-6 py-4 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Link href="/ai-chat">
+          <Link href="/learn/ai-chat">
             <button 
               className="p-2 hover-elevate active-elevate-2 rounded-md"
               data-testid="button-back"
@@ -201,12 +201,12 @@ export default function AIChatStats() {
           
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Link href="/ai-chat/history" className="flex-1">
+            <Link href="/learn/ai-chat/history" className="flex-1">
               <button className="w-full py-3 border border-border text-foreground rounded-lg hover-elevate active-elevate-2 font-medium">
                 대화 기록 보기
               </button>
             </Link>
-            <Link href="/ai-chat" className="flex-1">
+            <Link href="/learn/ai-chat" className="flex-1">
               <button className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover-elevate active-elevate-2 font-medium">
                 대화 시작하기
               </button>
