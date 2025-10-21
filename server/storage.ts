@@ -27,6 +27,10 @@ import {
   type InsertAIChatMessage,
   type AIChatStats,
   type InsertAIChatStats,
+  type ListeningLesson,
+  type InsertListeningLesson,
+  type ListeningProgress,
+  type InsertListeningProgress,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -102,6 +106,22 @@ export interface IStorage {
   // AI Chat Stats
   getAIChatStats(userId: string, language?: string): Promise<AIChatStats | undefined>;
   updateAIChatStats(userId: string, language: string, updates: Partial<AIChatStats>): Promise<AIChatStats>;
+
+  // Listening Lessons
+  getListeningLessons(filters?: { difficulty?: number; category?: string }): Promise<ListeningLesson[]>;
+  getListeningLesson(id: number): Promise<ListeningLesson | undefined>;
+  
+  // Listening Progress
+  addListeningProgress(progress: InsertListeningProgress): Promise<ListeningProgress>;
+  getListeningProgress(userId: string, lessonId?: number): Promise<ListeningProgress[]>;
+  getListeningStats(userId: string): Promise<{
+    totalCompleted: number;
+    averageScore: number;
+    averageAccuracy: number;
+    categoryStats: { category: string; count: number; avgScore: number; avgAccuracy: number }[];
+    difficultyStats: { difficulty: number; count: number; avgScore: number; avgAccuracy: number }[];
+    recentProgress: ListeningProgress[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -121,6 +141,8 @@ export class MemStorage implements IStorage {
   private aiChatSessions: Map<number, AIChatSession>;
   private aiChatMessages: Map<number, AIChatMessage>;
   private aiChatStats: Map<string, AIChatStats>;
+  private listeningLessons: Map<number, ListeningLesson>;
+  private listeningProgress: Map<number, ListeningProgress>;
   private nextId: number;
 
   constructor() {
@@ -140,10 +162,13 @@ export class MemStorage implements IStorage {
     this.aiChatSessions = new Map();
     this.aiChatMessages = new Map();
     this.aiChatStats = new Map();
+    this.listeningLessons = new Map();
+    this.listeningProgress = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
     this.initializeSentences();
+    this.initializeListeningLessons();
   }
 
   private initializeAchievementTemplates() {
@@ -645,6 +670,188 @@ export class MemStorage implements IStorage {
     
     this.aiChatStats.set(key, stats);
     return stats;
+  }
+
+  // Initialize Listening Lessons
+  private initializeListeningLessons() {
+    const lessons = [
+      // Difficulty 1: 일상 (초급)
+      { text: "Hello, how are you?", translation: "안녕하세요, 어떻게 지내세요?", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "Good morning!", translation: "좋은 아침이에요!", difficulty: 1, category: "일상" as const, duration: 2 },
+      { text: "Thank you very much.", translation: "정말 감사합니다.", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "Nice to meet you.", translation: "만나서 반가워요.", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "Have a great day!", translation: "좋은 하루 보내세요!", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "See you later.", translation: "나중에 봐요.", difficulty: 1, category: "일상" as const, duration: 2 },
+      { text: "What is your name?", translation: "이름이 뭐예요?", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "Where are you from?", translation: "어디서 왔어요?", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "I am fine, thank you.", translation: "잘 지내요, 감사해요.", difficulty: 1, category: "일상" as const, duration: 3 },
+      { text: "How old are you?", translation: "몇 살이에요?", difficulty: 1, category: "일상" as const, duration: 3 },
+      
+      // Difficulty 2: 일상 (기초)
+      { text: "What time is it?", translation: "몇 시예요?", difficulty: 2, category: "일상" as const, duration: 3 },
+      { text: "Can you help me?", translation: "도와주실 수 있나요?", difficulty: 2, category: "일상" as const, duration: 3 },
+      { text: "I would like some water.", translation: "물 좀 주세요.", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "Where is the bathroom?", translation: "화장실이 어디예요?", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "How much does this cost?", translation: "이거 얼마예요?", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "I do not understand.", translation: "이해가 안 돼요.", difficulty: 2, category: "일상" as const, duration: 3 },
+      { text: "Could you repeat that?", translation: "다시 말씀해 주시겠어요?", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "I am looking for a hotel.", translation: "호텔을 찾고 있어요.", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "What do you recommend?", translation: "뭘 추천하시나요?", difficulty: 2, category: "일상" as const, duration: 4 },
+      { text: "Can I have the menu?", translation: "메뉴판 주시겠어요?", difficulty: 2, category: "일상" as const, duration: 4 },
+      
+      // Difficulty 2: 여행
+      { text: "Where is the train station?", translation: "기차역이 어디예요?", difficulty: 2, category: "여행" as const, duration: 4 },
+      { text: "I need a taxi.", translation: "택시가 필요해요.", difficulty: 2, category: "여행" as const, duration: 3 },
+      { text: "How do I get to the airport?", translation: "공항에 어떻게 가나요?", difficulty: 2, category: "여행" as const, duration: 5 },
+      { text: "Is there a bus stop nearby?", translation: "근처에 버스 정류장이 있나요?", difficulty: 2, category: "여행" as const, duration: 5 },
+      { text: "I would like to buy a ticket.", translation: "표를 사고 싶어요.", difficulty: 2, category: "여행" as const, duration: 5 },
+      
+      // Difficulty 3: 비즈니스 (중급)
+      { text: "I have a meeting at three.", translation: "3시에 회의가 있어요.", difficulty: 3, category: "비즈니스" as const, duration: 5 },
+      { text: "Could you send me the report?", translation: "보고서를 보내주시겠어요?", difficulty: 3, category: "비즈니스" as const, duration: 5 },
+      { text: "Let me check my schedule.", translation: "제 일정을 확인해볼게요.", difficulty: 3, category: "비즈니스" as const, duration: 5 },
+      { text: "We need to discuss this further.", translation: "이것에 대해 더 논의해야 해요.", difficulty: 3, category: "비즈니스" as const, duration: 6 },
+      { text: "I will get back to you soon.", translation: "곧 연락드릴게요.", difficulty: 3, category: "비즈니스" as const, duration: 5 },
+    ];
+
+    lessons.forEach((lesson) => {
+      const id = this.nextId++;
+      this.listeningLessons.set(id, {
+        id,
+        text: lesson.text,
+        translation: lesson.translation,
+        difficulty: lesson.difficulty,
+        category: lesson.category,
+        duration: lesson.duration,
+        createdAt: new Date()
+      });
+    });
+  }
+
+  // Listening Lessons
+  async getListeningLessons(filters?: { difficulty?: number; category?: string }): Promise<ListeningLesson[]> {
+    let lessons = Array.from(this.listeningLessons.values());
+    
+    if (filters?.difficulty) {
+      lessons = lessons.filter(l => l.difficulty === filters.difficulty);
+    }
+    
+    if (filters?.category) {
+      lessons = lessons.filter(l => l.category === filters.category);
+    }
+    
+    return lessons.sort((a, b) => a.difficulty - b.difficulty);
+  }
+
+  async getListeningLesson(id: number): Promise<ListeningLesson | undefined> {
+    return this.listeningLessons.get(id);
+  }
+
+  // Listening Progress
+  async addListeningProgress(progress: InsertListeningProgress): Promise<ListeningProgress> {
+    const id = this.nextId++;
+    const listeningProgress: ListeningProgress = {
+      id,
+      userId: progress.userId,
+      lessonId: progress.lessonId,
+      userAnswer: progress.userAnswer,
+      score: progress.score,
+      accuracy: progress.accuracy,
+      completed: progress.completed ?? true,
+      completedAt: new Date(),
+      createdAt: new Date()
+    };
+    this.listeningProgress.set(id, listeningProgress);
+    return listeningProgress;
+  }
+
+  async getListeningProgress(userId: string, lessonId?: number): Promise<ListeningProgress[]> {
+    let progress = Array.from(this.listeningProgress.values())
+      .filter(p => p.userId === userId);
+    
+    if (lessonId !== undefined) {
+      progress = progress.filter(p => p.lessonId === lessonId);
+    }
+    
+    return progress.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }
+
+  async getListeningStats(userId: string): Promise<{
+    totalCompleted: number;
+    averageScore: number;
+    averageAccuracy: number;
+    categoryStats: { category: string; count: number; avgScore: number; avgAccuracy: number }[];
+    difficultyStats: { difficulty: number; count: number; avgScore: number; avgAccuracy: number }[];
+    recentProgress: ListeningProgress[];
+  }> {
+    const userProgress = Array.from(this.listeningProgress.values())
+      .filter(p => p.userId === userId && p.completed);
+    
+    const totalCompleted = userProgress.length;
+    const averageScore = totalCompleted > 0
+      ? userProgress.reduce((sum, p) => sum + p.score, 0) / totalCompleted
+      : 0;
+    const averageAccuracy = totalCompleted > 0
+      ? userProgress.reduce((sum, p) => sum + p.accuracy, 0) / totalCompleted
+      : 0;
+    
+    // Category stats
+    const categoryMap = new Map<string, { count: number; totalScore: number; totalAccuracy: number }>();
+    userProgress.forEach(p => {
+      const lesson = this.listeningLessons.get(p.lessonId);
+      if (lesson) {
+        const category = lesson.category;
+        const existing = categoryMap.get(category) || { count: 0, totalScore: 0, totalAccuracy: 0 };
+        categoryMap.set(category, {
+          count: existing.count + 1,
+          totalScore: existing.totalScore + p.score,
+          totalAccuracy: existing.totalAccuracy + p.accuracy
+        });
+      }
+    });
+    
+    const categoryStats = Array.from(categoryMap.entries()).map(([category, stats]) => ({
+      category,
+      count: stats.count,
+      avgScore: stats.totalScore / stats.count,
+      avgAccuracy: stats.totalAccuracy / stats.count
+    }));
+    
+    // Difficulty stats
+    const difficultyMap = new Map<number, { count: number; totalScore: number; totalAccuracy: number }>();
+    userProgress.forEach(p => {
+      const lesson = this.listeningLessons.get(p.lessonId);
+      if (lesson) {
+        const difficulty = lesson.difficulty;
+        const existing = difficultyMap.get(difficulty) || { count: 0, totalScore: 0, totalAccuracy: 0 };
+        difficultyMap.set(difficulty, {
+          count: existing.count + 1,
+          totalScore: existing.totalScore + p.score,
+          totalAccuracy: existing.totalAccuracy + p.accuracy
+        });
+      }
+    });
+    
+    const difficultyStats = Array.from(difficultyMap.entries()).map(([difficulty, stats]) => ({
+      difficulty,
+      count: stats.count,
+      avgScore: stats.totalScore / stats.count,
+      avgAccuracy: stats.totalAccuracy / stats.count
+    })).sort((a, b) => a.difficulty - b.difficulty);
+    
+    // Recent progress (last 10)
+    const recentProgress = userProgress
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
+      .slice(0, 10);
+    
+    return {
+      totalCompleted,
+      averageScore,
+      averageAccuracy,
+      categoryStats,
+      difficultyStats,
+      recentProgress
+    };
   }
 }
 
