@@ -891,6 +891,93 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // Listening Lessons API
+  app.get("/api/listening/lessons", requireAuth, async (req, res) => {
+    try {
+      const { difficulty, category } = req.query;
+      
+      const filters: { difficulty?: number; category?: string } = {};
+      if (difficulty) filters.difficulty = parseInt(difficulty as string);
+      if (category) filters.category = category as string;
+      
+      const lessons = await storage.getListeningLessons(filters);
+      res.json({ lessons });
+    } catch (error: any) {
+      console.error('Listening lessons fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch lessons' });
+    }
+  });
+
+  app.get("/api/listening/lessons/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const lesson = await storage.getListeningLesson(id);
+      
+      if (!lesson) {
+        return res.status(404).json({ error: 'Lesson not found' });
+      }
+      
+      res.json(lesson);
+    } catch (error: any) {
+      console.error('Listening lesson fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch lesson' });
+    }
+  });
+
+  // Listening Progress API
+  app.post("/api/listening/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { lessonId, userAnswer, score, accuracy } = req.body;
+      
+      if (!lessonId || !userAnswer || score === undefined || accuracy === undefined) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+      
+      const progress = await storage.addListeningProgress({
+        userId,
+        lessonId,
+        userAnswer,
+        score,
+        accuracy,
+        completed: true
+      });
+      
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Listening progress save error:', error);
+      res.status(500).json({ error: 'Failed to save progress' });
+    }
+  });
+
+  app.get("/api/listening/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { lessonId } = req.query;
+      
+      const progress = await storage.getListeningProgress(
+        userId,
+        lessonId ? parseInt(lessonId as string) : undefined
+      );
+      
+      res.json({ progress });
+    } catch (error: any) {
+      console.error('Listening progress fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch progress' });
+    }
+  });
+
+  app.get("/api/listening/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const stats = await storage.getListeningStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Listening stats fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  });
+
   app.get("/api/health/openai", async (req, res) => {
     try {
       const { checkOpenAIHealth } = await import('./openai');
