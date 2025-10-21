@@ -7,6 +7,7 @@ import type { SpeakingHistory } from "@shared/schema";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingBar } from "@/components/LoadingBar";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabase";
 
 export default function SpeakingStatsPage() {
   const [selectedLanguage] = useState("en");
@@ -14,6 +15,23 @@ export default function SpeakingStatsPage() {
 
   const { data: history = [], isLoading, error, isError } = useQuery<SpeakingHistory[]>({
     queryKey: [`/api/speaking-history/${selectedLanguage}`],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch(`/api/speaking-history/${selectedLanguage}`, {
+        credentials: 'include',
+        headers,
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText || response.statusText}`);
+      }
+      return response.json();
+    },
   });
 
   // Calculate statistics from history

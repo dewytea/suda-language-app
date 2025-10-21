@@ -9,6 +9,7 @@ import { ko } from "date-fns/locale";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingBar } from "@/components/LoadingBar";
 import { useLocation } from "wouter";
+import { supabase } from "@/lib/supabase";
 
 const categoryLabels = {
   daily: "일상",
@@ -22,6 +23,23 @@ export default function SpeakingHistoryPage() {
 
   const { data: history = [], isLoading, error, isError } = useQuery<SpeakingHistory[]>({
     queryKey: [`/api/speaking-history/${selectedLanguage}`],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch(`/api/speaking-history/${selectedLanguage}`, {
+        credentials: 'include',
+        headers,
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${response.status}: ${errorText || response.statusText}`);
+      }
+      return response.json();
+    },
   });
 
   const getScoreColor = (score: number) => {
