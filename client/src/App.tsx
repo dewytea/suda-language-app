@@ -93,9 +93,9 @@ function AppLayout() {
             <div className="max-w-7xl mx-auto">
               <Switch>
                 <Route path="/dashboard" component={Dashboard} />
-                <Route path="/learn/speaking" component={Speaking} />
                 <Route path="/learn/speaking/history" component={SpeakingHistory} />
                 <Route path="/learn/speaking/stats" component={SpeakingStats} />
+                <Route path="/learn/speaking" component={Speaking} />
                 <Route path="/learn/reading" component={Reading} />
                 <Route path="/learn/listening/history" component={ListeningHistory} />
                 <Route path="/learn/listening/stats" component={ListeningStats} />
