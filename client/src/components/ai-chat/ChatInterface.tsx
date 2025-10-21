@@ -5,6 +5,7 @@ import TypingIndicator from './TypingIndicator';
 import ScenarioSelector from './ScenarioSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Message {
   id: string;
@@ -55,16 +56,10 @@ export default function ChatInterface() {
     setIsCreatingSession(true);
     
     try {
-      const response = await fetch('/api/ai-chat/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          scenario: scenario
-        })
+      const response = await apiRequest('POST', '/api/ai-chat/session', {
+        userId: user.id,
+        scenario: scenario
       });
-      
-      if (!response.ok) throw new Error('Failed to create session');
       
       const data = await response.json();
       setSessionId(data.sessionId);
@@ -118,22 +113,13 @@ export default function ChatInterface() {
     }
 
     try {
-      const response = await fetch('/api/ai-chat/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: messages.concat(userMessage).map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-          scenario: scenario
-        })
+      const response = await apiRequest('POST', '/api/ai-chat/chat', {
+        messages: messages.concat(userMessage).map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        scenario: scenario
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get AI response');
-      }
 
       const data = await response.json();
       
@@ -167,16 +153,12 @@ export default function ChatInterface() {
     if (!sessionId) return;
     
     try {
-      await fetch('/api/ai-chat/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          messages: messages.map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        })
+      await apiRequest('POST', '/api/ai-chat/messages', {
+        sessionId,
+        messages: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
       });
     } catch (error) {
       console.error('Failed to save messages:', error);
