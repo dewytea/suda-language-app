@@ -1,0 +1,1336 @@
+AI Chat 모듈에 나머지 기능들을 추가해서 100% 완성해줘.
+
+=== 추가할 기능 리스트 ===
+
+1. 학습 모드 토글 (문법 교정 ON/OFF)
+2. 대화 주제 제안 카드 (사이드바)
+3. 유용한 표현 모음 (사이드바)
+4. 대화 기록 페이지 (/learn/ai-chat/history)
+5. 대화 통계 페이지 (/learn/ai-chat/stats)
+6. 성취 축하 모달 (10분, 20분, 30분 대화 완료 시)
+7. 세션 종료 시 요약 모달
+8. 첫 방문 온보딩 (튜토리얼)
+
+=== 1. 학습 모드 토글 ===
+
+components/ai-chat/ChatInterface.tsx에 추가:
+
+상태 추가:
+```tsx
+const [learningMode, setLearningMode] = useState(false)
+```
+
+헤더에 토글 스위치:
+```tsx
+<div className="flex items-center gap-2">
+  <span className="text-sm text-gray-600">학습 모드</span>
+  <button
+    onClick={() => setLearningMode(!learningMode)}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+      learningMode ? 'bg-blue-600' : 'bg-gray-300'
+    }`}
+  >
+    <span
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+        learningMode ? 'translate-x-6' : 'translate-x-1'
+      }`}
+    />
+  </button>
+  <button 
+    className="text-gray-400 hover:text-gray-600"
+    title="학습 모드를 켜면 AI가 문법 교정과 더 나은 표현을 제안합니다"
+  >
+    <HelpCircle className="w-4 h-4" />
+  </button>
+</div>
+```
+
+API 호출 시 learningMode 전달:
+```tsx
+const response = await fetch('/api/ai-chat/completion', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: recentMessages,
+    scenario: scenario,
+    userLevel: 'beginner',
+    learningMode: learningMode // 추가
+  })
+})
+```
+
+API 엔드포인트 업데이트 (app/api/ai-chat/completion/route.ts):
+```tsx
+const { messages, scenario, userLevel, learningMode } = await req.json()
+
+// 시스템 프롬프트에 추가:
+const learningModeInstruction = learningMode ? `
+IMPORTANT - Learning Mode is ON:
+- If you notice grammar mistakes, gently correct them
+- Suggest better or more natural expressions
+- Example: "Good try! We usually say 'I went' instead of 'I go' for past tense. 😊"
+- Keep corrections natural and encouraging
+- Don't overwhelm with too many corrections at once
+` : `
+Learning Mode is OFF:
+- Focus on natural conversation flow
+- Don't point out mistakes unless asked
+- Prioritize communication over correction
+`
+
+// basePrompt에 추가
+```
+
+=== 2. 대화 주제 제안 카드 (사이드바) ===
+
+components/ai-chat/TopicSuggestions.tsx 생성:
+```tsx
+'use client'
+
+import { MessageCircle } from 'lucide-react'
+
+const topics = [
+  {
+    category: '일상',
+    icon: '☕',
+    suggestions: [
+      'Tell me about your morning routine',
+      'What did you do last weekend?',
+      'Do you have any hobbies?',
+      'What kind of music do you like?'
+    ]
+  },
+  {
+    category: '취미',
+    icon: '🎨',
+    suggestions: [
+      'What do you do in your free time?',
+      'Have you read any good books lately?',
+      'Do you enjoy cooking?',
+      'What sports do you like?'
+    ]
+  },
+  {
+    category: '여행',
+    icon: '✈️',
+    suggestions: [
+      'Where would you like to travel?',
+      'What was your best vacation?',
+      'Do you prefer beaches or mountains?',
+      'Have you been abroad?'
+    ]
+  },
+  {
+    category: '음식',
+    icon: '🍕',
+    suggestions: [
+      'What is your favorite food?',
+      'Can you cook well?',
+      'Do you like trying new foods?',
+      'What did you eat for breakfast?'
+    ]
+  }
+]
+
+interface TopicSuggestionsProps {
+  onSelectTopic: (topic: string) => void
+}
+
+export default function TopicSuggestions({ onSelectTopic }: TopicSuggestionsProps) {
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+        <MessageCircle className="w-5 h-5 text-blue-600" />
+        대화 주제
+      </h3>
+      
+      {topics.map((topic) => (
+        <div key={topic.category} className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span>{topic.icon}</span>
+            <span>{topic.category}</span>
+          </h4>
+          
+          <div className="space-y-2">
+            {topic.suggestions.map((suggestion, idx) => (
+              <button
+                key={idx}
+                onClick={() => onSelectTopic(suggestion)}
+                className="w-full text-left px-3 py-2 text-sm bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+              >
+                "{suggestion}"
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+ChatInterface.tsx에 통합:
+
+레이아웃 변경 (데스크톱):
+```tsx
+<div className="flex-1 flex">
+  {/* 메인 채팅 영역 */}
+  <div className="flex-1 flex flex-col">
+    {/* 기존 채팅 UI */}
+  </div>
+  
+  {/* 사이드바 (데스크톱만) */}
+  <div className="hidden lg:block w-80 border-l bg-white p-4 overflow-y-auto">
+    <TopicSuggestions onSelectTopic={(topic) => setInput(topic)} />
+    <div className="my-6 border-t" />
+    <UsefulPhrases />
+  </div>
+</div>
+```
+
+=== 3. 유용한 표현 모음 ===
+
+components/ai-chat/UsefulPhrases.tsx 생성:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { BookOpen, Copy, Check } from 'lucide-react'
+
+const phrases = [
+  {
+    category: '인사',
+    icon: '👋',
+    items: [
+      { english: 'How are you?', korean: '어떻게 지내세요?' },
+      { english: 'Nice to meet you', korean: '만나서 반가워요' },
+      { english: 'Long time no see', korean: '오랜만이에요' },
+      { english: 'Have a great day', korean: '좋은 하루 보내세요' }
+    ]
+  },
+  {
+    category: '감사',
+    icon: '🙏',
+    items: [
+      { english: 'Thank you so much', korean: '정말 감사합니다' },
+      { english: 'I appreciate it', korean: '감사하게 생각해요' },
+      { english: 'Thanks for your help', korean: '도움 주셔서 감사해요' },
+      { english: "You're welcome", korean: '천만에요' }
+    ]
+  },
+  {
+    category: '요청',
+    icon: '🙋',
+    items: [
+      { english: 'Could you please...?', korean: '...해 주시겠어요?' },
+      { english: 'Would you mind...?', korean: '...해도 될까요?' },
+      { english: 'Can I ask you something?', korean: '질문 하나 해도 될까요?' },
+      { english: 'May I...?', korean: '...해도 되나요?' }
+    ]
+  },
+  {
+    category: '의견',
+    icon: '💭',
+    items: [
+      { english: 'I think...', korean: '제 생각에는...' },
+      { english: 'In my opinion...', korean: '제 의견으로는...' },
+      { english: 'I agree with you', korean: '동의해요' },
+      { english: 'I see your point', korean: '무슨 말인지 알겠어요' }
+    ]
+  }
+]
+
+export default function UsefulPhrases() {
+  const [copiedIndex, setCopiedIndex] = useState<string | null>(null)
+  
+  const handleCopy = (text: string, index: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedIndex(index)
+    setTimeout(() => setCopiedIndex(null), 2000)
+  }
+  
+  return (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+        <BookOpen className="w-5 h-5 text-blue-600" />
+        유용한 표현
+      </h3>
+      
+      {phrases.map((category) => (
+        <div key={category.category} className="space-y-2">
+          <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <span>{category.icon}</span>
+            <span>{category.category}</span>
+          </h4>
+          
+          <div className="space-y-2">
+            {category.items.map((item, idx) => {
+              const uniqueKey = `${category.category}-${idx}`
+              const isCopied = copiedIndex === uniqueKey
+              
+              return (
+                <div
+                  key={idx}
+                  className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {item.english}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {item.korean}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCopy(item.english, uniqueKey)}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
+                      title="복사"
+                    >
+                      {isCopied ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+=== 4. 대화 기록 페이지 ===
+
+app/learn/ai-chat/history/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Clock, MessageCircle, Calendar } from 'lucide-react'
+import Link from 'next/link'
+
+interface Session {
+  id: string
+  scenario: string
+  started_at: string
+  duration: number
+  message_count: number
+  xp_earned: number
+}
+
+const scenarioIcons: Record<string, string> = {
+  free: '🗣️',
+  restaurant: '🍽️',
+  hotel: '🏨',
+  shopping: '🛍️',
+  interview: '💼',
+  travel: '✈️'
+}
+
+const scenarioNames: Record<string, string> = {
+  free: '자유 대화',
+  restaurant: '식당',
+  hotel: '호텔',
+  shopping: '쇼핑',
+  interview: '면접',
+  travel: '여행'
+}
+
+export default function AIChatHistoryPage() {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    fetchSessions()
+  }, [])
+  
+  const fetchSessions = async () => {
+    try {
+      const response = await fetch('/api/ai-chat/sessions')
+      const data = await response.json()
+      setSessions(data.sessions || [])
+    } catch (error) {
+      console.error('Failed to fetch sessions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}분 ${secs}초`
+  }
+  
+  const groupByDate = (sessions: Session[]) => {
+    const groups: Record<string, Session[]> = {}
+    
+    sessions.forEach(session => {
+      const date = new Date(session.started_at).toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+      
+      if (!groups[date]) {
+        groups[date] = []
+      }
+      groups[date].push(session)
+    })
+    
+    return groups
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+  
+  if (sessions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <MessageCircle className="w-16 h-16 text-gray-300 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          아직 대화 기록이 없어요
+        </h3>
+        <p className="text-gray-600 mb-6">
+          AI와 첫 대화를 시작해보세요!
+        </p>
+        <Link
+          href="/learn/ai-chat"
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          대화 시작하기
+        </Link>
+      </div>
+    )
+  }
+  
+  const groupedSessions = groupByDate(sessions)
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">대화 기록</h1>
+        <p className="text-gray-600">AI와 나눈 대화를 다시 확인해보세요</p>
+      </div>
+      
+      <div className="space-y-8">
+        {Object.entries(groupedSessions).map(([date, dateSessions]) => (
+          <div key={date}>
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="w-5 h-5 text-gray-400" />
+              <h2 className="text-lg font-semibold text-gray-700">{date}</h2>
+            </div>
+            
+            <div className="space-y-3">
+              {dateSessions.map((session) => (
+                <Link
+                  key={session.id}
+                  href={`/learn/ai-chat/history/${session.id}`}
+                  className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">
+                        {scenarioIcons[session.scenario] || '🗣️'}
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">
+                          {scenarioNames[session.scenario] || '대화'}
+                        </h3>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {formatDuration(session.duration)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MessageCircle className="w-4 h-4" />
+                            {session.message_count}개 메시지
+                          </span>
+                          <span className="text-blue-600 font-medium">
+                            +{session.xp_earned} XP
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500">
+                      {new Date(session.started_at).toLocaleTimeString('ko-KR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+API 엔드포인트 (app/api/ai-chat/sessions/route.ts):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('ai_chat_sessions')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('started_at', { ascending: false })
+      .limit(50)
+
+    if (error) throw error
+
+    return NextResponse.json({ sessions: data })
+  } catch (error) {
+    console.error('Sessions fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch sessions' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 5. 대화 통계 페이지 ===
+
+app/learn/ai-chat/stats/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { BarChart3, Clock, MessageCircle, TrendingUp, Award } from 'lucide-react'
+
+interface Stats {
+  totalSessions: number
+  totalDuration: number
+  totalMessages: number
+  totalXP: number
+  averageDuration: number
+  averageMessages: number
+  favoriteScenario: string
+  scenarioCounts: Record<string, number>
+}
+
+const scenarioNames: Record<string, string> = {
+  free: '자유 대화',
+  restaurant: '식당',
+  hotel: '호텔',
+  shopping: '쇼핑',
+  interview: '면접',
+  travel: '여행'
+}
+
+export default function AIChatStatsPage() {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    fetchStats()
+  }, [])
+  
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/ai-chat/stats')
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Failed to fetch stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    
+    if (hours > 0) {
+      return `${hours}시간 ${mins}분`
+    }
+    return `${mins}분`
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+  
+  if (!stats || stats.totalSessions === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <BarChart3 className="w-16 h-16 text-gray-300 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          아직 통계가 없어요
+        </h3>
+        <p className="text-gray-600 mb-6">
+          AI와 대화를 시작하면 통계를 볼 수 있어요!
+        </p>
+      </div>
+    )
+  }
+  
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">대화 통계</h1>
+        <p className="text-gray-600">AI와의 대화 활동을 분석해봐요</p>
+      </div>
+      
+      {/* 주요 지표 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600 text-sm">총 대화 세션</span>
+            <MessageCircle className="w-5 h-5 text-blue-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{stats.totalSessions}</p>
+        </div>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600 text-sm">총 대화 시간</span>
+            <Clock className="w-5 h-5 text-green-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">
+            {formatTime(stats.totalDuration)}
+          </p>
+        </div>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600 text-sm">총 메시지</span>
+            <TrendingUp className="w-5 h-5 text-purple-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{stats.totalMessages}</p>
+        </div>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600 text-sm">획득 XP</span>
+            <Award className="w-5 h-5 text-orange-600" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{stats.totalXP} XP</p>
+        </div>
+      </div>
+      
+      {/* 평균 통계 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">평균 지표</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">세션당 대화 시간</span>
+              <span className="font-semibold">
+                {formatTime(stats.averageDuration)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">세션당 메시지 수</span>
+              <span className="font-semibold">
+                {Math.round(stats.averageMessages)}개
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">가장 많이 한 대화</h3>
+          <div className="space-y-2">
+            {Object.entries(stats.scenarioCounts)
+              .sort(([, a], [, b]) => b - a)
+              .map(([scenario, count]) => (
+                <div key={scenario} className="flex items-center justify-between">
+                  <span className="text-gray-700">
+                    {scenarioNames[scenario] || scenario}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-32 bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full"
+                        style={{
+                          width: `${(count / stats.totalSessions) * 100}%`
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900 w-8 text-right">
+                      {count}
+                    </span>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* 학습 인사이트 */}
+      <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6">
+        <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Award className="w-5 h-5 text-blue-600" />
+          학습 인사이트
+        </h3>
+        <div className="space-y-3 text-sm">
+          {stats.totalSessions >= 10 && (
+            <p className="text-gray-700">
+              🎉 이미 10회 이상 대화했어요! 꾸준한 연습이 실력 향상의 지름길이에요.
+            </p>
+          )}
+          {stats.averageDuration >= 600 && (
+            <p className="text-gray-700">
+              💪 평균 10분 이상 대화하고 있어요! 긴 대화는 실전 감각을 키워줘요.
+            </p>
+          )}
+          {stats.favoriteScenario && (
+            <p className="text-gray-700">
+              ⭐ {scenarioNames[stats.favoriteScenario]} 시나리오를 가장 좋아하시는군요!
+              다른 시나리오도 도전해보는 건 어떨까요?
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+API 엔드포인트 (app/api/ai-chat/stats/route.ts):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data: sessions, error } = await supabase
+      .from('ai_chat_sessions')
+      .select('*')
+      .eq('user_id', session.user.id)
+
+    if (error) throw error
+
+    if (!sessions || sessions.length === 0) {
+      return NextResponse.json({
+        totalSessions: 0,
+        totalDuration: 0,
+        totalMessages: 0,
+        totalXP: 0,
+        averageDuration: 0,
+        averageMessages: 0,
+        favoriteScenario: '',
+        scenarioCounts: {}
+      })
+    }
+
+    const stats = {
+      totalSessions: sessions.length,
+      totalDuration: sessions.reduce((sum, s) => sum + (s.duration || 0), 0),
+      totalMessages: sessions.reduce((sum, s) => sum + (s.message_count || 0), 0),
+      totalXP: sessions.reduce((sum, s) => sum + (s.xp_earned || 0), 0),
+      averageDuration: 0,
+      averageMessages: 0,
+      favoriteScenario: '',
+      scenarioCounts: {} as Record<string, number>
+    }
+
+    stats.averageDuration = Math.round(stats.totalDuration / stats.totalSessions)
+    stats.averageMessages = Math.round(stats.totalMessages / stats.totalSessions)
+
+    // 시나리오별 카운트
+    sessions.forEach(s => {
+      const scenario = s.scenario || 'free'
+      stats.scenarioCounts[scenario] = (stats.scenarioCounts[scenario] || 0) + 1
+    })
+
+    // 가장 많이 한 시나리오
+    stats.favoriteScenario = Object.entries(stats.scenarioCounts)
+      .sort(([, a], [, b]) => b - a)[0]?.[0] || ''
+
+    return NextResponse.json(stats)
+  } catch (error) {
+    console.error('Stats fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch stats' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 6. 성취 축하 모달 ===
+
+components/ai-chat/AchievementModal.tsx 생성:
+```tsx
+'use client'
+
+import { Trophy, X } from 'lucide-react'
+
+interface AchievementModalProps {
+  isOpen: boolean
+  onClose: () => void
+  achievement: {
+    title: string
+    description: string
+    icon: string
+    xp: number
+  }
+}
+
+export default function AchievementModal({
+  isOpen,
+  onClose,
+  achievement
+}: AchievementModalProps) {
+  if (!isOpen) return null
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* 오버레이 */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* 모달 */}
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-bounce-in">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="text-center">
+          {/* 아이콘 */}
+          <div className="text-7xl mb-4 animate-bounce">
+            {achievement.icon}
+          </div>
+          
+          {/* 제목 */}
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            {achievement.title}
+          </h3>
+          
+          {/* 설명 */}
+          <p className="text-gray-600 mb-6">
+            {achievement.description}
+          </p>
+          
+          {/* XP */}
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-center gap-2">
+              <Trophy className="w-6 h-6 text-orange-500" />
+              <span className="text-2xl font-bold text-gray-900">
+                +{achievement.xp} XP
+              </span>
+            </div>
+          </div>
+          
+          {/* 버튼 */}
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          >
+            계속하기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+ChatInterface.tsx에 통합:
+```tsx
+const [achievement, setAchievement] = useState<any>(null)
+const [showAchievement, setShowAchievement] = useState(false)
+
+// 시간 체크
+useEffect(() => {
+  const interval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime.getTime()) / 1000)
+    
+    // 10분 (600초)
+    if (elapsed === 600 && !localStorage.getItem('ai_chat_10min')) {
+      setAchievement({
+        title: '대화가 술술!',
+        description: '10분간 대화를 이어갔어요',
+        icon: '🎉',
+        xp: 30
+      })
+      setShowAchievement(true)
+      localStorage.setItem('ai_chat_10min', 'true')
+    }
+    
+    // 20분 (1200초)
+    if (elapsed === 1200 && !localStorage.getItem('ai_chat_20min')) {
+      setAchievement({
+        title: '끈기있는 학습자!',
+        description: '20분간 집중해서 대화했어요',
+        icon: '🌟',
+        xp: 60
+      })
+      setShowAchievement(true)
+      localStorage.setItem('ai_chat_20min', 'true')
+    }
+    
+    // 30분 (1800초)
+    if (elapsed === 1800 && !localStorage.getItem('ai_chat_30min')) {
+      setAchievement({
+        title: '대화 마스터!',
+        description: '30분간 멈추지 않고 대화했어요',
+        icon: '🏆',
+        xp: 100
+      })
+      setShowAchievement(true)
+      localStorage.setItem('ai_chat_30min', 'true')
+    }
+  }, 1000)
+  
+  return () => clearInterval(interval)
+}, [startTime])
+
+// 렌더링
+<AchievementModal
+  isOpen={showAchievement}
+  onClose={() => setShowAchievement(false)}
+  achievement={achievement}
+/>
+```
+
+=== 7. 세션 종료 모달 ===
+
+components/ai-chat/SessionSummaryModal.tsx 생성:
+```tsx
+'use client'
+
+import { Clock, MessageCircle, Award, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+
+interface SessionSummaryModalProps {
+  isOpen: boolean
+  onClose: () => void
+  summary: {
+    duration: number
+    messageCount: number
+    xpEarned: number
+  }
+}
+
+export default function SessionSummaryModal({
+  isOpen,
+  onClose,
+  summary
+}: SessionSummaryModalProps) {
+  if (!isOpen) return null
+  
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}분 ${secs}초`
+  }
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-3">👏</div>
+          <h3 className="text-2xl font-bold text-gray-900">
+            수고하셨어요!
+          </h3>
+          <p className="text-gray-600 mt-2">
+            오늘도 한 걸음 성장했어요
+          </p>
+        </div>
+        
+        {/* 통계 */}
+        <div className="space-y-3 mb-6">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              <span className="text-gray-700">대화 시간</span>
+            </div>
+            <span className="font-semibold">{formatDuration(summary.duration)}</span>
+          </div>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-green-600" />
+              <span className="text-gray-700">메시지 수</span>
+            </div>
+            <span className="font-semibold">{summary.messageCount}개</span>
+          </div>
+          
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2">
+              <Award className="w-5 h-5 text-orange-500" />
+              <span className="text-gray-700 font-medium">획득 XP</span>
+            </div>
+            <span className="font-bold text-blue-600">+{summary.xpEarned} XP</span>
+          </div>
+        </div>
+        
+        {/* 격려 메시지 */}
+        <div className="bg-blue-50 rounded-lg p-4 mb-6">
+          <p className="text-sm text-gray-700 text-center">
+            {summary.duration >= 600
+              ? '10분 이상 집중해서 대화했어요! 꾸준한 연습이 실력을 만들어요. 💪'
+              : summary.messageCount >= 20
+              ? '활발하게 대화했어요! 많이 말할수록 실력이 늘어요. 🌟'
+              : '좋아요! 매일 조금씩 연습하면 큰 변화를 느낄 수 있어요. 🚀'}
+          </p>
+        </div>
+        
+        {/* 버튼 */}
+        <div className="flex gap-3">
+          <Link
+            href="/learn/ai-chat/stats"
+            className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center font-medium"
+          >
+            통계 보기
+          </Link>
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          >
+            계속하기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 8. 첫 방문 온보딩 ===
+
+components/ai-chat/OnboardingTutorial.tsx 생성:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { X, ChevronRight, ChevronLeft } from 'lucide-react'
+
+interface OnboardingTutorialProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+const steps = [
+  {
+    title: 'AI 대화 파트너와 함께해요',
+    description: 'AI와 자유롭게 대화하며 언어 실력을 키워보세요. 실수해도 괜찮아요!',
+    icon: '🤖'
+  },
+  {
+    title: '시나리오를 선택하세요',
+    description: '자유 대화부터 식당, 호텔, 면접까지 다양한 상황을 연습할 수 있어요.',
+    icon: '🎭'
+  },
+  {
+    title: '학습 모드를 활용하세요',
+    description: '학습 모드를 켜면 AI가 문법을 교정하고 더 나은 표현을 제안해줘요.',
+    icon: '📚'
+  },
+  {
+    title: '주제 제안을 활용하세요',
+    description: '무슨 말을 해야 할지 모르겠다면 제안된 주제를 클릭해보세요!',
+    icon: '💡'
+  }
+]
+
+export default function OnboardingTutorial({ isOpen, onClose }: OnboardingTutorialProps) {
+  const [currentStep, setCurrentStep] = useState(0)
+  
+  if (!isOpen) return null
+  
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      localStorage.setItem('ai_chat_tutorial_completed', 'true')
+      onClose()
+    }
+  }
+  
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
+    }
+  }
+  
+  const handleSkip = () => {
+    localStorage.setItem('ai_chat_tutorial_completed', 'true')
+    onClose()
+  }
+  
+  const step = steps[currentStep]
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={handleSkip}
+      />
+      
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8">
+        <button
+          onClick={handleSkip}
+          className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="text-center">
+          <div className="text-7xl mb-6">{step.icon}</div>
+          
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            {step.title}
+          </h3>
+          
+          <p className="text-gray-600 mb-8">
+            {step.description}
+          </p>
+          
+          {/* 진행 표시 */}
+          <div className="flex justify-center gap-2 mb-8">
+            {steps.map((_, idx) => (
+              <div
+                key={idx}
+                className={`h-2 rounded-full transition-all ${
+                  idx === currentStep
+                    ? 'w-8 bg-blue-600'
+                    : 'w-2 bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+          
+          {/* 버튼 */}
+          <div className="flex gap-3">
+            {currentStep > 0 && (
+              <button
+                onClick={handlePrev}
+                className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                이전
+              </button>
+            )}
+            <button
+              onClick={handleNext}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+            >
+              {currentStep === steps.length - 1 ? '시작하기' : '다음'}
+              {currentStep < steps.length - 1 && <ChevronRight className="w-5 h-5" />}
+            </button>
+          </div>
+          
+          <button
+            onClick={handleSkip}
+            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
+          >
+            건너뛰기
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+ChatInterface.tsx에 통합:
+```tsx
+const [showTutorial, setShowTutorial] = useState(false)
+
+useEffect(() => {
+  const completed = localStorage.getItem('ai_chat_tutorial_completed')
+  if (!completed) {
+    setShowTutorial(true)
+  }
+}, [])
+
+// 렌더링
+<OnboardingTutorial
+  isOpen={showTutorial}
+  onClose={() => setShowTutorial(false)}
+/>
+```
+
+=== 9. 사이드바 메뉴 업데이트 ===
+
+기존 사이드바에 AI Chat 하위 메뉴 추가:
+```tsx
+AI 대화 메뉴:
+├─ 대화하기 (/learn/ai-chat)
+├─ 대화 기록 (/learn/ai-chat/history)
+└─ 통계 (/learn/ai-chat/stats)
+```
+
+=== 10. 애니메이션 CSS ===
+
+globals.css에 추가:
+```css
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+```
+
+=== 출력 요구사항 ===
+
+1. ✅ 학습 모드 토글 작동
+2. ✅ 대화 주제 제안 사이드바
+3. ✅ 유용한 표현 복사 기능
+4. ✅ 대화 기록 페이지 완성
+5. ✅ 대화 통계 페이지 완성
+6. ✅ 시간별 성취 모달 (10분, 20분, 30분)
+7. ✅ 세션 종료 시 요약 모달
+8. ✅ 첫 방문 온보딩 튜토리얼
+9. ✅ 사이드바 메뉴 확장
+10. ✅ 모든 애니메이션 부드럽게
+11. ✅ 모바일 반응형 완벽
+12. ✅ 에러 처리 완벽
+
+완성 후:
+- AI Chat 모듈 100% 완성
+- OpenAI 크레딧 충전 시 바로 사용 가능
+- 모든 UI/UX 완성
+- 베타 출시 준비 완료
+
+지금 바로 만들어줘!
+완성되면 꼭 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 2-3시간
+- 완성 알림 받으면: 최종 테스트
+
+---
+
+## ☕ **구현하는 동안**
+
+**편하게 쉬세요!**
+- 저녁 식사
+- 운동
+- 휴식
+- 취미
+
+**또는:**
+- 내일 베타 모집 계획 세우기
+- SNS 공유글 작성하기
+
+---
+
+## ✅ **완성 확인하기**
+
+**테스트 체크리스트:**
+```
+1. 학습 모드
+   ✅ 토글 작동하나?
+   ✅ ON/OFF 구분되나?
+   
+2. 사이드바
+   ✅ 주제 제안 보이나?
+   ✅ 유용한 표현 복사되나?
+   
+3. 대화 기록
+   ✅ /learn/ai-chat/history 열리나?
+   ✅ 과거 대화 리스트 보이나?
+   
+4. 통계
+   ✅ /learn/ai-chat/stats 열리나?
+   ✅ 통계 표시되나?
+   
+5. 모달
+   ✅ 온보딩 튜토리얼 나오나?
+   ✅ 성취 모달 작동하나?
+   
+6. 모바일
+   ✅ 스마트폰에서 잘 보임?
+```
+
+---
+
+## 🎉 **완성되면**
+
+**AI Chat 100% 완성!**
+```
+✅ UI 완성
+✅ 기능 완성
+✅ 통계 완성
+✅ 기록 완성
+✅ 온보딩 완성
+
+→ OpenAI 크레딧 충전만 하면 끝!
+→ 베타 출시 준비 완료!
