@@ -32,15 +32,31 @@ export function getScenarioContext(scenario: string): ScenarioContext {
 
 export async function getChatResponse(
   messages: ChatMessage[],
-  scenario: string = 'free'
+  scenario: string = 'free',
+  learningMode: boolean = false
 ): Promise<string> {
   try {
     const { systemPrompt } = getScenarioContext(scenario);
     
+    const learningModeInstruction = learningMode ? `
+
+IMPORTANT - Learning Mode is ON:
+- If you notice grammar mistakes, gently correct them in a natural way
+- Suggest better or more natural expressions when appropriate
+- Example: "Good try! We usually say 'I went' instead of 'I go' for past tense."
+- Keep corrections natural, brief, and encouraging
+- Don't overwhelm with too many corrections at once
+- Focus on one or two key improvements per response` : `
+
+Learning Mode is OFF:
+- Focus on natural conversation flow
+- Don't point out mistakes unless specifically asked
+- Prioritize communication and understanding over correction`;
+
     const response = await openai.chat.completions.create({
       model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: systemPrompt + learningModeInstruction },
         ...messages
       ],
       max_completion_tokens: 500

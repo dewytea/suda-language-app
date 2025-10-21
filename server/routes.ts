@@ -724,45 +724,156 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   });
 
   // AI Chat Routes
+  
+  // Create new chat session
   app.post("/api/ai-chat/session", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
-      const { scenario = 'free' } = req.body;
+      const { scenario = 'free', language = 'en' } = req.body;
 
-      const sessionId = await storage.createAIChatSession({ userId, scenario });
-      res.json({ sessionId, scenario });
+      const session = await storage.createAIChatSession({ 
+        userId, 
+        scenario,
+        language,
+        grammarCorrectionEnabled: false,
+        messageCount: 0,
+        duration: 0,
+        completed: false
+      });
+      res.json(session);
     } catch (error: any) {
       console.error('AI Chat session creation error:', error);
       res.status(500).json({ error: 'Failed to create session' });
     }
   });
 
-  app.post("/api/ai-chat/messages", requireAuth, async (req, res) => {
+  // Get all sessions for user
+  app.get("/api/ai-chat/sessions", requireAuth, async (req, res) => {
     try {
-      const { sessionId, messages } = req.body;
-
-      if (!sessionId || !Array.isArray(messages)) {
-        return res.status(400).json({ error: 'Invalid request data' });
-      }
-
-      await storage.saveAIChatMessages(sessionId, messages);
-      res.json({ success: true });
+      const userId = req.user!.id;
+      const { language } = req.query;
+      
+      const sessions = await storage.getAIChatSessions(userId, language as string);
+      res.json({ sessions });
     } catch (error: any) {
-      console.error('AI Chat message save error:', error);
-      res.status(500).json({ error: 'Failed to save messages' });
+      console.error('AI Chat sessions fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch sessions' });
     }
   });
 
+  // Get specific session
+  app.get("/api/ai-chat/sessions/:id", requireAuth, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const session = await storage.getAIChatSession(sessionId);
+      
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+      
+      res.json(session);
+    } catch (error: any) {
+      console.error('AI Chat session fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch session' });
+    }
+  });
+
+  // Update session
+  app.patch("/api/ai-chat/sessions/:id", requireAuth, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const session = await storage.updateAIChatSession(sessionId, updates);
+      res.json(session);
+    } catch (error: any) {
+      console.error('AI Chat session update error:', error);
+      res.status(500).json({ error: 'Failed to update session' });
+    }
+  });
+
+  // Save message
+  app.post("/api/ai-chat/messages", requireAuth, async (req, res) => {
+    try {
+      const { sessionId, role, content, correctedContent, hasGrammarErrors } = req.body;
+
+      if (!sessionId || !role || !content) {
+        return res.status(400).json({ error: 'Invalid request data' });
+      }
+
+      const message = await storage.saveAIChatMessage({
+        sessionId: parseInt(sessionId),
+        role,
+        content,
+        correctedContent,
+        hasGrammarErrors
+      });
+      
+      res.json(message);
+    } catch (error: any) {
+      console.error('AI Chat message save error:', error);
+      res.status(500).json({ error: 'Failed to save message' });
+    }
+  });
+
+  // Get messages for session
+  app.get("/api/ai-chat/sessions/:id/messages", requireAuth, async (req, res) => {
+    try {
+      const sessionId = parseInt(req.params.id);
+      const messages = await storage.getAIChatMessages(sessionId);
+      res.json({ messages });
+    } catch (error: any) {
+      console.error('AI Chat messages fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+  });
+
+  // Get stats
+  app.get("/api/ai-chat/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { language = 'en' } = req.query;
+      
+      const stats = await storage.getAIChatStats(userId, language as string);
+      res.json(stats || {
+        totalSessions: 0,
+        totalMessages: 0,
+        totalDuration: 0,
+        longestStreak: 0,
+        currentStreak: 0,
+        achievements: []
+      });
+    } catch (error: any) {
+      console.error('AI Chat stats fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  });
+
+  // Update stats
+  app.patch("/api/ai-chat/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { language = 'en', ...updates } = req.body;
+      
+      const stats = await storage.updateAIChatStats(userId, language, updates);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('AI Chat stats update error:', error);
+      res.status(500).json({ error: 'Failed to update stats' });
+    }
+  });
+
+  // Chat with AI
   app.post("/api/ai-chat/chat", requireAuth, async (req, res) => {
     try {
-      const { messages, scenario = 'free' } = req.body;
+      const { messages, scenario = 'free', learningMode = false } = req.body;
 
       if (!Array.isArray(messages) || messages.length === 0) {
         return res.status(400).json({ error: 'Messages are required' });
       }
 
       const { getChatResponse } = await import('./openai');
-      const aiResponse = await getChatResponse(messages, scenario);
+      const aiResponse = await getChatResponse(messages, scenario, learningMode);
       
       res.json({ response: aiResponse });
     } catch (error: any) {
