@@ -3,6 +3,7 @@ import { ArrowLeft, Calendar, CheckCircle2, Volume2 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 import type { ListeningProgress, ListeningLesson } from '@shared/schema';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -13,8 +14,15 @@ export default function ListeningHistory() {
   const { data: progressData, isLoading } = useQuery<{ progress: ListeningProgress[] }>({
     queryKey: ['/api/listening/progress'],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
       const response = await fetch('/api/listening/progress', {
-        credentials: 'include'
+        credentials: 'include',
+        headers,
       });
       if (!response.ok) throw new Error('Failed to fetch progress');
       return response.json();

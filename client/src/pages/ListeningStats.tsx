@@ -3,6 +3,7 @@ import { ArrowLeft, TrendingUp, Target, Award, BarChart3 } from 'lucide-react';
 import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 export default function ListeningStats() {
   const { user } = useAuth();
@@ -10,8 +11,15 @@ export default function ListeningStats() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['/api/listening/stats'],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
       const response = await fetch('/api/listening/stats', {
-        credentials: 'include'
+        credentials: 'include',
+        headers,
       });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
