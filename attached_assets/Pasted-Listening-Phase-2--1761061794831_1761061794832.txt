@@ -1,0 +1,862 @@
+Listening 모듈에 점수 계산과 진도 저장 시스템을 추가해줘.
+
+=== Phase 2: 점수 계산 + 진도 저장 ===
+
+이번 단계에서는 사용자의 답변을 분석하고
+점수를 계산한 후 진도를 저장할 거야.
+
+=== 텍스트 비교 알고리즘 ===
+
+lib/listening/scoreUtils.ts 생성:
+```typescript
+// 텍스트 정규화 (대소문자, 구두점 제거)
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:'"]/g, '') // 구두점 제거
+    .replace(/\s+/g, ' ') // 여러 공백을 하나로
+    .trim()
+}
+
+// 단어 배열로 분리
+function getWords(text: string): string[] {
+  return normalizeText(text).split(' ').filter(word => word.length > 0)
+}
+
+// 레벤슈타인 거리 (편집 거리)
+function levenshteinDistance(str1: string, str2: string): number {
+  const len1 = str1.length
+  const len2 = str2.length
+  const matrix: number[][] = []
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i]
+  }
+
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // 삭제
+        matrix[i][j - 1] + 1, // 삽입
+        matrix[i - 1][j - 1] + cost // 교체
+      )
+    }
+  }
+
+  return matrix[len1][len2]
+}
+
+// 두 단어가 비슷한지 체크 (오타 허용)
+function isSimilar(word1: string, word2: string, threshold: number = 0.8): boolean {
+  if (word1 === word2) return true
+  
+  const maxLen = Math.max(word1.length, word2.length)
+  const distance = levenshteinDistance(word1, word2)
+  const similarity = 1 - distance / maxLen
+  
+  return similarity >= threshold
+}
+
+// 메인 비교 함수
+export interface ComparisonResult {
+  correctWords: string[] // 정확히 맞은 단어
+  incorrectWords: Array<{ // 틀린 단어
+    user: string
+    correct: string
+    position: number
+  }>
+  missedWords: string[] // 놓친 단어 (말 안 함)
+  extraWords: string[] // 추가 단어 (원본에 없음)
+  accuracy: number // 정확도 (0-100)
+  score: number // 최종 점수 (0-100)
+}
+
+export function compareTexts(
+  originalText: string,
+  userText: string
+): ComparisonResult {
+  const originalWords = getWords(originalText)
+  const userWords = getWords(userText)
+  
+  const correctWords: string[] = []
+  const incorrectWords: Array<{ user: string; correct: string; position: number }> = []
+  const missedWords: string[] = []
+  const extraWords: string[] = []
+  
+  // 단어별 비교
+  const maxLength = Math.max(originalWords.length, userWords.length)
+  
+  for (let i = 0; i < maxLength; i++) {
+    const original = originalWords[i]
+    const user = userWords[i]
+    
+    if (!original && user) {
+      // 추가된 단어
+      extraWords.push(user)
+    } else if (original && !user) {
+      // 놓친 단어
+      missedWords.push(original)
+    } else if (original && user) {
+      if (original === user) {
+        // 정확히 맞음
+        correctWords.push(original)
+      } else if (isSimilar(original, user, 0.8)) {
+        // 비슷함 (오타 허용) - 정답으로 처리
+        correctWords.push(original)
+      } else {
+        // 완전히 다름
+        incorrectWords.push({
+          user: user,
+          correct: original,
+          position: i
+        })
+      }
+    }
+  }
+  
+  // 정확도 계산
+  const totalWords = originalWords.length
+  const correctCount = correctWords.length
+  const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 0
+  
+  // 점수 계산 (페널티 적용)
+  let score = accuracy
+  
+  // 틀린 단어 페널티 (-2점씩)
+  score -= incorrectWords.length * 2
+  
+  // 놓친 단어 페널티 (-3점씩, 더 중요)
+  score -= missedWords.length * 3
+  
+  // 추가 단어 페널티 (-1점씩)
+  score -= extraWords.length * 1
+  
+  // 최소 0점, 최대 100점
+  score = Math.max(0, Math.min(100, score))
+  
+  return {
+    correctWords,
+    incorrectWords,
+    missedWords,
+    extraWords,
+    accuracy,
+    score
+  }
+}
+
+// 단어 하이라이트용 (원본 텍스트에 색상 정보 추가)
+export interface HighlightedWord {
+  word: string
+  status: 'correct' | 'incorrect' | 'missed'
+  userWord?: string // 틀렸을 때 사용자가 입력한 단어
+}
+
+export function getHighlightedWords(
+  originalText: string,
+  comparisonResult: ComparisonResult
+): HighlightedWord[] {
+  const originalWords = getWords(originalText)
+  const highlighted: HighlightedWord[] = []
+  
+  originalWords.forEach((word, index) => {
+    if (comparisonResult.correctWords.includes(word)) {
+      highlighted.push({ word, status: 'correct' })
+    } else if (comparisonResult.missedWords.includes(word)) {
+      highlighted.push({ word, status: 'missed' })
+    } else {
+      const incorrect = comparisonResult.incorrectWords.find(
+        item => item.position === index
+      )
+      if (incorrect) {
+        highlighted.push({
+          word,
+          status: 'incorrect',
+          userWord: incorrect.user
+        })
+      }
+    }
+  })
+  
+  return highlighted
+}
+```
+
+=== 결과 모달 컴포넌트 ===
+
+components/listening/ResultModal.tsx 생성:
+```tsx
+'use client'
+
+import { Trophy, TrendingUp, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import type { ComparisonResult, HighlightedWord } from '@/lib/listening/scoreUtils'
+
+interface ResultModalProps {
+  isOpen: boolean
+  result: ComparisonResult
+  highlightedWords: HighlightedWord[]
+  originalText: string
+  userAnswer: string
+  onRetry: () => void
+  onNext: () => void
+}
+
+export default function ResultModal({
+  isOpen,
+  result,
+  highlightedWords,
+  originalText,
+  userAnswer,
+  onRetry,
+  onNext
+}: ResultModalProps) {
+  if (!isOpen) return null
+  
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'text-green-600'
+    if (score >= 70) return 'text-blue-600'
+    if (score >= 50) return 'text-orange-600'
+    return 'text-red-600'
+  }
+  
+  const getScoreMessage = (score: number) => {
+    if (score >= 90) return '완벽해요! 🎉'
+    if (score >= 70) return '잘했어요! 👍'
+    if (score >= 50) return '괜찮아요! 💪'
+    return '다시 한번 연습해봐요! 📚'
+  }
+  
+  const getScoreIcon = (score: number) => {
+    if (score >= 90) return '🏆'
+    if (score >= 70) return '⭐'
+    if (score >= 50) return '💡'
+    return '📖'
+  }
+  
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* 점수 헤더 */}
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 text-center">
+          <div className="text-6xl mb-4">{getScoreIcon(result.score)}</div>
+          <h2 className={`text-5xl font-bold mb-2 ${getScoreColor(result.score)}`}>
+            {result.score}점
+          </h2>
+          <p className="text-lg text-gray-600">{getScoreMessage(result.score)}</p>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          {/* 정확도 */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">정확도</span>
+              <span className="text-sm font-semibold">{result.accuracy}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className={`h-3 rounded-full transition-all ${
+                  result.accuracy >= 90
+                    ? 'bg-green-600'
+                    : result.accuracy >= 70
+                    ? 'bg-blue-600'
+                    : result.accuracy >= 50
+                    ? 'bg-orange-600'
+                    : 'bg-red-600'
+                }`}
+                style={{ width: `${result.accuracy}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* 통계 */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-green-50 rounded-lg p-4 text-center">
+              <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-green-600">
+                {result.correctWords.length}
+              </p>
+              <p className="text-xs text-gray-600">맞은 단어</p>
+            </div>
+            
+            <div className="bg-orange-50 rounded-lg p-4 text-center">
+              <AlertCircle className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-orange-600">
+                {result.missedWords.length}
+              </p>
+              <p className="text-xs text-gray-600">놓친 단어</p>
+            </div>
+            
+            <div className="bg-red-50 rounded-lg p-4 text-center">
+              <XCircle className="w-6 h-6 text-red-600 mx-auto mb-2" />
+              <p className="text-2xl font-bold text-red-600">
+                {result.incorrectWords.length}
+              </p>
+              <p className="text-xs text-gray-600">틀린 단어</p>
+            </div>
+          </div>
+          
+          {/* 하이라이트된 정답 */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">정답 (단어별 분석)</h3>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex flex-wrap gap-2">
+                {highlightedWords.map((item, index) => (
+                  <span
+                    key={index}
+                    className={`px-3 py-1 rounded-lg font-medium ${
+                      item.status === 'correct'
+                        ? 'bg-green-100 text-green-800'
+                        : item.status === 'missed'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                    title={
+                      item.status === 'incorrect'
+                        ? `당신의 답변: "${item.userWord}"`
+                        : undefined
+                    }
+                  >
+                    {item.word}
+                    {item.status === 'incorrect' && item.userWord && (
+                      <span className="text-xs ml-1">
+                        (입력: {item.userWord})
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+          
+          {/* 당신의 답변 */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">당신의 답변</h3>
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="text-gray-800">{userAnswer}</p>
+            </div>
+          </div>
+          
+          {/* 놓친 단어 상세 */}
+          {result.missedWords.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h4 className="font-semibold text-orange-800 mb-2">
+                💡 놓친 단어들
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {result.missedWords.map((word, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-white rounded-lg text-orange-800 font-medium"
+                  >
+                    {word}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-orange-700 mt-3">
+                이 단어들을 다시 들어보세요!
+              </p>
+            </div>
+          )}
+          
+          {/* 틀린 단어 상세 */}
+          {result.incorrectWords.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="font-semibold text-red-800 mb-2">
+                ❌ 틀린 단어들
+              </h4>
+              <div className="space-y-2">
+                {result.incorrectWords.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-white rounded-lg p-3"
+                  >
+                    <div>
+                      <span className="text-red-600 font-medium">
+                        입력: "{item.user}"
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">→</span>
+                      <span className="text-green-600 font-medium">
+                        정답: "{item.correct}"
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* 추가 단어 */}
+          {result.extraWords.length > 0 && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <h4 className="font-semibold text-purple-800 mb-2">
+                ➕ 추가된 단어들
+              </h4>
+              <p className="text-sm text-purple-700 mb-2">
+                원본에 없는 단어를 입력했어요
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {result.extraWords.map((word, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-white rounded-lg text-purple-800 font-medium"
+                  >
+                    {word}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* 버튼 */}
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={onRetry}
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+            >
+              다시 연습하기
+            </button>
+            <button
+              onClick={onNext}
+              className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              다음 레슨
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+=== ListeningCard 업데이트 ===
+
+components/listening/ListeningCard.tsx 수정:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { X, Eye, EyeOff } from 'lucide-react'
+import AudioPlayer from './AudioPlayer'
+import DictationInput from './DictationInput'
+import ResultModal from './ResultModal'
+import { compareTexts, getHighlightedWords } from '@/lib/listening/scoreUtils'
+import type { ComparisonResult } from '@/lib/listening/scoreUtils'
+
+interface Lesson {
+  id: string
+  text: string
+  translation: string
+  difficulty: number
+  category: string
+}
+
+interface ListeningCardProps {
+  lesson: Lesson
+  onClose: () => void
+  onComplete: () => void
+}
+
+export default function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProps) {
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [userAnswer, setUserAnswer] = useState('')
+  const [result, setResult] = useState<ComparisonResult | null>(null)
+  const [showResult, setShowResult] = useState(false)
+  
+  const handleSubmit = async (answer: string) => {
+    setUserAnswer(answer)
+    setSubmitted(true)
+    
+    // 텍스트 비교 및 점수 계산
+    const comparisonResult = compareTexts(lesson.text, answer)
+    setResult(comparisonResult)
+    
+    // 진도 저장 및 XP 적립
+    try {
+      const response = await fetch('/api/listening/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: lesson.id,
+          userAnswer: answer,
+          score: comparisonResult.score,
+          accuracy: comparisonResult.accuracy,
+          completed: comparisonResult.score >= 70 // 70점 이상이면 완료
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to save progress')
+      }
+      
+      // XP 적립 (점수에 따라)
+      const xpAmount = Math.floor(comparisonResult.score / 5) // 100점 = 20 XP
+      await fetch('/api/gamification/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: xpAmount,
+          source: 'listening'
+        })
+      })
+      
+      // 결과 모달 표시
+      setShowResult(true)
+      
+    } catch (error) {
+      console.error('Failed to save progress:', error)
+    }
+  }
+  
+  const handleRetry = () => {
+    setSubmitted(false)
+    setUserAnswer('')
+    setResult(null)
+    setShowResult(false)
+  }
+  
+  const handleNext = () => {
+    setShowResult(false)
+    onComplete()
+  }
+  
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          {/* 헤더 */}
+          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Listening 연습</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm text-gray-600">
+                  Level {lesson.difficulty}
+                </span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm text-gray-600">
+                  {lesson.category}
+                </span>
+              </div>
+            </div>
+            
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          {/* 콘텐츠 */}
+          <div className="p-6 space-y-6">
+            {/* 번역 토글 */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowTranslation(!showTranslation)}
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {showTranslation ? (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    번역 숨기기
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    번역 보기
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {/* 번역 */}
+            {showTranslation && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <p className="text-gray-700 text-center">
+                  {lesson.translation}
+                </p>
+              </div>
+            )}
+            
+            {/* 오디오 플레이어 */}
+            <AudioPlayer text={lesson.text} />
+            
+            {/* 받아쓰기 입력 */}
+            {!submitted && (
+              <DictationInput onSubmit={handleSubmit} />
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* 결과 모달 */}
+      {result && (
+        <ResultModal
+          isOpen={showResult}
+          result={result}
+          highlightedWords={getHighlightedWords(lesson.text, result)}
+          originalText={lesson.text}
+          userAnswer={userAnswer}
+          onRetry={handleRetry}
+          onNext={handleNext}
+        />
+      )}
+    </>
+  )
+}
+```
+
+=== 진도 저장 API ===
+
+app/api/listening/progress/route.ts 생성:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { lessonId, userAnswer, score, accuracy, completed } = await req.json()
+
+    // 진도 저장
+    const { data, error } = await supabase
+      .from('listening_progress')
+      .insert({
+        user_id: session.user.id,
+        lesson_id: lessonId,
+        user_answer: userAnswer,
+        score: score,
+        accuracy: accuracy,
+        completed: completed
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // user_stats 업데이트 (오늘 날짜)
+    const today = new Date().toISOString().split('T')[0]
+    
+    const { error: statsError } = await supabase.rpc('update_user_stats', {
+      p_user_id: session.user.id,
+      p_date: today,
+      p_lessons_completed: completed ? 1 : 0,
+      p_time_spent: 60 // 1분 (추정)
+    })
+
+    if (statsError) {
+      console.error('Stats update error:', statsError)
+      // 에러가 나도 진행은 계속
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: data
+    })
+
+  } catch (error) {
+    console.error('Progress save error:', error)
+    return NextResponse.json(
+      { error: 'Failed to save progress' },
+      { status: 500 }
+    )
+  }
+}
+
+// 진도 조회 (통계용)
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('listening_progress')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('completed_at', { ascending: false })
+      .limit(50)
+
+    if (error) throw error
+
+    return NextResponse.json({ progress: data })
+  } catch (error) {
+    console.error('Progress fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch progress' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== Supabase RPC 함수 (통계 업데이트용) ===
+
+Supabase SQL Editor에서 실행:
+```sql
+-- user_stats 업데이트 함수
+CREATE OR REPLACE FUNCTION update_user_stats(
+  p_user_id UUID,
+  p_date DATE,
+  p_lessons_completed INTEGER DEFAULT 0,
+  p_time_spent INTEGER DEFAULT 0
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO user_stats (user_id, date, lessons_completed, time_spent)
+  VALUES (p_user_id, p_date, p_lessons_completed, p_time_spent)
+  ON CONFLICT (user_id, date)
+  DO UPDATE SET
+    lessons_completed = user_stats.lessons_completed + p_lessons_completed,
+    time_spent = user_stats.time_spent + p_time_spent;
+END;
+$$;
+```
+
+=== XP 토스트 알림 ===
+
+ListeningCard.tsx에 토스트 추가:
+```tsx
+import { toast } from 'sonner' // 또는 기존 토스트 라이브러리
+
+// XP 적립 후
+if (xpAmount > 0) {
+  toast.success(`+${xpAmount} XP 획득!`, {
+    icon: '⭐',
+    duration: 3000
+  })
+}
+```
+
+=== 출력 요구사항 ===
+
+1. ✅ 텍스트 비교 알고리즘 작동
+2. ✅ 레벤슈타인 거리로 오타 허용
+3. ✅ 점수 계산 (0-100)
+4. ✅ 정확도 계산 (0-100%)
+5. ✅ 단어별 상태 구분 (맞음/틀림/놓침)
+6. ✅ 결과 모달 표시
+7. ✅ 하이라이트된 정답 표시
+8. ✅ 틀린/놓친 단어 상세 분석
+9. ✅ 진도 DB 저장
+10. ✅ XP 자동 적립 (점수 비례)
+11. ✅ user_stats 업데이트
+12. ✅ 토스트 알림
+13. ✅ 다시 하기 / 다음 레슨 작동
+
+완성 후:
+- Listening 핵심 기능 완성!
+- Speaking과 동일한 점수 시스템
+- 실제 학습 효과 측정 가능
+- Phase 3 (통계/기록) 준비 완료
+
+테스트:
+1. 문장 듣고 받아쓰기
+2. 제출 시 점수 계산
+3. 결과 모달에 상세 분석 표시
+4. 단어별 색상 확인 (초록/빨강/주황)
+5. XP 증가 확인
+6. 일일 목표 업데이트 확인
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 2-3시간
+
+---
+
+## ☕ **구현하는 동안**
+
+**편하게 쉬세요!**
+- 야식
+- 게임
+- 유튜브
+- 휴식
+
+**또는:**
+- 내일 계획 생각하기
+- Phase 3 (통계/기록) 미리 구상
+
+---
+
+## ✅ **완성 확인하기**
+
+**테스트 체크리스트:**
+```
+1. 점수 계산
+   ✅ 받아쓰기 제출 시 점수 나오나?
+   ✅ 0-100점 사이인가?
+   
+2. 결과 모달
+   ✅ 결과 모달 표시되나?
+   ✅ 점수 크게 보이나?
+   ✅ 단어별 색상 구분되나?
+   
+3. 상세 분석
+   ✅ 맞은 단어 (초록색)
+   ✅ 틀린 단어 (빨간색)
+   ✅ 놓친 단어 (주황색)
+   
+4. 진도 저장
+   ✅ DB에 저장되나?
+   ✅ XP 증가하나?
+   ✅ 일일 목표 업데이트?
+   
+5. 버튼
+   ✅ 다시 하기 작동?
+   ✅ 다음 레슨 작동?
+```
+
+---
+
+## 🎉 **완성되면**
+
+**Phase 2 완료!**
+```
+✅ 점수 계산 완성
+✅ 진도 저장 완성
+✅ XP 적립 완성
+✅ 결과 모달 완성
+
+다음 (Phase 3):
+- 학습 기록 페이지
+- 통계 페이지
+- 온보딩
+
+→ 내일 완성하면 Listening 100%!
