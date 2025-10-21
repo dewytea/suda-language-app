@@ -1,46 +1,214 @@
-import { AudioPlayer } from "@/components/AudioPlayer";
-import { ListeningTranscript } from "@/components/ListeningTranscript";
-import { LevelGuide } from "@/components/LevelGuide";
-import { Headphones } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import type { UserProgress } from "@shared/schema";
-import { useState } from "react";
-
-const sentences = [
-  { id: 1, text: "Good morning, how are you today?", translation: "좋은 아침입니다, 오늘 어떻게 지내세요?" },
-  { id: 2, text: "I'm doing well, thank you for asking.", translation: "잘 지내고 있습니다, 물어봐 주셔서 감사합니다." },
-  { id: 3, text: "What are your plans for the weekend?", translation: "주말 계획이 무엇인가요?" },
-  { id: 4, text: "I'm planning to visit the museum.", translation: "박물관을 방문할 계획입니다." },
-  { id: 5, text: "That sounds like a great idea!", translation: "정말 좋은 생각이네요!" },
-];
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Volume2, Clock, BookOpen } from 'lucide-react';
+import { ListeningCard } from '@/components/listening/ListeningCard';
+import { Button } from '@/components/ui/button';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { supabase } from '@/lib/supabase';
+import type { ListeningLesson } from '@shared/schema';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Listening() {
-  const [selectedLanguage] = useState("en");
-
-  const { data: progress } = useQuery<UserProgress>({
-    queryKey: ["/api/progress", selectedLanguage],
+  const { user } = useAuth();
+  const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<ListeningLesson | null>(null);
+  
+  const { data: lessonsData, isLoading } = useQuery<{ lessons: ListeningLesson[] }>({
+    queryKey: ['/api/listening/lessons', { difficulty: selectedDifficulty, category: selectedCategory }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedDifficulty) params.append('difficulty', selectedDifficulty.toString());
+      if (selectedCategory) params.append('category', selectedCategory);
+      
+      const url = params.toString() 
+        ? `/api/listening/lessons?${params}` 
+        : '/api/listening/lessons';
+      
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: await (async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          return session?.access_token 
+            ? { "Authorization": `Bearer ${session.access_token}` }
+            : {};
+        })(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
   });
 
+  const saveProgressMutation = useMutation({
+    mutationFn: async (data: { lessonId: number; userAnswer: string; score: number; accuracy: number }) => {
+      return apiRequest('POST', '/api/listening/progress', data);
+    },
+    onSuccess: () => {
+      // Invalidate all lessons queries (including filtered ones)
+      queryClient.invalidateQueries({ queryKey: ['/api/listening/lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/listening/progress'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/listening/stats'] });
+    }
+  });
+  
+  const handleComplete = async (score: number, accuracy: number, userAnswer: string) => {
+    if (currentLesson) {
+      try {
+        await saveProgressMutation.mutateAsync({
+          lessonId: currentLesson.id,
+          userAnswer,
+          score,
+          accuracy
+        });
+        
+        setCurrentLesson(null);
+      } catch (error) {
+        console.error('Failed to save progress:', error);
+      }
+    }
+  };
+  
+  const lessons = lessonsData?.lessons || [];
+  const categories = ['일상', '여행', '비즈니스'];
+  const difficulties = [1, 2, 3, 4, 5];
+  
+  if (currentLesson) {
+    return (
+      <ListeningCard
+        lesson={currentLesson}
+        onClose={() => setCurrentLesson(null)}
+        onComplete={handleComplete}
+      />
+    );
+  }
+  
   return (
     <div className="space-y-8">
+      {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Headphones className="h-8 w-8 text-skill-listening" />
+        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center">
+          <Volume2 className="w-6 h-6 text-white" />
+        </div>
         <div>
-          <h1 className="font-serif font-bold text-4xl">듣기 연습</h1>
-          <p className="text-muted-foreground mt-1">10분 • 듣기 능력을 향상시키세요</p>
+          <h1 className="font-serif font-bold text-4xl text-foreground">듣기 연습</h1>
+          <p className="text-muted-foreground mt-1">듣고 받아쓰며 청취력을 키워요</p>
         </div>
       </div>
-
-      <LevelGuide level={progress?.level || 1} skill="listening" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div>
-          <AudioPlayer title="일상 대화" duration="5:30" sentences={sentences} />
-        </div>
-        <div>
-          <ListeningTranscript sentences={sentences} currentSentence={1} />
+      
+      {/* 필터 */}
+      <div className="bg-card rounded-xl border p-6">
+        <div className="space-y-4">
+          {/* 난이도 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3">난이도</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedDifficulty === null ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedDifficulty(null)}
+                data-testid="filter-difficulty-all"
+              >
+                전체
+              </Button>
+              {difficulties.map((diff) => (
+                <Button
+                  key={diff}
+                  variant={selectedDifficulty === diff ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedDifficulty(diff)}
+                  data-testid={`filter-difficulty-${diff}`}
+                >
+                  Level {diff}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 카테고리 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-foreground mb-3">카테고리</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={selectedCategory === null ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSelectedCategory(null)}
+                data-testid="filter-category-all"
+              >
+                전체
+              </Button>
+              {categories.map((cat) => (
+                <Button
+                  key={cat}
+                  variant={selectedCategory === cat ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat)}
+                  data-testid={`filter-category-${cat}`}
+                >
+                  {cat}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+      
+      {/* 레슨 리스트 */}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        </div>
+      ) : lessons.length === 0 ? (
+        <div className="text-center py-12">
+          <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">선택한 조건의 레슨이 없어요</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {lessons.map((lesson) => (
+            <button
+              key={lesson.id}
+              onClick={() => setCurrentLesson(lesson)}
+              className="bg-card rounded-xl border p-5 hover-elevate active-elevate-2 transition-all text-left"
+              data-testid={`lesson-card-${lesson.id}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+                    <Volume2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Level {lesson.difficulty}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {lesson.category}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-foreground font-medium mb-2 line-clamp-2">
+                {lesson.text}
+              </p>
+              
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
+                {lesson.translation}
+              </p>
+              
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {lesson.duration}초
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
