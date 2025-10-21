@@ -51,14 +51,17 @@ export async function getChatResponse(
     console.error('OpenAI API error:', error);
     
     if (error.status === 401) {
-      throw new Error('OPENAI_API_KEY is invalid or missing');
+      throw new Error('OpenAI API 키가 유효하지 않습니다. Settings에서 API 키를 확인해주세요.');
     } else if (error.status === 429) {
-      throw new Error('OpenAI API rate limit exceeded. Please try again later.');
+      if (error.code === 'insufficient_quota') {
+        throw new Error('OpenAI API 크레딧이 부족합니다. https://platform.openai.com/settings/organization/billing 에서 크레딧을 충전해주세요.');
+      }
+      throw new Error('OpenAI API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.');
     } else if (error.status === 500) {
-      throw new Error('OpenAI service is temporarily unavailable. Please try again.');
+      throw new Error('OpenAI 서비스에 일시적인 문제가 있습니다. 잠시 후 다시 시도해주세요.');
     }
     
-    throw new Error('Failed to get AI response: ' + error.message);
+    throw new Error('AI 응답 생성 실패: ' + (error.message || '알 수 없는 오류'));
   }
 }
 
