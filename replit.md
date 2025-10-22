@@ -230,3 +230,81 @@ The Listening module provides two distinct learning modes: short-form dictation 
 - Created paragraph-by-paragraph navigation system
 - Expanded category taxonomy to include advanced topics
 - Maintained strict NO-EMOJI policy (lucide-react icons only)
+
+## Vocabulary Dictionary & Personal Notebook
+
+**Overview**
+The Vocabulary system provides an interactive English dictionary with clickable words throughout the app's long-form listening content. Users can look up definitions, hear pronunciations, and save words to their personal vocabulary notebook for later review.
+
+**Core Features**
+
+*ClickableText Component*
+- Interactive word detection: Every word in long-form listening paragraphs is clickable
+- Instant word popup with comprehensive information:
+  - Word definition (from local database or external API fallback)
+  - Phonetic notation (IPA)
+  - Part of speech (noun, verb, adjective, etc.)
+  - Example sentence demonstrating usage
+- Web Speech API integration for native pronunciation playback
+- One-click save to personal vocabulary notebook
+- Visual feedback when word is already saved (bookmark icon changes)
+- Fallback to external dictionary API (dictionaryapi.dev) when word not in local database
+
+*Vocabulary Database*
+- Pre-seeded with 60+ common English words across 5 difficulty levels
+- VocabularyWord schema: word, definition, phonetic, partOfSpeech, exampleSentence, difficultyLevel, frequencyRank
+- UserVocabulary schema: userId, wordId, learned status, timesReviewed, lastReviewedAt, notes
+
+*Personal Vocabulary Page (/learn/vocabulary)*
+- Three-tab filtering system:
+  - "전체" (All): Shows all saved words
+  - "학습중" (Learning): Words marked as in-progress
+  - "외움" (Learned): Words marked as memorized
+- Statistics dashboard:
+  - Total saved words count
+  - Learning words count (orange)
+  - Learned words count (green)
+- Per-word actions:
+  - Toggle learned status (학습중 ↔ 외움)
+  - Delete from vocabulary
+  - Play pronunciation (Volume2 button)
+- Word card display:
+  - Word with phonetic notation
+  - Part of speech badge
+  - Definition and example sentence
+  - Optional user notes field
+
+**Integration Points**
+- LongContentPlayer: All paragraphs render through ClickableText component
+- Sidebar navigation: "내 단어장" link with BookText icon
+- Query invalidation: Vocabulary changes update across all components instantly
+
+**API Endpoints**
+- GET `/api/vocabulary/word?word={word}` - Fetch word definition from database
+- GET `/api/vocabulary/saved?word={word}` - Check if user saved a word
+- POST `/api/vocabulary/save` - Save word to user's vocabulary (body: {wordId})
+- GET `/api/vocabulary/user` - Fetch all user's saved vocabulary
+- POST `/api/vocabulary/update` - Update word status (body: {id, learned, notes})
+- DELETE `/api/vocabulary/delete/:wordId` - Remove word from vocabulary
+
+**Technical Implementation**
+- Storage: MemStorage with 8 vocabulary-specific methods
+- External API: dictionaryapi.dev as fallback for words not in local database
+- Audio: Web Speech API (speechSynthesis) for pronunciation playback
+- State management: TanStack Query for server state, React Query cache invalidation
+- Type safety: Zod schemas with drizzle-zod for validation
+- Testing: All interactive elements include data-testid attributes
+
+**UX Design Principles**
+- Frictionless word lookup: Single click reveals full definition
+- Progressive disclosure: Popup doesn't obstruct content
+- Instant feedback: Toast notifications for save/delete actions
+- Status visualization: Color-coded badges for learning progress
+- Accessibility: Keyboard-friendly, screen-reader compatible
+
+**Recent Updates (October 2025)**
+- Implemented ClickableText component with word popup and dictionary integration
+- Created Vocabulary page with filtering and CRUD operations
+- Integrated vocabulary system into LongContentPlayer for seamless learning
+- Added 60+ pre-seeded English words across 5 difficulty levels
+- Maintained strict NO-EMOJI policy (lucide-react icons only)
