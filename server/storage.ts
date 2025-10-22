@@ -31,6 +31,10 @@ import {
   type InsertListeningLesson,
   type ListeningProgress,
   type InsertListeningProgress,
+  type VocabularyWord,
+  type InsertVocabularyWord,
+  type UserVocabulary,
+  type InsertUserVocabulary,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -122,6 +126,18 @@ export interface IStorage {
     difficultyStats: { difficulty: number; count: number; avgScore: number; avgAccuracy: number }[];
     recentProgress: ListeningProgress[];
   }>;
+
+  // Vocabulary Words
+  getVocabularyWord(word: string): Promise<VocabularyWord | undefined>;
+  getAllVocabularyWords(): Promise<VocabularyWord[]>;
+  addVocabularyWord(word: InsertVocabularyWord): Promise<VocabularyWord>;
+  
+  // User Vocabulary
+  getUserVocabulary(userId: string): Promise<(UserVocabulary & { word: VocabularyWord })[]>;
+  saveUserVocabulary(userVocab: InsertUserVocabulary): Promise<UserVocabulary>;
+  updateUserVocabulary(userId: string, id: number, updates: Partial<UserVocabulary>): Promise<UserVocabulary>;
+  deleteUserVocabulary(userId: string, id: number): Promise<void>;
+  isWordSaved(userId: string, wordId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -143,6 +159,8 @@ export class MemStorage implements IStorage {
   private aiChatStats: Map<string, AIChatStats>;
   private listeningLessons: Map<number, ListeningLesson>;
   private listeningProgress: Map<number, ListeningProgress>;
+  private vocabularyWords: Map<number, VocabularyWord>;
+  private userVocabulary: Map<number, UserVocabulary>;
   private nextId: number;
 
   constructor() {
@@ -164,11 +182,14 @@ export class MemStorage implements IStorage {
     this.aiChatStats = new Map();
     this.listeningLessons = new Map();
     this.listeningProgress = new Map();
+    this.vocabularyWords = new Map();
+    this.userVocabulary = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
     this.initializeSentences();
     this.initializeListeningLessons();
+    this.initializeVocabularyWords();
   }
 
   private initializeAchievementTemplates() {
@@ -832,6 +853,100 @@ export class MemStorage implements IStorage {
     });
   }
 
+  // Initialize Vocabulary Words
+  private initializeVocabularyWords() {
+    const words = [
+      // Level 1 - Basic (초급)
+      { word: "hello", definition: "인사말, 안녕", phonetic: "/həˈləʊ/", partOfSpeech: "interjection", exampleSentence: "Hello, how are you today?", difficultyLevel: 1, frequencyRank: 100 },
+      { word: "good", definition: "좋은, 훌륭한", phonetic: "/ɡʊd/", partOfSpeech: "adjective", exampleSentence: "That is a good idea.", difficultyLevel: 1, frequencyRank: 50 },
+      { word: "time", definition: "시간", phonetic: "/taɪm/", partOfSpeech: "noun", exampleSentence: "What time is it?", difficultyLevel: 1, frequencyRank: 30 },
+      { word: "day", definition: "날, 하루", phonetic: "/deɪ/", partOfSpeech: "noun", exampleSentence: "Have a nice day!", difficultyLevel: 1, frequencyRank: 40 },
+      { word: "thank", definition: "감사하다", phonetic: "/θæŋk/", partOfSpeech: "verb", exampleSentence: "Thank you for your help.", difficultyLevel: 1, frequencyRank: 80 },
+      { word: "help", definition: "돕다, 도움", phonetic: "/help/", partOfSpeech: "verb", exampleSentence: "Can you help me?", difficultyLevel: 1, frequencyRank: 60 },
+      { word: "water", definition: "물", phonetic: "/ˈwɔːtər/", partOfSpeech: "noun", exampleSentence: "I need some water.", difficultyLevel: 1, frequencyRank: 90 },
+      { word: "food", definition: "음식", phonetic: "/fuːd/", partOfSpeech: "noun", exampleSentence: "The food is delicious.", difficultyLevel: 1, frequencyRank: 85 },
+      { word: "name", definition: "이름", phonetic: "/neɪm/", partOfSpeech: "noun", exampleSentence: "What is your name?", difficultyLevel: 1, frequencyRank: 70 },
+      { word: "year", definition: "년, 해", phonetic: "/jɪər/", partOfSpeech: "noun", exampleSentence: "I am twenty years old.", difficultyLevel: 1, frequencyRank: 45 },
+      { word: "people", definition: "사람들", phonetic: "/ˈpiːpl/", partOfSpeech: "noun", exampleSentence: "Many people are here.", difficultyLevel: 1, frequencyRank: 35 },
+      { word: "work", definition: "일, 일하다", phonetic: "/wɜːrk/", partOfSpeech: "noun/verb", exampleSentence: "I work at a school.", difficultyLevel: 1, frequencyRank: 55 },
+      { word: "place", definition: "장소", phonetic: "/pleɪs/", partOfSpeech: "noun", exampleSentence: "This is a nice place.", difficultyLevel: 1, frequencyRank: 65 },
+      { word: "friend", definition: "친구", phonetic: "/frend/", partOfSpeech: "noun", exampleSentence: "She is my best friend.", difficultyLevel: 1, frequencyRank: 75 },
+      
+      // Level 2 - Elementary (기초)
+      { word: "morning", definition: "아침", phonetic: "/ˈmɔːrnɪŋ/", partOfSpeech: "noun", exampleSentence: "Good morning everyone!", difficultyLevel: 2, frequencyRank: 95 },
+      { word: "night", definition: "밤", phonetic: "/naɪt/", partOfSpeech: "noun", exampleSentence: "Good night, sleep well.", difficultyLevel: 2, frequencyRank: 105 },
+      { word: "family", definition: "가족", phonetic: "/ˈfæməli/", partOfSpeech: "noun", exampleSentence: "I love my family.", difficultyLevel: 2, frequencyRank: 110 },
+      { word: "house", definition: "집", phonetic: "/haʊs/", partOfSpeech: "noun", exampleSentence: "This is my house.", difficultyLevel: 2, frequencyRank: 120 },
+      { word: "book", definition: "책", phonetic: "/bʊk/", partOfSpeech: "noun", exampleSentence: "I am reading a book.", difficultyLevel: 2, frequencyRank: 125 },
+      { word: "school", definition: "학교", phonetic: "/skuːl/", partOfSpeech: "noun", exampleSentence: "She goes to school every day.", difficultyLevel: 2, frequencyRank: 115 },
+      { word: "money", definition: "돈", phonetic: "/ˈmʌni/", partOfSpeech: "noun", exampleSentence: "I need some money.", difficultyLevel: 2, frequencyRank: 130 },
+      { word: "world", definition: "세계", phonetic: "/wɜːrld/", partOfSpeech: "noun", exampleSentence: "The world is beautiful.", difficultyLevel: 2, frequencyRank: 135 },
+      
+      // Level 3 - Intermediate (중급)
+      { word: "important", definition: "중요한", phonetic: "/ɪmˈpɔːrtnt/", partOfSpeech: "adjective", exampleSentence: "This is very important.", difficultyLevel: 3, frequencyRank: 150 },
+      { word: "understand", definition: "이해하다", phonetic: "/ˌʌndərˈstænd/", partOfSpeech: "verb", exampleSentence: "I understand your concern.", difficultyLevel: 3, frequencyRank: 120 },
+      { word: "different", definition: "다른, 상이한", phonetic: "/ˈdɪfrənt/", partOfSpeech: "adjective", exampleSentence: "Every situation is different.", difficultyLevel: 3, frequencyRank: 110 },
+      { word: "business", definition: "사업, 업무", phonetic: "/ˈbɪznəs/", partOfSpeech: "noun", exampleSentence: "She runs her own business.", difficultyLevel: 3, frequencyRank: 140 },
+      { word: "develop", definition: "개발하다, 발전시키다", phonetic: "/dɪˈveləp/", partOfSpeech: "verb", exampleSentence: "We need to develop new skills.", difficultyLevel: 3, frequencyRank: 130 },
+      { word: "system", definition: "시스템, 체계", phonetic: "/ˈsɪstəm/", partOfSpeech: "noun", exampleSentence: "The education system needs reform.", difficultyLevel: 3, frequencyRank: 125 },
+      { word: "provide", definition: "제공하다", phonetic: "/prəˈvaɪd/", partOfSpeech: "verb", exampleSentence: "The company provides training.", difficultyLevel: 3, frequencyRank: 135 },
+      { word: "include", definition: "포함하다", phonetic: "/ɪnˈkluːd/", partOfSpeech: "verb", exampleSentence: "The price includes breakfast.", difficultyLevel: 3, frequencyRank: 115 },
+      { word: "continue", definition: "계속하다", phonetic: "/kənˈtɪnjuː/", partOfSpeech: "verb", exampleSentence: "Please continue reading.", difficultyLevel: 3, frequencyRank: 145 },
+      { word: "consider", definition: "고려하다, 생각하다", phonetic: "/kənˈsɪdər/", partOfSpeech: "verb", exampleSentence: "We should consider all options.", difficultyLevel: 3, frequencyRank: 155 },
+      { word: "problem", definition: "문제", phonetic: "/ˈprɒbləm/", partOfSpeech: "noun", exampleSentence: "We need to solve this problem.", difficultyLevel: 3, frequencyRank: 160 },
+      { word: "question", definition: "질문", phonetic: "/ˈkwestʃən/", partOfSpeech: "noun", exampleSentence: "Do you have any questions?", difficultyLevel: 3, frequencyRank: 165 },
+      { word: "government", definition: "정부", phonetic: "/ˈɡʌvərnmənt/", partOfSpeech: "noun", exampleSentence: "The government announced new policies.", difficultyLevel: 3, frequencyRank: 170 },
+      { word: "company", definition: "회사", phonetic: "/ˈkʌmpəni/", partOfSpeech: "noun", exampleSentence: "She works for a tech company.", difficultyLevel: 3, frequencyRank: 175 },
+      { word: "program", definition: "프로그램", phonetic: "/ˈprəʊɡræm/", partOfSpeech: "noun", exampleSentence: "This is a great training program.", difficultyLevel: 3, frequencyRank: 180 },
+      { word: "service", definition: "서비스", phonetic: "/ˈsɜːrvɪs/", partOfSpeech: "noun", exampleSentence: "Their customer service is excellent.", difficultyLevel: 3, frequencyRank: 185 },
+      { word: "public", definition: "공공의, 대중의", phonetic: "/ˈpʌblɪk/", partOfSpeech: "adjective", exampleSentence: "This is a public park.", difficultyLevel: 3, frequencyRank: 190 },
+      { word: "satisfied", definition: "만족한", phonetic: "/ˈsætɪsfaɪd/", partOfSpeech: "adjective", exampleSentence: "I am satisfied with the result.", difficultyLevel: 3, frequencyRank: 190 },
+      
+      // Level 4 - Upper Intermediate (중상급)
+      { word: "artificial", definition: "인공의, 인위적인", phonetic: "/ˌɑːrtɪˈfɪʃl/", partOfSpeech: "adjective", exampleSentence: "Artificial intelligence is advancing rapidly.", difficultyLevel: 4, frequencyRank: 300 },
+      { word: "intelligence", definition: "지능, 정보", phonetic: "/ɪnˈtelɪdʒəns/", partOfSpeech: "noun", exampleSentence: "Human intelligence is remarkable.", difficultyLevel: 4, frequencyRank: 250 },
+      { word: "transform", definition: "변형시키다, 변환하다", phonetic: "/trænsˈfɔːrm/", partOfSpeech: "verb", exampleSentence: "Technology will transform education.", difficultyLevel: 4, frequencyRank: 280 },
+      { word: "research", definition: "연구", phonetic: "/rɪˈsɜːrtʃ/", partOfSpeech: "noun/verb", exampleSentence: "Scientific research takes time.", difficultyLevel: 4, frequencyRank: 200 },
+      { word: "investment", definition: "투자", phonetic: "/ɪnˈvestmənt/", partOfSpeech: "noun", exampleSentence: "This requires significant investment.", difficultyLevel: 4, frequencyRank: 220 },
+      { word: "application", definition: "응용, 신청", phonetic: "/ˌæplɪˈkeɪʃn/", partOfSpeech: "noun", exampleSentence: "Mobile applications are everywhere.", difficultyLevel: 4, frequencyRank: 240 },
+      { word: "prediction", definition: "예측", phonetic: "/prɪˈdɪkʃn/", partOfSpeech: "noun", exampleSentence: "Weather predictions are improving.", difficultyLevel: 4, frequencyRank: 320 },
+      { word: "technology", definition: "기술", phonetic: "/tekˈnɑːlədʒi/", partOfSpeech: "noun", exampleSentence: "New technology changes lives.", difficultyLevel: 4, frequencyRank: 180 },
+      { word: "privacy", definition: "프라이버시, 사생활", phonetic: "/ˈpraɪvəsi/", partOfSpeech: "noun", exampleSentence: "Privacy concerns are growing.", difficultyLevel: 4, frequencyRank: 290 },
+      { word: "melting", definition: "녹는, 용해", phonetic: "/ˈmeltɪŋ/", partOfSpeech: "adjective", exampleSentence: "Ice caps are melting rapidly.", difficultyLevel: 4, frequencyRank: 350 },
+      { word: "species", definition: "종, 종류", phonetic: "/ˈspiːʃiːz/", partOfSpeech: "noun", exampleSentence: "Many species face extinction.", difficultyLevel: 4, frequencyRank: 270 },
+      { word: "habitat", definition: "서식지", phonetic: "/ˈhæbɪtæt/", partOfSpeech: "noun", exampleSentence: "Wildlife habitats are shrinking.", difficultyLevel: 4, frequencyRank: 380 },
+      { word: "renewable", definition: "재생 가능한", phonetic: "/rɪˈnuːəbl/", partOfSpeech: "adjective", exampleSentence: "Renewable energy is the future.", difficultyLevel: 4, frequencyRank: 360 },
+      { word: "sustainable", definition: "지속 가능한", phonetic: "/səˈsteɪnəbl/", partOfSpeech: "adjective", exampleSentence: "We need sustainable practices.", difficultyLevel: 4, frequencyRank: 340 },
+      { word: "achievement", definition: "성취, 업적", phonetic: "/əˈtʃiːvmənt/", partOfSpeech: "noun", exampleSentence: "This is a great achievement.", difficultyLevel: 4, frequencyRank: 260 },
+      { word: "essential", definition: "필수적인", phonetic: "/ɪˈsenʃl/", partOfSpeech: "adjective", exampleSentence: "Water is essential for life.", difficultyLevel: 4, frequencyRank: 230 },
+      { word: "invisible", definition: "보이지 않는", phonetic: "/ɪnˈvɪzəbl/", partOfSpeech: "adjective", exampleSentence: "Love is invisible but real.", difficultyLevel: 4, frequencyRank: 370 },
+      { word: "challenge", definition: "도전, 과제", phonetic: "/ˈtʃælɪndʒ/", partOfSpeech: "noun/verb", exampleSentence: "This is a big challenge.", difficultyLevel: 4, frequencyRank: 210 },
+      { word: "opportunity", definition: "기회", phonetic: "/ˌɒpərˈtjuːnəti/", partOfSpeech: "noun", exampleSentence: "This is a great opportunity.", difficultyLevel: 4, frequencyRank: 195 },
+      
+      // Level 5 - Advanced (고급)
+      { word: "ethics", definition: "윤리", phonetic: "/ˈeθɪks/", partOfSpeech: "noun", exampleSentence: "Medical ethics are important.", difficultyLevel: 5, frequencyRank: 400 },
+      { word: "extinction", definition: "멸종", phonetic: "/ɪkˈstɪŋkʃn/", partOfSpeech: "noun", exampleSentence: "Climate change threatens extinction.", difficultyLevel: 5, frequencyRank: 420 },
+      { word: "phenomenon", definition: "현상", phonetic: "/fəˈnɒmɪnən/", partOfSpeech: "noun", exampleSentence: "This is a natural phenomenon.", difficultyLevel: 5, frequencyRank: 430 },
+      { word: "philosophy", definition: "철학", phonetic: "/fɪˈlɒsəfi/", partOfSpeech: "noun", exampleSentence: "She studies ancient philosophy.", difficultyLevel: 5, frequencyRank: 440 },
+      { word: "sophisticated", definition: "정교한, 세련된", phonetic: "/səˈfɪstɪkeɪtɪd/", partOfSpeech: "adjective", exampleSentence: "This is a sophisticated system.", difficultyLevel: 5, frequencyRank: 450 },
+    ];
+
+    words.forEach((w) => {
+      const id = this.nextId++;
+      this.vocabularyWords.set(id, {
+        id,
+        word: w.word,
+        definition: w.definition,
+        phonetic: w.phonetic,
+        partOfSpeech: w.partOfSpeech,
+        exampleSentence: w.exampleSentence,
+        difficultyLevel: w.difficultyLevel,
+        frequencyRank: w.frequencyRank,
+        createdAt: new Date()
+      });
+    });
+  }
+
   // Listening Lessons
   async getListeningLessons(filters?: { difficulty?: number; category?: string }): Promise<ListeningLesson[]> {
     let lessons = Array.from(this.listeningLessons.values());
@@ -956,6 +1071,110 @@ export class MemStorage implements IStorage {
       difficultyStats,
       recentProgress
     };
+  }
+
+  // Vocabulary Words
+  async getVocabularyWord(word: string): Promise<VocabularyWord | undefined> {
+    const lowerWord = word.toLowerCase();
+    const wordEntry = Array.from(this.vocabularyWords.values()).find(
+      w => w.word.toLowerCase() === lowerWord
+    );
+    return wordEntry;
+  }
+
+  async getAllVocabularyWords(): Promise<VocabularyWord[]> {
+    return Array.from(this.vocabularyWords.values());
+  }
+
+  async addVocabularyWord(word: InsertVocabularyWord): Promise<VocabularyWord> {
+    const id = this.nextId++;
+    const vocabularyWord: VocabularyWord = {
+      id,
+      word: word.word.toLowerCase(),
+      definition: word.definition,
+      phonetic: word.phonetic,
+      partOfSpeech: word.partOfSpeech,
+      exampleSentence: word.exampleSentence,
+      difficultyLevel: word.difficultyLevel,
+      frequencyRank: word.frequencyRank,
+      createdAt: new Date()
+    };
+    this.vocabularyWords.set(id, vocabularyWord);
+    return vocabularyWord;
+  }
+
+  // User Vocabulary
+  async getUserVocabulary(userId: string): Promise<(UserVocabulary & { word: VocabularyWord })[]> {
+    const userVocab = Array.from(this.userVocabulary.values())
+      .filter(v => v.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    
+    const result = userVocab.map(uv => {
+      const word = this.vocabularyWords.get(uv.wordId);
+      if (!word) {
+        throw new Error(`Word ${uv.wordId} not found`);
+      }
+      return {
+        ...uv,
+        word
+      };
+    });
+    
+    return result;
+  }
+
+  async saveUserVocabulary(userVocab: InsertUserVocabulary): Promise<UserVocabulary> {
+    // Check if already exists
+    const existing = Array.from(this.userVocabulary.values()).find(
+      v => v.userId === userVocab.userId && v.wordId === userVocab.wordId
+    );
+    
+    if (existing) {
+      return existing;
+    }
+    
+    const id = this.nextId++;
+    const vocabulary: UserVocabulary = {
+      id,
+      userId: userVocab.userId,
+      wordId: userVocab.wordId,
+      learned: userVocab.learned ?? false,
+      timesReviewed: userVocab.timesReviewed ?? 0,
+      notes: userVocab.notes,
+      createdAt: new Date()
+    };
+    this.userVocabulary.set(id, vocabulary);
+    return vocabulary;
+  }
+
+  async updateUserVocabulary(userId: string, id: number, updates: Partial<UserVocabulary>): Promise<UserVocabulary> {
+    const existing = this.userVocabulary.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error(`User vocabulary ${id} not found`);
+    }
+    
+    const updated: UserVocabulary = {
+      ...existing,
+      ...updates,
+      lastReviewedAt: new Date()
+    };
+    this.userVocabulary.set(id, updated);
+    return updated;
+  }
+
+  async deleteUserVocabulary(userId: string, id: number): Promise<void> {
+    const existing = this.userVocabulary.get(id);
+    if (!existing || existing.userId !== userId) {
+      throw new Error(`User vocabulary ${id} not found`);
+    }
+    this.userVocabulary.delete(id);
+  }
+
+  async isWordSaved(userId: string, wordId: number): Promise<boolean> {
+    const saved = Array.from(this.userVocabulary.values()).find(
+      v => v.userId === userId && v.wordId === wordId
+    );
+    return !!saved;
   }
 }
 

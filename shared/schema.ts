@@ -236,3 +236,29 @@ export const insertListeningProgressSchema = z.object({
 
 export type InsertListeningProgress = z.infer<typeof insertListeningProgressSchema>;
 export type ListeningProgress = InsertListeningProgress & { id: number; completedAt: Date; createdAt: Date };
+
+// Vocabulary Words (단어 사전)
+export const insertVocabularyWordSchema = z.object({
+  word: z.string(),
+  definition: z.string(),
+  phonetic: z.string().optional(),
+  partOfSpeech: z.string().optional(),
+  exampleSentence: z.string().optional(),
+  difficultyLevel: z.number().min(1).max(5).optional(),
+  frequencyRank: z.number().optional(),
+});
+
+export type InsertVocabularyWord = z.infer<typeof insertVocabularyWordSchema>;
+export type VocabularyWord = InsertVocabularyWord & { id: number; createdAt: Date };
+
+// User Vocabulary (사용자 단어장)
+export const insertUserVocabularySchema = z.object({
+  userId: z.string(),
+  wordId: z.number(),
+  learned: z.boolean().default(false),
+  timesReviewed: z.number().default(0),
+  notes: z.string().optional(),
+});
+
+export type InsertUserVocabulary = z.infer<typeof insertUserVocabularySchema>;
+export type UserVocabulary = InsertUserVocabulary & { id: number; lastReviewedAt?: Date; createdAt: Date };

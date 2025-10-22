@@ -1,0 +1,989 @@
+Listening 모듈에 단어 사전 기능과 단어장을 추가해줘.
+
+=== Listening 심화: Phase 2 - 단어 사전 + 단어장 ===
+
+이번 단계에서는 스크립트의 단어를 클릭하면
+뜻이 나오고, 발음을 들을 수 있으며,
+단어장에 저장할 수 있는 기능을 만들 거야.
+
+=== 데이터베이스 테이블 생성 ===
+
+1. vocabulary_words 테이블 (단어 사전):
+```sql
+CREATE TABLE vocabulary_words (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  word TEXT UNIQUE NOT NULL,
+  definition TEXT NOT NULL,
+  phonetic TEXT,
+  part_of_speech TEXT, -- noun, verb, adjective, etc.
+  example_sentence TEXT,
+  difficulty_level INTEGER CHECK (difficulty_level BETWEEN 1 AND 5),
+  frequency_rank INTEGER, -- 사용 빈도
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_vocabulary_words_word ON vocabulary_words(word);
+CREATE INDEX idx_vocabulary_words_difficulty ON vocabulary_words(difficulty_level);
+
+-- 기본 단어 데이터 추가 (100개 정도)
+INSERT INTO vocabulary_words (word, definition, phonetic, part_of_speech, example_sentence, difficulty_level, frequency_rank) VALUES
+-- 초급 (Level 1-2)
+('hello', '인사말, 안녕', '/həˈləʊ/', 'interjection', 'Hello, how are you today?', 1, 100),
+('good', '좋은, 훌륭한', '/ɡʊd/', 'adjective', 'That is a good idea.', 1, 50),
+('time', '시간', '/taɪm/', 'noun', 'What time is it?', 1, 30),
+('day', '날, 하루', '/deɪ/', 'noun', 'Have a nice day!', 1, 40),
+('thank', '감사하다', '/θæŋk/', 'verb', 'Thank you for your help.', 1, 80),
+('help', '돕다, 도움', '/help/', 'verb/noun', 'Can you help me?', 1, 60),
+('water', '물', '/ˈwɔːtər/', 'noun', 'I need some water.', 1, 90),
+('food', '음식', '/fuːd/', 'noun', 'The food is delicious.', 1, 85),
+('name', '이름', '/neɪm/', 'noun', 'What is your name?', 1, 70),
+('year', '년, 해', '/jɪər/', 'noun', 'I am twenty years old.', 1, 45),
+
+-- 중급 (Level 3)
+('important', '중요한', '/ɪmˈpɔːrtnt/', 'adjective', 'This is very important.', 3, 150),
+('understand', '이해하다', '/ˌʌndərˈstænd/', 'verb', 'I understand your concern.', 3, 120),
+('different', '다른, 상이한', '/ˈdɪfrənt/', 'adjective', 'Every situation is different.', 3, 110),
+('business', '사업, 업무', '/ˈbɪznəs/', 'noun', 'She runs her own business.', 3, 140),
+('develop', '개발하다, 발전시키다', '/dɪˈveləp/', 'verb', 'We need to develop new skills.', 3, 130),
+('system', '시스템, 체계', '/ˈsɪstəm/', 'noun', 'The education system needs reform.', 3, 125),
+('provide', '제공하다', '/prəˈvaɪd/', 'verb', 'The company provides training.', 3, 135),
+('include', '포함하다', '/ɪnˈkluːd/', 'verb', 'The price includes breakfast.', 3, 115),
+('continue', '계속하다', '/kənˈtɪnjuː/', 'verb', 'Please continue reading.', 3, 145),
+('consider', '고려하다, 생각하다', '/kənˈsɪdər/', 'verb', 'We should consider all options.', 3, 155),
+
+-- 고급 (Level 4-5)
+('artificial', '인공의, 인위적인', '/ˌɑːrtɪˈfɪʃl/', 'adjective', 'Artificial intelligence is advancing rapidly.', 4, 300),
+('intelligence', '지능, 정보', '/ɪnˈtelɪdʒəns/', 'noun', 'Human intelligence is remarkable.', 4, 250),
+('transform', '변형시키다, 변환하다', '/trænsˈfɔːrm/', 'verb', 'Technology will transform education.', 4, 280),
+('research', '연구', '/rɪˈsɜːrtʃ/', 'noun/verb', 'Scientific research takes time.', 4, 200),
+('investment', '투자', '/ɪnˈvestmənt/', 'noun', 'This requires significant investment.', 4, 220),
+('application', '응용, 신청', '/ˌæplɪˈkeɪʃn/', 'noun', 'Mobile applications are everywhere.', 4, 240),
+('prediction', '예측', '/prɪˈdɪkʃn/', 'noun', 'Weather predictions are improving.', 4, 320),
+('technology', '기술', '/tekˈnɑːlədʒi/', 'noun', 'New technology changes lives.', 4, 180),
+('privacy', '프라이버시, 사생활', '/ˈpraɪvəsi/', 'noun', 'Privacy concerns are growing.', 4, 290),
+('ethics', '윤리', '/ˈeθɪks/', 'noun', 'Medical ethics are important.', 5, 400),
+('melting', '녹는, 용해', '/ˈmeltɪŋ/', 'verb/adjective', 'Ice caps are melting rapidly.', 4, 350),
+('species', '종, 종류', '/ˈspiːʃiːz/', 'noun', 'Many species face extinction.', 4, 270),
+('habitat', '서식지', '/ˈhæbɪtæt/', 'noun', 'Wildlife habitats are shrinking.', 4, 380),
+('renewable', '재생 가능한', '/rɪˈnuːəbl/', 'adjective', 'Renewable energy is the future.', 4, 360),
+('sustainable', '지속 가능한', '/səˈsteɪnəbl/', 'adjective', 'We need sustainable practices.', 4, 340),
+('extinction', '멸종', '/ɪkˈstɪŋkʃn/', 'noun', 'Climate change threatens extinction.', 5, 420),
+('achievement', '성취, 업적', '/əˈtʃiːvmənt/', 'noun', 'This is a great achievement.', 4, 260),
+('essential', '필수적인', '/ɪˈsenʃl/', 'adjective', 'Water is essential for life.', 4, 230),
+('invisible', '보이지 않는', '/ɪnˈvɪzəbl/', 'adjective', 'Love is invisible but real.', 4, 370),
+('satisfied', '만족한', '/ˈsætɪsfaɪd/', 'adjective', 'I am satisfied with the result.', 3, 190);
+
+-- 더 많은 단어 추가 (총 50-100개 정도)
+-- 실제로는 더 많이 추가하되, 예시만 여기 포함
+```
+
+2. user_vocabulary 테이블 (사용자 단어장):
+```sql
+CREATE TABLE user_vocabulary (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  word_id UUID REFERENCES vocabulary_words(id) ON DELETE CASCADE,
+  learned BOOLEAN DEFAULT false,
+  times_reviewed INTEGER DEFAULT 0,
+  last_reviewed_at TIMESTAMP WITH TIME ZONE,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, word_id)
+);
+
+-- 인덱스
+CREATE INDEX idx_user_vocabulary_user_id ON user_vocabulary(user_id);
+CREATE INDEX idx_user_vocabulary_word_id ON user_vocabulary(word_id);
+CREATE INDEX idx_user_vocabulary_learned ON user_vocabulary(learned);
+```
+
+=== 단어 클릭 가능한 텍스트 컴포넌트 ===
+
+components/listening/ClickableText.tsx 생성:
+```tsx
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Volume2, BookmarkPlus, Check } from 'lucide-react'
+
+interface Word {
+  word: string
+  definition: string
+  phonetic?: string
+  part_of_speech?: string
+  example_sentence?: string
+}
+
+interface ClickableTextProps {
+  text: string
+  onWordClick?: (word: string) => void
+}
+
+export default function ClickableText({ text, onWordClick }: ClickableTextProps) {
+  const [selectedWord, setSelectedWord] = useState<string | null>(null)
+  const [wordData, setWordData] = useState<Word | null>(null)
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 })
+  const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const popupRef = useRef<HTMLDivElement>(null)
+  
+  // 단어 클릭 핸들러
+  const handleWordClick = async (word: string, event: React.MouseEvent) => {
+    // 구두점 제거
+    const cleanWord = word.toLowerCase().replace(/[.,!?;:'"]/g, '')
+    
+    if (!cleanWord || cleanWord.length < 2) return
+    
+    setSelectedWord(cleanWord)
+    setLoading(true)
+    setSaved(false)
+    
+    // 팝업 위치 계산
+    const rect = (event.target as HTMLElement).getBoundingClientRect()
+    setPopupPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10
+    })
+    
+    try {
+      // 단어 데이터 가져오기
+      const response = await fetch(`/api/vocabulary/word?word=${cleanWord}`)
+      const data = await response.json()
+      
+      if (data.word) {
+        setWordData(data.word)
+      } else {
+        // DB에 없으면 외부 API 사용
+        const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`)
+        if (dictResponse.ok) {
+          const dictData = await dictResponse.json()
+          const firstEntry = dictData[0]
+          const firstMeaning = firstEntry.meanings[0]
+          
+          setWordData({
+            word: cleanWord,
+            definition: firstMeaning.definitions[0].definition,
+            phonetic: firstEntry.phonetic || '',
+            part_of_speech: firstMeaning.partOfSpeech,
+            example_sentence: firstMeaning.definitions[0].example || ''
+          })
+        } else {
+          setWordData({
+            word: cleanWord,
+            definition: '사전에서 찾을 수 없습니다.',
+            phonetic: '',
+            part_of_speech: '',
+            example_sentence: ''
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch word:', error)
+      setWordData({
+        word: cleanWord,
+        definition: '단어를 불러올 수 없습니다.',
+        phonetic: '',
+        part_of_speech: '',
+        example_sentence: ''
+      })
+    } finally {
+      setLoading(false)
+    }
+    
+    onWordClick?.(cleanWord)
+  }
+  
+  // 발음 듣기
+  const handlePronounce = () => {
+    if (!selectedWord) return
+    
+    const utterance = new SpeechSynthesisUtterance(selectedWord)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.8
+    window.speechSynthesis.speak(utterance)
+  }
+  
+  // 단어장에 저장
+  const handleSave = async () => {
+    if (!wordData) return
+    
+    try {
+      const response = await fetch('/api/vocabulary/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ word: wordData.word })
+      })
+      
+      if (response.ok) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+      }
+    } catch (error) {
+      console.error('Failed to save word:', error)
+    }
+  }
+  
+  // 외부 클릭 시 팝업 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setSelectedWord(null)
+        setWordData(null)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+  
+  // 텍스트를 단어 단위로 분리하고 클릭 가능하게
+  const words = text.split(/(\s+)/)
+  
+  return (
+    <div className="relative">
+      <div className="leading-relaxed">
+        {words.map((word, index) => {
+          if (word.trim()) {
+            return (
+              <span
+                key={index}
+                onClick={(e) => handleWordClick(word, e)}
+                className="cursor-pointer hover:bg-blue-100 hover:text-blue-700 rounded px-0.5 transition-colors"
+              >
+                {word}
+              </span>
+            )
+          }
+          return <span key={index}>{word}</span>
+        })}
+      </div>
+      
+      {/* 단어 팝업 */}
+      {selectedWord && (
+        <div
+          ref={popupRef}
+          className="fixed z-50 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 max-w-sm w-80"
+          style={{
+            left: `${popupPosition.x}px`,
+            top: `${popupPosition.y}px`,
+            transform: 'translate(-50%, -100%)'
+          }}
+        >
+          {loading ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
+            </div>
+          ) : wordData ? (
+            <>
+              {/* 헤더 */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1">
+                  <h4 className="text-lg font-bold text-gray-900">
+                    {wordData.word}
+                  </h4>
+                  {wordData.phonetic && (
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {wordData.phonetic}
+                    </p>
+                  )}
+                  {wordData.part_of_speech && (
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      {wordData.part_of_speech}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex gap-2 ml-2">
+                  <button
+                    onClick={handlePronounce}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="발음 듣기"
+                  >
+                    <Volume2 className="w-4 h-4 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className={`p-2 rounded-lg transition-colors ${
+                      saved
+                        ? 'bg-green-100 text-green-600'
+                        : 'hover:bg-gray-100 text-gray-600'
+                    }`}
+                    title="단어장에 저장"
+                  >
+                    {saved ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <BookmarkPlus className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              {/* 뜻 */}
+              <div className="mb-3">
+                <p className="text-sm font-semibold text-gray-700 mb-1">뜻:</p>
+                <p className="text-sm text-gray-900">{wordData.definition}</p>
+              </div>
+              
+              {/* 예문 */}
+              {wordData.example_sentence && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">예문:</p>
+                  <p className="text-sm text-gray-600 italic">
+                    "{wordData.example_sentence}"
+                  </p>
+                </div>
+              )}
+            </>
+          ) : null}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+=== ListeningCardLong에 ClickableText 추가 ===
+
+components/listening/ListeningCardLong.tsx 수정:
+```tsx
+import ClickableText from './ClickableText'
+
+// 스크립트 부분 수정:
+{showScript && (
+  <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+    <h3 className="font-semibold text-gray-900 mb-4">
+      전체 스크립트
+      <span className="text-sm text-gray-500 font-normal ml-2">
+        (단어를 클릭하면 뜻을 볼 수 있어요)
+      </span>
+    </h3>
+    <div className="space-y-4">
+      {lesson.paragraphs.map((para, index) => (
+        <div
+          key={index}
+          className={`p-4 rounded-lg transition-colors ${
+            currentSentence === index
+              ? 'bg-yellow-50 border-2 border-yellow-300'
+              : 'bg-white border border-gray-200'
+          }`}
+        >
+          <div className="text-gray-900 mb-2 leading-relaxed">
+            <ClickableText text={para.text} />
+          </div>
+          {showTranslation && (
+            <p className="text-sm text-gray-600 pt-2 border-t">
+              {para.translation}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+```
+
+=== 단어장 페이지 ===
+
+app/learn/vocabulary/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { BookOpen, Volume2, Trash2, Check, X } from 'lucide-react'
+import Link from 'next/link'
+
+interface SavedWord {
+  id: string
+  word: string
+  definition: string
+  phonetic?: string
+  part_of_speech?: string
+  example_sentence?: string
+  learned: boolean
+  times_reviewed: number
+  created_at: string
+}
+
+export default function VocabularyPage() {
+  const [words, setWords] = useState<SavedWord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | 'learning' | 'learned'>('all')
+  
+  useEffect(() => {
+    fetchWords()
+  }, [])
+  
+  const fetchWords = async () => {
+    try {
+      const response = await fetch('/api/vocabulary/saved')
+      const data = await response.json()
+      setWords(data.words || [])
+    } catch (error) {
+      console.error('Failed to fetch words:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handlePronounce = (word: string) => {
+    const utterance = new SpeechSynthesisUtterance(word)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.8
+    window.speechSynthesis.speak(utterance)
+  }
+  
+  const handleToggleLearned = async (wordId: string, currentStatus: boolean) => {
+    try {
+      await fetch('/api/vocabulary/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wordId: wordId,
+          learned: !currentStatus
+        })
+      })
+      fetchWords()
+    } catch (error) {
+      console.error('Failed to update word:', error)
+    }
+  }
+  
+  const handleDelete = async (wordId: string) => {
+    if (!confirm('이 단어를 삭제하시겠습니까?')) return
+    
+    try {
+      await fetch(`/api/vocabulary/delete?wordId=${wordId}`, {
+        method: 'DELETE'
+      })
+      fetchWords()
+    } catch (error) {
+      console.error('Failed to delete word:', error)
+    }
+  }
+  
+  const filteredWords = words.filter(word => {
+    if (filter === 'learned') return word.learned
+    if (filter === 'learning') return !word.learned
+    return true
+  })
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
+  
+  if (words.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+        <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          단어장이 비어있어요
+        </h3>
+        <p className="text-gray-600 mb-6">
+          Listening 연습 중 단어를 클릭해서 저장해보세요!
+        </p>
+        <Link
+          href="/learn/listening"
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Listening 연습하기
+        </Link>
+      </div>
+    )
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">나의 단어장</h1>
+        <p className="text-gray-600">저장한 단어를 복습하세요</p>
+      </div>
+      
+      {/* 필터 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            전체 ({words.length})
+          </button>
+          <button
+            onClick={() => setFilter('learning')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'learning'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            학습 중 ({words.filter(w => !w.learned).length})
+          </button>
+          <button
+            onClick={() => setFilter('learned')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === 'learned'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            외운 단어 ({words.filter(w => w.learned).length})
+          </button>
+        </div>
+      </div>
+      
+      {/* 단어 리스트 */}
+      <div className="space-y-3">
+        {filteredWords.map((word) => (
+          <div
+            key={word.id}
+            className="bg-white rounded-xl border border-gray-200 p-5 hover:border-blue-300 hover:shadow-md transition-all"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {word.word}
+                  </h3>
+                  {word.phonetic && (
+                    <span className="text-sm text-gray-500">
+                      {word.phonetic}
+                    </span>
+                  )}
+                  {word.part_of_speech && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                      {word.part_of_speech}
+                    </span>
+                  )}
+                </div>
+                
+                <p className="text-gray-700 mb-3">
+                  {word.definition}
+                </p>
+                
+                {word.example_sentence && (
+                  <p className="text-sm text-gray-600 italic mb-3">
+                    "{word.example_sentence}"
+                  </p>
+                )}
+                
+                <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <span>복습 {word.times_reviewed}회</span>
+                  <span>
+                    {new Date(word.created_at).toLocaleDateString('ko-KR')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-2 ml-4">
+                <button
+                  onClick={() => handlePronounce(word.word)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="발음 듣기"
+                >
+                  <Volume2 className="w-5 h-5 text-gray-600" />
+                </button>
+                
+                <button
+                  onClick={() => handleToggleLearned(word.id, word.learned)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    word.learned
+                      ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  title={word.learned ? '학습 중으로 변경' : '외웠음으로 표시'}
+                >
+                  {word.learned ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <X className="w-5 h-5" />
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => handleDelete(word.id)}
+                  className="p-2 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors"
+                  title="삭제"
+                >
+                  <Trash2 className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+=== API 엔드포인트들 ===
+
+1. app/api/vocabulary/word/route.ts (단어 조회):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const word = searchParams.get('word')
+    
+    if (!word) {
+      return NextResponse.json(
+        { error: 'Word parameter required' },
+        { status: 400 }
+      )
+    }
+    
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const { data, error } = await supabase
+      .from('vocabulary_words')
+      .select('*')
+      .ilike('word', word)
+      .single()
+    
+    if (error) {
+      return NextResponse.json({ word: null })
+    }
+    
+    return NextResponse.json({ word: data })
+  } catch (error) {
+    console.error('Word fetch error:', error)
+    return NextResponse.json({ word: null })
+  }
+}
+```
+
+2. app/api/vocabulary/save/route.ts (단어장 저장):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { word } = await req.json()
+    
+    // 단어 찾기 또는 생성
+    let wordData = await supabase
+      .from('vocabulary_words')
+      .select('id')
+      .ilike('word', word)
+      .single()
+    
+    let wordId: string
+    
+    if (wordData.data) {
+      wordId = wordData.data.id
+    } else {
+      // 외부 API에서 단어 정보 가져오기
+      try {
+        const dictResponse = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+        if (dictResponse.ok) {
+          const dictData = await dictResponse.json()
+          const firstEntry = dictData[0]
+          const firstMeaning = firstEntry.meanings[0]
+          
+          const { data: newWord, error: createError } = await supabase
+            .from('vocabulary_words')
+            .insert({
+              word: word.toLowerCase(),
+              definition: firstMeaning.definitions[0].definition,
+              phonetic: firstEntry.phonetic || '',
+              part_of_speech: firstMeaning.partOfSpeech,
+              example_sentence: firstMeaning.definitions[0].example || ''
+            })
+            .select()
+            .single()
+          
+          if (createError) throw createError
+          wordId = newWord.id
+        } else {
+          throw new Error('Dictionary API failed')
+        }
+      } catch (dictError) {
+        // 기본 정보로 생성
+        const { data: newWord, error: createError } = await supabase
+          .from('vocabulary_words')
+          .insert({
+            word: word.toLowerCase(),
+            definition: 'Definition not available',
+            phonetic: '',
+            part_of_speech: 'unknown'
+          })
+          .select()
+          .single()
+        
+        if (createError) throw createError
+        wordId = newWord.id
+      }
+    }
+    
+    // 사용자 단어장에 저장
+    const { error: saveError } = await supabase
+      .from('user_vocabulary')
+      .upsert({
+        user_id: session.user.id,
+        word_id: wordId
+      })
+    
+    if (saveError) throw saveError
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Save word error:', error)
+    return NextResponse.json(
+      { error: 'Failed to save word' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+3. app/api/vocabulary/saved/route.ts (저장된 단어 목록):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('user_vocabulary')
+      .select(`
+        id,
+        learned,
+        times_reviewed,
+        created_at,
+        vocabulary_words (
+          word,
+          definition,
+          phonetic,
+          part_of_speech,
+          example_sentence
+        )
+      `)
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+    
+    if (error) throw error
+    
+    // 데이터 평탄화
+    const words = data.map(item => ({
+      id: item.id,
+      word: item.vocabulary_words.word,
+      definition: item.vocabulary_words.definition,
+      phonetic: item.vocabulary_words.phonetic,
+      part_of_speech: item.vocabulary_words.part_of_speech,
+      example_sentence: item.vocabulary_words.example_sentence,
+      learned: item.learned,
+      times_reviewed: item.times_reviewed,
+      created_at: item.created_at
+    }))
+    
+    return NextResponse.json({ words })
+  } catch (error) {
+    console.error('Fetch saved words error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch words' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+4. app/api/vocabulary/update/route.ts (단어 상태 업데이트):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { wordId, learned } = await req.json()
+    
+    const { error } = await supabase
+      .from('user_vocabulary')
+      .update({
+        learned: learned,
+        times_reviewed: learned 
+          ? supabase.rpc('increment_times_reviewed', { row_id: wordId })
+          : undefined,
+        last_reviewed_at: new Date().toISOString()
+      })
+      .eq('id', wordId)
+      .eq('user_id', session.user.id)
+    
+    if (error) throw error
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Update word error:', error)
+    return NextResponse.json(
+      { error: 'Failed to update word' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+5. app/api/vocabulary/delete/route.ts (단어 삭제):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const wordId = searchParams.get('wordId')
+    
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { error } = await supabase
+      .from('user_vocabulary')
+      .delete()
+      .eq('id', wordId)
+      .eq('user_id', session.user.id)
+    
+    if (error) throw error
+    
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Delete word error:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete word' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 사이드바 메뉴 업데이트 ===
+
+기존 사이드바에 Vocabulary 메뉴 추가:
+
+Vocabulary 메뉴:
+- 아이콘: 📚 또는 <BookOpen />
+- 링크: /learn/vocabulary
+- 단일 페이지 (하위 메뉴 없음)
+
+=== 출력 요구사항 ===
+
+1. ✅ vocabulary_words 테이블 생성
+2. ✅ user_vocabulary 테이블 생성
+3. ✅ 기본 단어 50-100개 추가
+4. ✅ ClickableText 컴포넌트
+5. ✅ 단어 클릭 → 뜻 팝업
+6. ✅ 발음 듣기 버튼
+7. ✅ 단어장 저장 버튼
+8. ✅ 외부 사전 API 연동 (fallback)
+9. ✅ 단어장 페이지 (/learn/vocabulary)
+10. ✅ 필터 (전체/학습중/외운단어)
+11. ✅ 외웠음 토글
+12. ✅ 단어 삭제
+13. ✅ API 엔드포인트 5개
+14. ✅ 모바일 반응형
+
+완성 후:
+- Listening Phase 2 완료!
+- 단어 사전 기능 완성
+- 단어장 시스템 완성
+- 내일 Phase 3 (콘텐츠 대량 추가)
+
+테스트:
+1. Listening 긴 컨텐츠 열기
+2. 스크립트 보기
+3. 단어 클릭 → 팝업 확인
+4. 발음 듣기
+5. 단어장 저장
+6. /learn/vocabulary 접속
+7. 저장된 단어 확인
+8. 외웠음 토글
+9. 단어 삭제
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 3-4시간
+
+---
+
+## 🎉 **완성되면**
+
+**Phase 2 완료!**
+```
+✅ Phase 1: 긴 컨텐츠 + 속도 조절
+✅ Phase 2: 단어 사전 + 단어장
+
+다음 (Phase 3):
+- 콘텐츠 대량 추가 (20-30개)
+- 다양한 주제 (뉴스, 명언, 문학 등)
+
+→ 내일 완성하면 Listening 100%!
