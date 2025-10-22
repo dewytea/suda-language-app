@@ -1,11 +1,3 @@
-import { useState } from 'react';
-import { X, Eye, EyeOff } from 'lucide-react';
-import { AudioPlayer } from './AudioPlayer';
-import { DictationInput } from './DictationInput';
-import ResultModal from './ResultModal';
-import { Button } from '@/components/ui/button';
-import type { ListeningLesson } from '@shared/schema';
-import { compareTexts, getHighlightedWords, type ComparisonResult } from '@/lib/listening/scoreUtils';
 
 interface ListeningCardProps {
   lesson: ListeningLesson;
