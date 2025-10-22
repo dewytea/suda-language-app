@@ -171,3 +171,62 @@ The architecture separates concerns cleanly: React handles UI presentation, TanS
 - Clear error messages directing users to Settings page
 - API service availability check before making AI requests
 - Korean-language error messages for user accessibility
+
+## Listening Module
+
+**Overview**
+The Listening module provides two distinct learning modes: short-form dictation practice and long-form content listening with paragraph-by-paragraph navigation.
+
+**Content Types**
+
+*Short-Form Dictation (Levels 1-3)*
+- Categories: 일상 (daily life), 여행 (travel), 비즈니스 (business)
+- Duration: 2-6 seconds per sentence
+- Interactive dictation with Levenshtein distance scoring
+- Real-time accuracy feedback with highlighted differences
+- Progress tracking with score and accuracy metrics
+
+*Long-Form Content (Levels 4-5)*
+- Categories: AI/테크, 명언, 역사, 문학, 환경/과학
+- Duration: 45-60 seconds (30s-3min range)
+- Word count: 56-85 words per lesson
+- Paragraph-by-paragraph navigation and playback
+- Per-paragraph translation toggle
+- No dictation requirement (pure listening comprehension)
+
+**Audio Playback Features**
+
+*AudioPlayerAdvanced Component*
+- Web Speech API integration for text-to-speech
+- Playback speed control: 0.5x, 0.75x, 1.0x, 1.25x, 1.5x
+- Visual progress bar
+- Play/pause/restart controls
+- Exposed imperative handle (play, pause, restart) via forwardRef
+- Browser compatibility fallback messaging
+
+*LongContentPlayer Component*
+- Individual paragraph playback with dedicated play buttons
+- Full content playback mode
+- Per-paragraph translation toggle (show/hide)
+- Full translation display at bottom
+- Visual highlighting of currently playing paragraph
+- Seamless transition between paragraph and full playback
+
+**Data Schema**
+- `contentType`: 'sentence' | 'long' - distinguishes dictation vs listening-only lessons
+- `paragraphs`: Array of {text, translation} objects for long content
+- `wordCount`: Total word count for long content
+- `estimatedDuration`: Expected listening duration in seconds
+
+**UI/UX Design**
+- Long content cards display purple gradient (vs green/blue for dictation)
+- "긴 컨텐츠" badge for quick identification
+- Word count and duration metadata displayed prominently
+- Completion button (no scoring) for long content vs dictation submission for short content
+
+**Recent Updates (October 2025)**
+- Added long-form listening content feature with 5 sample lessons
+- Implemented AudioPlayerAdvanced with playback speed control
+- Created paragraph-by-paragraph navigation system
+- Expanded category taxonomy to include advanced topics
+- Maintained strict NO-EMOJI policy (lucide-react icons only)
