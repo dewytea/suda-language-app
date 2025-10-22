@@ -210,8 +210,15 @@ export const insertListeningLessonSchema = z.object({
   translation: z.string(),
   audioUrl: z.string().optional(),
   difficulty: z.number().min(1).max(5),
-  category: z.enum(["일상", "여행", "비즈니스"]),
+  category: z.enum(["일상", "여행", "비즈니스", "AI/테크", "명언", "역사", "문학", "환경/과학"]),
   duration: z.number(), // seconds
+  contentType: z.enum(["sentence", "long"]).default("sentence"),
+  paragraphs: z.array(z.object({
+    text: z.string(),
+    translation: z.string(),
+  })).optional(),
+  wordCount: z.number().optional(),
+  estimatedDuration: z.number().optional(), // seconds for long content
 });
 
 export type InsertListeningLesson = z.infer<typeof insertListeningLessonSchema>;

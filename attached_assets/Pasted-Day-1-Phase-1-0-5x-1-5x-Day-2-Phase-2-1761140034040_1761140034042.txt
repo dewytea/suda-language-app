@@ -1,0 +1,818 @@
+Day 1 (오늘): Phase 1 - 긴 컨텐츠 시스템
+├─ 문단별 스크립트 표시
+├─ 속도 조절 (0.5x ~ 1.5x)
+└─ 문장별 번역
+
+Day 2: Phase 2 - 단어 사전 기능
+├─ 단어 클릭 → 뜻 팝업
+├─ 발음 듣기
+└─ 단어장 저장
+
+Day 3: Phase 3 - 콘텐츠 대량 추가
+├─ 뉴스 10개
+├─ 명언 5개
+├─ 문학 5개
+└─ 역사/AI 뉴스 등
+
+Day 4: Phase 4 - 이해도 퀴즈 (선택)
+├─ 객관식 문제
+├─ 정답/해설
+└─ XP 추가
+```
+
+---
+
+## 🚀 **Phase 1: 긴 컨텐츠 시스템 (지금 시작!)**
+
+### ⏰ **예상 소요 시간: 3-4시간**
+
+---
+
+## 📝 **Replit Agent에 바로 붙여넣으세요!**
+```
+Listening 모듈에 긴 컨텐츠와 고급 기능을 추가해줘.
+
+=== Listening 심화: Phase 1 - 긴 컨텐츠 시스템 ===
+
+이번 단계에서는 30초~3분 분량의 긴 컨텐츠를
+문단별로 표시하고, 속도 조절 기능을 추가할 거야.
+
+=== 데이터베이스 업데이트 ===
+
+listening_lessons 테이블에 컬럼 추가:
+```sql
+-- 새 컬럼 추가
+ALTER TABLE listening_lessons 
+ADD COLUMN content_type TEXT DEFAULT 'sentence',
+ADD COLUMN paragraphs JSONB,
+ADD COLUMN word_count INTEGER,
+ADD COLUMN estimated_duration INTEGER;
+
+-- content_type: 'sentence' (기존) 또는 'long' (새로운)
+-- paragraphs: 문단별 텍스트와 번역 [{text: "", translation: ""}]
+-- word_count: 전체 단어 수
+-- estimated_duration: 예상 소요 시간 (초)
+
+-- 인덱스 추가
+CREATE INDEX idx_listening_lessons_content_type ON listening_lessons(content_type);
+CREATE INDEX idx_listening_lessons_word_count ON listening_lessons(word_count);
+```
+
+긴 컨텐츠 샘플 데이터 추가 (Level 4-5):
+```sql
+-- 1. 데일리 뉴스 (기술)
+INSERT INTO listening_lessons (
+  text, 
+  translation, 
+  difficulty, 
+  category, 
+  content_type,
+  paragraphs,
+  word_count,
+  estimated_duration
+) VALUES (
+  'Artificial intelligence continues to transform our daily lives. Companies worldwide are investing billions in AI research. From smart assistants to self-driving cars, AI applications are everywhere. Experts predict AI will create millions of new jobs while changing many existing ones. The technology raises important questions about privacy and ethics.',
+  '인공지능은 계속해서 우리의 일상을 변화시키고 있습니다. 전 세계 기업들이 AI 연구에 수십억 달러를 투자하고 있습니다. 스마트 어시스턴트부터 자율주행차까지, AI 애플리케이션은 어디에나 있습니다. 전문가들은 AI가 수백만 개의 새로운 일자리를 창출하면서 많은 기존 일자리를 변화시킬 것이라고 예측합니다. 이 기술은 프라이버시와 윤리에 관한 중요한 질문을 제기합니다.',
+  4,
+  'AI/테크',
+  'long',
+  '[
+    {"text": "Artificial intelligence continues to transform our daily lives.", "translation": "인공지능은 계속해서 우리의 일상을 변화시키고 있습니다."},
+    {"text": "Companies worldwide are investing billions in AI research.", "translation": "전 세계 기업들이 AI 연구에 수십억 달러를 투자하고 있습니다."},
+    {"text": "From smart assistants to self-driving cars, AI applications are everywhere.", "translation": "스마트 어시스턴트부터 자율주행차까지, AI 애플리케이션은 어디에나 있습니다."},
+    {"text": "Experts predict AI will create millions of new jobs while changing many existing ones.", "translation": "전문가들은 AI가 수백만 개의 새로운 일자리를 창출하면서 많은 기존 일자리를 변화시킬 것이라고 예측합니다."},
+    {"text": "The technology raises important questions about privacy and ethics.", "translation": "이 기술은 프라이버시와 윤리에 관한 중요한 질문을 제기합니다."}
+  ]'::jsonb,
+  56,
+  45
+);
+
+-- 2. 명언 (스티브 잡스)
+INSERT INTO listening_lessons (
+  text,
+  translation,
+  difficulty,
+  category,
+  content_type,
+  paragraphs,
+  word_count,
+  estimated_duration
+) VALUES (
+  'Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work. And the only way to do great work is to love what you do. If you have not found it yet, keep looking. Do not settle. As with all matters of the heart, you will know when you find it.',
+  '당신의 일은 인생의 많은 부분을 채울 것이고, 진정으로 만족하는 유일한 방법은 위대한 일이라고 믿는 것을 하는 것입니다. 그리고 위대한 일을 하는 유일한 방법은 당신이 하는 일을 사랑하는 것입니다. 아직 찾지 못했다면 계속 찾으세요. 타협하지 마세요. 마음의 모든 문제와 마찬가지로, 당신은 그것을 찾았을 때 알게 될 것입니다.',
+  4,
+  '명언',
+  'long',
+  '[
+    {"text": "Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work.", "translation": "당신의 일은 인생의 많은 부분을 채울 것이고, 진정으로 만족하는 유일한 방법은 위대한 일이라고 믿는 것을 하는 것입니다."},
+    {"text": "And the only way to do great work is to love what you do.", "translation": "그리고 위대한 일을 하는 유일한 방법은 당신이 하는 일을 사랑하는 것입니다."},
+    {"text": "If you have not found it yet, keep looking. Do not settle.", "translation": "아직 찾지 못했다면 계속 찾으세요. 타협하지 마세요."},
+    {"text": "As with all matters of the heart, you will know when you find it.", "translation": "마음의 모든 문제와 마찬가지로, 당신은 그것을 찾았을 때 알게 될 것입니다."}
+  ]'::jsonb,
+  73,
+  55
+);
+
+-- 3. 역사적 뉴스 (달 착륙)
+INSERT INTO listening_lessons (
+  text,
+  translation,
+  difficulty,
+  category,
+  content_type,
+  paragraphs,
+  word_count,
+  estimated_duration
+) VALUES (
+  'On July 20, 1969, humans landed on the Moon for the first time. Neil Armstrong and Buzz Aldrin walked on the lunar surface while Michael Collins orbited above. Armstrong''s famous words, "That''s one small step for man, one giant leap for mankind," echoed around the world. The mission took four days to reach the Moon. It represented years of scientific research and engineering achievements. The event inspired millions and marked a new era in space exploration.',
+  '1969년 7월 20일, 인류는 처음으로 달에 착륙했습니다. 닐 암스트롱과 버즈 올드린이 달 표면을 걸었고, 마이클 콜린스는 위에서 궤도를 돌았습니다. 암스트롱의 유명한 말, "이것은 한 사람에게는 작은 발걸음이지만, 인류에게는 거대한 도약입니다"는 전 세계에 울려 퍼졌습니다. 임무는 달에 도달하는 데 4일이 걸렸습니다. 그것은 수년간의 과학 연구와 공학적 업적을 나타냅니다. 이 사건은 수백만 명에게 영감을 주었고 우주 탐사의 새로운 시대를 열었습니다.',
+  4,
+  '역사',
+  'long',
+  '[
+    {"text": "On July 20, 1969, humans landed on the Moon for the first time.", "translation": "1969년 7월 20일, 인류는 처음으로 달에 착륙했습니다."},
+    {"text": "Neil Armstrong and Buzz Aldrin walked on the lunar surface while Michael Collins orbited above.", "translation": "닐 암스트롱과 버즈 올드린이 달 표면을 걸었고, 마이클 콜린스는 위에서 궤도를 돌았습니다."},
+    {"text": "Armstrong''s famous words, \"That''s one small step for man, one giant leap for mankind,\" echoed around the world.", "translation": "암스트롱의 유명한 말, \"이것은 한 사람에게는 작은 발걸음이지만, 인류에게는 거대한 도약입니다\"는 전 세계에 울려 퍼졌습니다."},
+    {"text": "The mission took four days to reach the Moon.", "translation": "임무는 달에 도달하는 데 4일이 걸렸습니다."},
+    {"text": "It represented years of scientific research and engineering achievements.", "translation": "그것은 수년간의 과학 연구와 공학적 업적을 나타냅니다."},
+    {"text": "The event inspired millions and marked a new era in space exploration.", "translation": "이 사건은 수백만 명에게 영감을 주었고 우주 탐사의 새로운 시대를 열었습니다."}
+  ]'::jsonb,
+  85,
+  60
+);
+
+-- 4. 문학 (The Little Prince 발췌)
+INSERT INTO listening_lessons (
+  text,
+  translation,
+  difficulty,
+  category,
+  content_type,
+  paragraphs,
+  word_count,
+  estimated_duration
+) VALUES (
+  'It is only with the heart that one can see rightly. What is essential is invisible to the eye. The most beautiful things in the world cannot be seen or touched. They must be felt with the heart. Time spent with someone you love is never wasted. The greatest glory in living lies not in never falling, but in rising every time we fall.',
+  '오직 마음으로만 제대로 볼 수 있습니다. 본질적인 것은 눈에 보이지 않습니다. 세상에서 가장 아름다운 것들은 보거나 만질 수 없습니다. 그것들은 마음으로 느껴야 합니다. 사랑하는 사람과 함께 보낸 시간은 결코 낭비되지 않습니다. 인생의 가장 큰 영광은 결코 넘어지지 않는 것이 아니라, 넘어질 때마다 일어서는 것입니다.',
+  5,
+  '문학',
+  'long',
+  '[
+    {"text": "It is only with the heart that one can see rightly.", "translation": "오직 마음으로만 제대로 볼 수 있습니다."},
+    {"text": "What is essential is invisible to the eye.", "translation": "본질적인 것은 눈에 보이지 않습니다."},
+    {"text": "The most beautiful things in the world cannot be seen or touched.", "translation": "세상에서 가장 아름다운 것들은 보거나 만질 수 없습니다."},
+    {"text": "They must be felt with the heart.", "translation": "그것들은 마음으로 느껴야 합니다."},
+    {"text": "Time spent with someone you love is never wasted.", "translation": "사랑하는 사람과 함께 보낸 시간은 결코 낭비되지 않습니다."},
+    {"text": "The greatest glory in living lies not in never falling, but in rising every time we fall.", "translation": "인생의 가장 큰 영광은 결코 넘어지지 않는 것이 아니라, 넘어질 때마다 일어서는 것입니다."}
+  ]'::jsonb,
+  75,
+  55
+);
+
+-- 5. 환경 뉴스
+INSERT INTO listening_lessons (
+  text,
+  translation,
+  difficulty,
+  category,
+  content_type,
+  paragraphs,
+  word_count,
+  estimated_duration
+) VALUES (
+  'Climate change affects every corner of our planet. Rising temperatures are melting polar ice caps and raising sea levels. Extreme weather events are becoming more frequent and severe. Many species face extinction as their habitats disappear. Scientists warn we have limited time to take action. Renewable energy and sustainable practices offer hope for the future.',
+  '기후 변화는 지구의 모든 곳에 영향을 미칩니다. 온도 상승으로 극지방의 빙하가 녹고 해수면이 상승하고 있습니다. 극단적인 기상 현상이 더 빈번하고 심각해지고 있습니다. 많은 종들이 서식지가 사라지면서 멸종 위기에 처해 있습니다. 과학자들은 우리에게 행동할 시간이 제한되어 있다고 경고합니다. 재생 가능 에너지와 지속 가능한 관행이 미래에 대한 희망을 제공합니다.',
+  4,
+  '환경/과학',
+  'long',
+  '[
+    {"text": "Climate change affects every corner of our planet.", "translation": "기후 변화는 지구의 모든 곳에 영향을 미칩니다."},
+    {"text": "Rising temperatures are melting polar ice caps and raising sea levels.", "translation": "온도 상승으로 극지방의 빙하가 녹고 해수면이 상승하고 있습니다."},
+    {"text": "Extreme weather events are becoming more frequent and severe.", "translation": "극단적인 기상 현상이 더 빈번하고 심각해지고 있습니다."},
+    {"text": "Many species face extinction as their habitats disappear.", "translation": "많은 종들이 서식지가 사라지면서 멸종 위기에 처해 있습니다."},
+    {"text": "Scientists warn we have limited time to take action.", "translation": "과학자들은 우리에게 행동할 시간이 제한되어 있다고 경고합니다."},
+    {"text": "Renewable energy and sustainable practices offer hope for the future.", "translation": "재생 가능 에너지와 지속 가능한 관행이 미래에 대한 희망을 제공합니다."}
+  ]'::jsonb,
+  68,
+  50
+);
+```
+
+=== 향상된 AudioPlayer 컴포넌트 ===
+
+components/listening/AudioPlayerAdvanced.tsx 생성:
+```tsx
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { Play, Pause, RotateCcw, Volume2, Gauge } from 'lucide-react'
+
+interface AudioPlayerAdvancedProps {
+  text: string
+  paragraphs?: Array<{ text: string; translation: string }>
+  onPlayComplete?: () => void
+  onSentenceChange?: (index: number) => void
+}
+
+export default function AudioPlayerAdvanced({ 
+  text, 
+  paragraphs,
+  onPlayComplete,
+  onSentenceChange 
+}: AudioPlayerAdvancedProps) {
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [playbackRate, setPlaybackRate] = useState(1.0)
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1)
+  
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  const speeds = [
+    { value: 0.5, label: '0.5x', icon: '🐢' },
+    { value: 0.75, label: '0.75x', icon: '🐇' },
+    { value: 1.0, label: '1x', icon: '▶️' },
+    { value: 1.25, label: '1.25x', icon: '⚡' },
+    { value: 1.5, label: '1.5x', icon: '🚀' }
+  ]
+  
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      utteranceRef.current = new SpeechSynthesisUtterance(text)
+      utteranceRef.current.lang = 'en-US'
+      utteranceRef.current.rate = playbackRate
+      utteranceRef.current.pitch = 1
+      
+      // 문장별 진행 추적 (근사치)
+      if (paragraphs && paragraphs.length > 0) {
+        utteranceRef.current.onboundary = (event) => {
+          if (event.name === 'sentence') {
+            const charIndex = event.charIndex
+            let cumulative = 0
+            for (let i = 0; i < paragraphs.length; i++) {
+              cumulative += paragraphs[i].text.length
+              if (charIndex < cumulative) {
+                setCurrentSentenceIndex(i)
+                onSentenceChange?.(i)
+                break
+              }
+            }
+          }
+        }
+      }
+      
+      utteranceRef.current.onend = () => {
+        setIsPlaying(false)
+        setProgress(100)
+        setCurrentSentenceIndex(-1)
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current)
+        }
+        onPlayComplete?.()
+      }
+    }
+    
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    }
+  }, [text, playbackRate, paragraphs])
+  
+  const handlePlay = () => {
+    if (!utteranceRef.current) return
+    
+    if (isPlaying) {
+      window.speechSynthesis.cancel()
+      setIsPlaying(false)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
+    } else {
+      setProgress(0)
+      setCurrentSentenceIndex(-1)
+      window.speechSynthesis.speak(utteranceRef.current)
+      setIsPlaying(true)
+      
+      const words = text.split(' ').length
+      const estimatedDuration = (words * 0.6 * 1000) / playbackRate
+      const interval = estimatedDuration / 100
+      
+      progressIntervalRef.current = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 100) {
+            if (progressIntervalRef.current) {
+              clearInterval(progressIntervalRef.current)
+            }
+            return 100
+          }
+          return prev + 1
+        })
+      }, interval)
+    }
+  }
+  
+  const handleRestart = () => {
+    window.speechSynthesis.cancel()
+    setProgress(0)
+    setIsPlaying(false)
+    setCurrentSentenceIndex(-1)
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current)
+    }
+  }
+  
+  const handleSpeedChange = (newSpeed: number) => {
+    const wasPlaying = isPlaying
+    if (wasPlaying) {
+      window.speechSynthesis.cancel()
+      setIsPlaying(false)
+    }
+    setPlaybackRate(newSpeed)
+    if (utteranceRef.current) {
+      utteranceRef.current.rate = newSpeed
+    }
+  }
+  
+  return (
+    <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl border border-green-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Volume2 className="w-5 h-5 text-green-600" />
+          <h3 className="font-semibold text-gray-900">오디오</h3>
+        </div>
+        
+        {/* 속도 선택 */}
+        <div className="flex items-center gap-2">
+          <Gauge className="w-4 h-4 text-gray-600" />
+          <div className="flex gap-1">
+            {speeds.map((speed) => (
+              <button
+                key={speed.value}
+                onClick={() => handleSpeedChange(speed.value)}
+                disabled={isPlaying}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  playbackRate === speed.value
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                title={speed.label}
+              >
+                {speed.icon}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* 진행 바 */}
+      <div className="mb-4">
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-green-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1 text-xs text-gray-600">
+          <span>{Math.round(progress)}%</span>
+          <span>{playbackRate}x 속도</span>
+        </div>
+      </div>
+      
+      {/* 컨트롤 */}
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={handleRestart}
+          className="p-3 bg-white hover:bg-gray-50 rounded-lg transition-colors"
+          title="처음부터"
+        >
+          <RotateCcw className="w-5 h-5 text-gray-700" />
+        </button>
+        
+        <button
+          onClick={handlePlay}
+          className="p-4 bg-green-600 hover:bg-green-700 rounded-full transition-colors shadow-lg"
+          title={isPlaying ? '일시정지' : '재생'}
+        >
+          {isPlaying ? (
+            <Pause className="w-6 h-6 text-white" />
+          ) : (
+            <Play className="w-6 h-6 text-white ml-0.5" />
+          )}
+        </button>
+      </div>
+      
+      <p className="text-xs text-center text-gray-500 mt-3">
+        {isPlaying ? '재생 중...' : '재생 버튼을 눌러 시작하세요'}
+      </p>
+    </div>
+  )
+}
+```
+
+=== 긴 컨텐츠용 ListeningCard ===
+
+components/listening/ListeningCardLong.tsx 생성:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { X, Eye, EyeOff, BookOpen } from 'lucide-react'
+import AudioPlayerAdvanced from './AudioPlayerAdvanced'
+import DictationInput from './DictationInput'
+import ResultModal from './ResultModal'
+import { compareTexts, getHighlightedWords } from '@/lib/listening/scoreUtils'
+import type { ComparisonResult } from '@/lib/listening/scoreUtils'
+
+interface Paragraph {
+  text: string
+  translation: string
+}
+
+interface LongLesson {
+  id: string
+  text: string
+  translation: string
+  difficulty: number
+  category: string
+  content_type: string
+  paragraphs: Paragraph[]
+  word_count: number
+  estimated_duration: number
+}
+
+interface ListeningCardLongProps {
+  lesson: LongLesson
+  onClose: () => void
+  onComplete: () => void
+}
+
+export default function ListeningCardLong({ lesson, onClose, onComplete }: ListeningCardLongProps) {
+  const [showScript, setShowScript] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [userAnswer, setUserAnswer] = useState('')
+  const [result, setResult] = useState<ComparisonResult | null>(null)
+  const [showResult, setShowResult] = useState(false)
+  const [currentSentence, setCurrentSentence] = useState(-1)
+  
+  const handleSubmit = async (answer: string) => {
+    setUserAnswer(answer)
+    setSubmitted(true)
+    
+    const comparisonResult = compareTexts(lesson.text, answer)
+    setResult(comparisonResult)
+    
+    try {
+      const response = await fetch('/api/listening/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: lesson.id,
+          userAnswer: answer,
+          score: comparisonResult.score,
+          accuracy: comparisonResult.accuracy,
+          completed: comparisonResult.score >= 70
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to save progress')
+      
+      const xpAmount = Math.floor(comparisonResult.score / 5) + 10 // 긴 컨텐츠는 보너스 XP
+      await fetch('/api/gamification/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: xpAmount,
+          source: 'listening'
+        })
+      })
+      
+      setShowResult(true)
+    } catch (error) {
+      console.error('Failed to save progress:', error)
+    }
+  }
+  
+  const handleRetry = () => {
+    setSubmitted(false)
+    setUserAnswer('')
+    setResult(null)
+    setShowResult(false)
+  }
+  
+  const handleNext = () => {
+    setShowResult(false)
+    onComplete()
+  }
+  
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* 헤더 */}
+          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Listening 연습</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm text-gray-600">
+                  Level {lesson.difficulty}
+                </span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm text-gray-600">
+                  {lesson.category}
+                </span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm text-gray-600">
+                  {lesson.word_count} 단어
+                </span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm text-gray-600">
+                  약 {Math.ceil(lesson.estimated_duration / 60)}분
+                </span>
+              </div>
+            </div>
+            
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          {/* 콘텐츠 */}
+          <div className="p-6 space-y-6">
+            {/* 토글 버튼들 */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowScript(!showScript)}
+                className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+                  showScript
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <BookOpen className="w-4 h-4" />
+                {showScript ? '스크립트 숨기기' : '스크립트 보기'}
+              </button>
+              
+              {showScript && (
+                <button
+                  onClick={() => setShowTranslation(!showTranslation)}
+                  className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+                    showTranslation
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {showTranslation ? (
+                    <>
+                      <EyeOff className="w-4 h-4" />
+                      번역 숨기기
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      번역 보기
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+            
+            {/* 스크립트 (문단별) */}
+            {showScript && (
+              <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+                <h3 className="font-semibold text-gray-900 mb-4">전체 스크립트</h3>
+                <div className="space-y-4">
+                  {lesson.paragraphs.map((para, index) => (
+                    <div
+                      key={index}
+                      className={`p-4 rounded-lg transition-colors ${
+                        currentSentence === index
+                          ? 'bg-yellow-50 border-2 border-yellow-300'
+                          : 'bg-white border border-gray-200'
+                      }`}
+                    >
+                      <p className="text-gray-900 mb-2 leading-relaxed">
+                        {para.text}
+                      </p>
+                      {showTranslation && (
+                        <p className="text-sm text-gray-600 pt-2 border-t">
+                          {para.translation}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* 오디오 플레이어 */}
+            <AudioPlayerAdvanced
+              text={lesson.text}
+              paragraphs={lesson.paragraphs}
+              onSentenceChange={setCurrentSentence}
+            />
+            
+            {/* 받아쓰기 입력 */}
+            {!submitted && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>팁:</strong> 긴 문장은 여러 번 들으며 한 문장씩 적어보세요. 
+                  스크립트를 보면서 확인할 수도 있어요!
+                </p>
+              </div>
+            )}
+            
+            {!submitted && (
+              <DictationInput onSubmit={handleSubmit} />
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* 결과 모달 */}
+      {result && (
+        <ResultModal
+          isOpen={showResult}
+          result={result}
+          highlightedWords={getHighlightedWords(lesson.text, result)}
+          originalText={lesson.text}
+          userAnswer={userAnswer}
+          onRetry={handleRetry}
+          onNext={handleNext}
+        />
+      )}
+    </>
+  )
+}
+```
+
+=== 메인 페이지 업데이트 ===
+
+app/learn/listening/page.tsx 수정:
+
+ListeningCard import 부분에 조건부 추가:
+```tsx
+import ListeningCard from '@/components/listening/ListeningCard'
+import ListeningCardLong from '@/components/listening/ListeningCardLong'
+
+// ...
+
+// 렌더링 부분
+{currentLesson && (
+  currentLesson.content_type === 'long' ? (
+    <ListeningCardLong
+      lesson={currentLesson}
+      onClose={() => setCurrentLesson(null)}
+      onComplete={() => {
+        setCurrentLesson(null)
+        fetchLessons()
+      }}
+    />
+  ) : (
+    <ListeningCard
+      lesson={currentLesson}
+      onClose={() => setCurrentLesson(null)}
+      onComplete={() => {
+        setCurrentLesson(null)
+        fetchLessons()
+      }}
+    />
+  )
+)}
+```
+
+레슨 카드에 컨텐츠 타입 표시:
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {lessons.map((lesson) => (
+    <button
+      key={lesson.id}
+      onClick={() => setCurrentLesson(lesson)}
+      className="bg-white rounded-xl border border-gray-200 p-5 hover:border-green-300 hover:shadow-lg transition-all text-left"
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+            <Volume2 className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="text-xs font-medium text-gray-500">
+              Level {lesson.difficulty}
+            </span>
+            <span className="text-xs text-gray-400 ml-2">
+              {lesson.category}
+            </span>
+            {lesson.content_type === 'long' && (
+              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">
+                Long
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <p className="text-gray-900 font-medium mb-2 line-clamp-2">
+        {lesson.content_type === 'long' 
+          ? `${lesson.text.substring(0, 80)}...`
+          : lesson.text
+        }
+      </p>
+      
+      <p className="text-sm text-gray-500 mb-3 line-clamp-1">
+        {lesson.translation}
+      </p>
+      
+      <div className="flex items-center gap-3 text-xs text-gray-500">
+        {lesson.content_type === 'long' ? (
+          <>
+            <span className="flex items-center gap-1">
+              <BookOpen className="w-3 h-3" />
+              {lesson.word_count} 단어
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              약 {Math.ceil(lesson.estimated_duration / 60)}분
+            </span>
+          </>
+        ) : (
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {lesson.duration || 10}초
+          </span>
+        )}
+      </div>
+    </button>
+  ))}
+</div>
+```
+
+=== API 업데이트 ===
+
+app/api/listening/lessons/route.ts는 이미 모든 컬럼을 가져오므로
+추가 수정 불필요. 새 컬럼들이 자동으로 포함됨.
+
+=== 출력 요구사항 ===
+
+1. ✅ 데이터베이스 컬럼 추가
+2. ✅ 5개 긴 컨텐츠 샘플 추가
+3. ✅ 속도 조절 UI (0.5x ~ 1.5x)
+4. ✅ 문단별 스크립트 표시
+5. ✅ 현재 재생 중인 문장 하이라이트
+6. ✅ 스크립트 보기/숨기기
+7. ✅ 번역 보기/숨기기
+8. ✅ 긴 컨텐츠용 별도 카드 컴포넌트
+9. ✅ 레슨 카드에 'Long' 배지
+10. ✅ 단어 수, 예상 시간 표시
+11. ✅ 모바일 반응형
+12. ✅ 기존 짧은 문장도 정상 작동
+
+완성 후:
+- Listening Phase 1 완료!
+- 속도 조절 작동
+- 긴 컨텐츠 시스템 완성
+- 내일 Phase 2 (단어 사전) 진행
+
+테스트:
+1. Level 4-5 레슨 확인
+2. 'Long' 배지 확인
+3. 속도 조절 (0.5x, 1x, 1.5x) 테스트
+4. 스크립트 보기/숨기기
+5. 번역 보기/숨기기
+6. 현재 문장 하이라이트
+7. 받아쓰기 제출
+8. 점수 계산 확인
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 3-4시간
+
+---
+
+## 🎉 **완성되면**
+
+**Phase 1 완료!**
+```
+✅ 긴 컨텐츠 시스템
+✅ 속도 조절
+✅ 문단별 스크립트
+✅ 번역 토글
+
+다음 (Phase 2):
+- 단어 클릭 → 뜻 팝업
+- 발음 듣기
+- 단어장 저장
+
+→ 내일 계속!
