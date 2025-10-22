@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Eye, EyeOff, FileText, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { AudioPlayerAdvanced } from './AudioPlayerAdvanced';
+import { AudioPlayerAdvanced, type AudioPlayerAdvancedRef } from './AudioPlayerAdvanced';
 import type { ListeningLesson } from '@shared/schema';
 
 interface LongContentPlayerProps {
@@ -13,6 +13,7 @@ export function LongContentPlayer({ lesson }: LongContentPlayerProps) {
   const [showTranslations, setShowTranslations] = useState<boolean[]>(
     lesson.paragraphs?.map(() => false) || []
   );
+  const audioPlayerRef = useRef<AudioPlayerAdvancedRef>(null);
   
   const paragraphs = lesson.paragraphs || [];
   
@@ -31,10 +32,18 @@ export function LongContentPlayer({ lesson }: LongContentPlayerProps) {
   
   const playParagraph = (index: number) => {
     setCurrentParagraph(index);
+    // Trigger playback after state update
+    setTimeout(() => {
+      audioPlayerRef.current?.play();
+    }, 100);
   };
   
   const playAll = () => {
     setCurrentParagraph(null);
+    // Trigger playback after state update
+    setTimeout(() => {
+      audioPlayerRef.current?.play();
+    }, 100);
   };
   
   return (
@@ -71,6 +80,7 @@ export function LongContentPlayer({ lesson }: LongContentPlayerProps) {
       
       {/* Audio Player */}
       <AudioPlayerAdvanced
+        ref={audioPlayerRef}
         text={lesson.text}
         paragraphs={paragraphs}
         currentParagraph={currentParagraph ?? undefined}

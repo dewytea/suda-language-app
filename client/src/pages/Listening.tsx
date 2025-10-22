@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Volume2, Clock, BookOpen } from 'lucide-react';
+import { Volume2, Clock, BookOpen, FileText } from 'lucide-react';
 import { ListeningCard } from '@/components/listening/ListeningCard';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -74,7 +74,7 @@ export default function Listening() {
   };
   
   const lessons = lessonsData?.lessons || [];
-  const categories = ['일상', '여행', '비즈니스'];
+  const categories = ['일상', '여행', '비즈니스', 'AI/테크', '명언', '역사', '문학', '환경/과학'];
   const difficulties = [1, 2, 3, 4, 5];
   
   if (currentLesson) {
@@ -169,45 +169,69 @@ export default function Listening() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lessons.map((lesson) => (
-            <button
-              key={lesson.id}
-              onClick={() => setCurrentLesson(lesson)}
-              className="bg-card rounded-xl border p-5 hover-elevate active-elevate-2 transition-all text-left"
-              data-testid={`lesson-card-${lesson.id}`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Volume2 className="w-5 h-5 text-white" />
+          {lessons.map((lesson) => {
+            const isLongContent = lesson.contentType === 'long';
+            
+            return (
+              <button
+                key={lesson.id}
+                onClick={() => setCurrentLesson(lesson)}
+                className="bg-card rounded-xl border p-5 hover-elevate active-elevate-2 transition-all text-left"
+                data-testid={`lesson-card-${lesson.id}`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      isLongContent 
+                        ? 'bg-gradient-to-br from-purple-400 to-indigo-500' 
+                        : 'bg-gradient-to-br from-green-400 to-blue-500'
+                    }`}>
+                      {isLongContent ? (
+                        <FileText className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Level {lesson.difficulty}
+                      </span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        {lesson.category}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground">
-                      Level {lesson.difficulty}
+                  
+                  {isLongContent && (
+                    <span className="text-xs font-medium px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                      긴 컨텐츠
                     </span>
-                    <span className="text-xs text-muted-foreground ml-2">
-                      {lesson.category}
-                    </span>
-                  </div>
+                  )}
                 </div>
-              </div>
-              
-              <p className="text-foreground font-medium mb-2 line-clamp-2">
-                {lesson.text}
-              </p>
-              
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
-                {lesson.translation}
-              </p>
-              
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {lesson.duration}초
-                </span>
-              </div>
-            </button>
-          ))}
+                
+                <p className="text-foreground font-medium mb-2 line-clamp-2">
+                  {isLongContent ? lesson.text.substring(0, 100) + '...' : lesson.text}
+                </p>
+                
+                <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
+                  {lesson.translation.substring(0, 50) + (lesson.translation.length > 50 ? '...' : '')}
+                </p>
+                
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {lesson.duration}초
+                  </span>
+                  {isLongContent && lesson.wordCount && (
+                    <span className="flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {lesson.wordCount} 단어
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
