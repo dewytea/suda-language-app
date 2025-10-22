@@ -1,3 +1,12 @@
+import { useState } from 'react';
+import { X, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { AudioPlayer } from './AudioPlayer';
+import { DictationInput } from './DictationInput';
+import { LongContentPlayer } from './LongContentPlayer';
+import ResultModal from './ResultModal';
+import { Button } from '@/components/ui/button';
+import type { ListeningLesson } from '@shared/schema';
+import { compareTexts, getHighlightedWords, type ComparisonResult } from '@/lib/listening/scoreUtils';
 
 interface ListeningCardProps {
   lesson: ListeningLesson;
@@ -11,6 +20,8 @@ export function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProp
   const [userAnswer, setUserAnswer] = useState('');
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [showResultModal, setShowResultModal] = useState(false);
+  
+  const isLongContent = lesson.contentType === 'long';
   
   const handleSubmit = (answer: string) => {
     setUserAnswer(answer);
@@ -39,14 +50,21 @@ export function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProp
     setShowResultModal(false);
   };
   
+  const handleLongContentComplete = () => {
+    // For long content, mark as completed with perfect score (listening only, no dictation)
+    onComplete(100, 100, '');
+  };
+  
   return (
     <>
       <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/50">
-        <div className="bg-background rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-background rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           {/* 헤더 */}
           <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Listening 연습</h2>
+              <h2 className="text-xl font-bold text-foreground">
+                {isLongContent ? 'Listening - 긴 컨텐츠' : 'Listening 연습'}
+              </h2>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-sm text-muted-foreground">
                   Level {lesson.difficulty}
@@ -55,6 +73,14 @@ export function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProp
                 <span className="text-sm text-muted-foreground">
                   {lesson.category}
                 </span>
+                {isLongContent && (
+                  <>
+                    <span className="text-sm text-muted-foreground">•</span>
+                    <span className="text-sm text-muted-foreground">
+                      {lesson.wordCount} 단어
+                    </span>
+                  </>
+                )}
               </div>
             </div>
             
@@ -69,50 +95,72 @@ export function ListeningCard({ lesson, onClose, onComplete }: ListeningCardProp
           
           {/* 콘텐츠 */}
           <div className="p-6 space-y-6">
-            {/* 번역 토글 */}
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowTranslation(!showTranslation)}
-                data-testid="button-toggle-translation"
-              >
-                {showTranslation ? (
-                  <>
-                    <EyeOff className="w-4 h-4 mr-2" />
-                    번역 숨기기
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    번역 보기
-                  </>
+            {isLongContent ? (
+              <>
+                {/* 긴 컨텐츠 플레이어 */}
+                <LongContentPlayer lesson={lesson} />
+                
+                {/* 완료 버튼 */}
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={handleLongContentComplete}
+                    size="lg"
+                    className="gap-2"
+                    data-testid="button-complete"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    학습 완료
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 번역 토글 */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTranslation(!showTranslation)}
+                    data-testid="button-toggle-translation"
+                  >
+                    {showTranslation ? (
+                      <>
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        번역 숨기기
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 mr-2" />
+                        번역 보기
+                      </>
+                    )}
+                  </Button>
+                </div>
+                
+                {/* 번역 */}
+                {showTranslation && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
+                    <p className="text-foreground text-center">
+                      {lesson.translation}
+                    </p>
+                  </div>
                 )}
-              </Button>
-            </div>
-            
-            {/* 번역 */}
-            {showTranslation && (
-              <div className="bg-primary/10 border border-primary/20 rounded-xl p-4">
-                <p className="text-foreground text-center">
-                  {lesson.translation}
-                </p>
-              </div>
-            )}
-            
-            {/* 오디오 플레이어 */}
-            <AudioPlayer text={lesson.text} />
-            
-            {/* 받아쓰기 입력 */}
-            {!submitted && (
-              <DictationInput onSubmit={handleSubmit} />
+                
+                {/* 오디오 플레이어 */}
+                <AudioPlayer text={lesson.text} />
+                
+                {/* 받아쓰기 입력 */}
+                {!submitted && (
+                  <DictationInput onSubmit={handleSubmit} />
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
       
-      {/* 결과 모달 */}
-      {result && (
+      {/* 결과 모달 (받아쓰기용) */}
+      {result && !isLongContent && (
         <ResultModal
           isOpen={showResultModal}
           result={result}
