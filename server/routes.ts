@@ -978,6 +978,131 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // Vocabulary Routes
+  app.get("/api/vocabulary/word", requireAuth, async (req, res) => {
+    try {
+      const { word } = req.query;
+      if (!word || typeof word !== 'string') {
+        return res.status(400).json({ error: 'Word is required' });
+      }
+      
+      const wordData = await storage.getVocabularyWord(word);
+      
+      if (!wordData) {
+        return res.status(404).json({ error: 'Word not found' });
+      }
+      
+      res.json(wordData);
+    } catch (error: any) {
+      console.error('Vocabulary word fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch word' });
+    }
+  });
+
+  app.get("/api/vocabulary/saved", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { word } = req.query;
+      
+      if (!word || typeof word !== 'string') {
+        return res.status(400).json({ error: 'Word is required' });
+      }
+      
+      const wordData = await storage.getVocabularyWord(word);
+      if (!wordData) {
+        return res.json(false);
+      }
+      
+      const isSaved = await storage.isWordSaved(userId, wordData.id);
+      res.json(isSaved);
+    } catch (error: any) {
+      console.error('Check saved word error:', error);
+      res.status(500).json({ error: 'Failed to check word status' });
+    }
+  });
+
+  app.post("/api/vocabulary/save", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { wordId } = req.body;
+      
+      if (!wordId) {
+        return res.status(400).json({ error: 'Word ID is required' });
+      }
+      
+      const userVocab = await storage.saveUserVocabulary({
+        userId,
+        wordId,
+        learned: false,
+        timesReviewed: 0,
+      });
+      
+      res.json(userVocab);
+    } catch (error: any) {
+      console.error('Save vocabulary error:', error);
+      res.status(500).json({ error: 'Failed to save word' });
+    }
+  });
+
+  app.get("/api/vocabulary/user", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const userVocabulary = await storage.getUserVocabulary(userId);
+      res.json(userVocabulary);
+    } catch (error: any) {
+      console.error('Get user vocabulary error:', error);
+      res.status(500).json({ error: 'Failed to fetch vocabulary' });
+    }
+  });
+
+  app.post("/api/vocabulary/update", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { id, learned, notes } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ error: 'ID is required' });
+      }
+      
+      const updated = await storage.updateUserVocabulary(userId, id, {
+        learned,
+        notes,
+        timesReviewed: (await storage.getUserVocabulary(userId))
+          .find(v => v.id === id)?.timesReviewed ?? 0 + 1,
+      });
+      
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Update vocabulary error:', error);
+      res.status(500).json({ error: 'Failed to update word' });
+    }
+  });
+
+  app.delete("/api/vocabulary/delete/:wordId", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { wordId } = req.params;
+      
+      if (!wordId) {
+        return res.status(400).json({ error: 'Word ID is required' });
+      }
+      
+      // Find the user vocabulary entry for this word
+      const userVocabulary = await storage.getUserVocabulary(userId);
+      const entry = userVocabulary.find(v => v.wordId === parseInt(wordId));
+      
+      if (!entry) {
+        return res.status(404).json({ error: 'Word not found in your vocabulary' });
+      }
+      
+      await storage.deleteUserVocabulary(userId, entry.id);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete vocabulary error:', error);
+      res.status(500).json({ error: 'Failed to delete word' });
+    }
+  });
+
   app.get("/api/health/openai", async (req, res) => {
     try {
       const { checkOpenAIHealth } = await import('./openai');
