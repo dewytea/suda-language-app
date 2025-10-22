@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { VocabularyWord, UserVocabulary } from "@db/schema";
+import type { VocabularyWord, UserVocabulary } from "@shared/schema";
 
 interface WordPopupProps {
   word: string;
@@ -34,10 +34,7 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!wordData) return;
-      return apiRequest("/api/vocabulary/save", {
-        method: "POST",
-        body: JSON.stringify({ wordId: wordData.id }),
-      });
+      return apiRequest("POST", "/api/vocabulary/save", { wordId: wordData.id });
     },
     onSuccess: () => {
       toast({
@@ -53,9 +50,7 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!wordData) return;
-      return apiRequest(`/api/vocabulary/delete/${wordData.id}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/vocabulary/delete/${wordData.id}`);
     },
     onSuccess: () => {
       toast({

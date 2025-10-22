@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Volume2, Trash2, BookmarkCheck, BookmarkX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { UserVocabulary, VocabularyWord } from "@db/schema";
+import type { UserVocabulary, VocabularyWord } from "@shared/schema";
 
 type VocabularyFilter = "all" | "learning" | "learned";
 
@@ -23,10 +23,7 @@ export default function Vocabulary() {
 
   const toggleLearnedMutation = useMutation({
     mutationFn: async ({ id, learned }: { id: number; learned: boolean }) => {
-      return apiRequest("/api/vocabulary/update", {
-        method: "POST",
-        body: JSON.stringify({ id, learned }),
-      });
+      return apiRequest("POST", "/api/vocabulary/update", { id, learned });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/vocabulary/user"] });
@@ -35,9 +32,7 @@ export default function Vocabulary() {
 
   const deleteMutation = useMutation({
     mutationFn: async (wordId: number) => {
-      return apiRequest(`/api/vocabulary/delete/${wordId}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/vocabulary/delete/${wordId}`);
     },
     onSuccess: () => {
       toast({

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Eye, EyeOff, FileText, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AudioPlayerAdvanced, type AudioPlayerAdvancedRef } from './AudioPlayerAdvanced';
+import ClickableText from '@/components/vocabulary/ClickableText';
 import type { ListeningLesson } from '@shared/schema';
 
 interface LongContentPlayerProps {
@@ -113,13 +114,14 @@ export function LongContentPlayer({ lesson }: LongContentPlayerProps) {
             data-testid={`paragraph-${index}`}
           >
             <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary">
                   {index + 1}
                 </span>
-                <p className="text-foreground leading-relaxed">
-                  {paragraph.text}
-                </p>
+                <ClickableText
+                  text={paragraph.text}
+                  className="text-foreground leading-relaxed"
+                />
               </div>
               
               <div className="flex items-center gap-2 flex-shrink-0">

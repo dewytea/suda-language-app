@@ -1,4 +1,4 @@
-import { Home, Mic, BookOpen, Headphones, PenLine, BookMarked, Award, Settings, History, BarChart3, ChevronRight, MessageCircle } from "lucide-react";
+import { Home, Mic, BookOpen, Headphones, PenLine, BookMarked, Award, Settings, History, BarChart3, ChevronRight, MessageCircle, BookText } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +43,7 @@ const menuItems = [
   { title: "쓰기", url: "/learn/writing", icon: PenLine },
   { title: "AI 대화", url: "/learn/ai-chat", icon: MessageCircle },
   { title: "복습", url: "/learn/review", icon: BookMarked },
+  { title: "내 단어장", url: "/learn/vocabulary", icon: BookText },
   { title: "업적", url: "/achievements", icon: Award },
 ];
 
