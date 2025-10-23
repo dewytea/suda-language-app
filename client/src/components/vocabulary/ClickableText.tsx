@@ -20,13 +20,13 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
 
   // Query for local vocabulary word
   const { data: wordData, isLoading } = useQuery<VocabularyWord>({
-    queryKey: ["/api/vocabulary/word", word],
+    queryKey: [`/api/vocabulary/word?word=${word}`],
     enabled: !!word,
   });
 
   // Check if word is saved
   const { data: isSaved, refetch: refetchSaved } = useQuery<boolean>({
-    queryKey: ["/api/vocabulary/saved", word],
+    queryKey: [`/api/vocabulary/saved?word=${word}`],
     enabled: !!wordData,
   });
 
