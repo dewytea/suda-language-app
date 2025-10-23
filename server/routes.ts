@@ -1109,6 +1109,96 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // Reading Passages API
+  app.get("/api/reading/passages", requireAuth, async (req, res) => {
+    try {
+      const { difficulty, type } = req.query;
+      
+      const filters: { difficulty?: number; contentType?: string } = {};
+      if (difficulty) filters.difficulty = parseInt(difficulty as string);
+      if (type) filters.contentType = type as string;
+      
+      const passages = await storage.getReadingPassages(filters);
+      res.json({ passages });
+    } catch (error: any) {
+      console.error('Reading passages fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch passages' });
+    }
+  });
+
+  app.get("/api/reading/passages/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const passage = await storage.getReadingPassage(id);
+      
+      if (!passage) {
+        return res.status(404).json({ error: 'Passage not found' });
+      }
+      
+      res.json(passage);
+    } catch (error: any) {
+      console.error('Reading passage fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch passage' });
+    }
+  });
+
+  // Reading Progress API
+  app.post("/api/reading/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { passageId, answers, score, correctCount, totalCount, readingTime, wpm } = req.body;
+      
+      if (!passageId) {
+        return res.status(400).json({ error: 'Passage ID is required' });
+      }
+      
+      const progress = await storage.addReadingProgress({
+        userId,
+        passageId,
+        answers,
+        score,
+        correctCount,
+        totalCount,
+        readingTime,
+        wpm,
+        completed: true
+      });
+      
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Reading progress save error:', error);
+      res.status(500).json({ error: 'Failed to save progress' });
+    }
+  });
+
+  app.get("/api/reading/progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { passageId } = req.query;
+      
+      const progress = await storage.getReadingProgress(
+        userId,
+        passageId ? parseInt(passageId as string) : undefined
+      );
+      
+      res.json({ progress });
+    } catch (error: any) {
+      console.error('Reading progress fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch progress' });
+    }
+  });
+
+  app.get("/api/reading/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const stats = await storage.getReadingStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Reading stats fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  });
+
   app.get("/api/health/openai", async (req, res) => {
     try {
       const { checkOpenAIHealth } = await import('./openai');
