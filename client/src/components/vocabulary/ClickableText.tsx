@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VocabularyWord, UserVocabulary } from "@shared/schema";
+import { supabase } from "@/lib/supabase";
 
 interface WordPopupProps {
   word: string;
@@ -20,13 +21,41 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
 
   // Query for local vocabulary word
   const { data: wordData, isLoading } = useQuery<VocabularyWord>({
-    queryKey: [`/api/vocabulary/word?word=${word}`],
+    queryKey: ["/api/vocabulary/word", word],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const res = await fetch(`/api/vocabulary/word?word=${encodeURIComponent(word)}`, {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    },
     enabled: !!word,
   });
 
   // Check if word is saved
   const { data: isSaved, refetch: refetchSaved } = useQuery<boolean>({
-    queryKey: [`/api/vocabulary/saved?word=${word}`],
+    queryKey: ["/api/vocabulary/saved", word],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const res = await fetch(`/api/vocabulary/saved?word=${encodeURIComponent(word)}`, {
+        headers,
+        credentials: "include",
+      });
+      if (!res.ok) return false;
+      return await res.json();
+    },
     enabled: !!wordData,
   });
 
