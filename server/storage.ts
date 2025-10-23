@@ -2015,6 +2015,7 @@ export class MemStorage implements IStorage {
       };
       this.writingTopics.set(id, writingTopic);
     });
+    console.log(`[Writing Topics] Initialized ${topics.length} writing topics. Map size: ${this.writingTopics.size}`);
   }
 
   // Writing Topics
