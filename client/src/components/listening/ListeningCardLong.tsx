@@ -97,6 +97,11 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
     setShowResult(false);
   };
   
+  const handleCloseResult = () => {
+    // When user closes the result modal, allow them to retry
+    handleRetry();
+  };
+  
   const handleResultNext = () => {
     setShowResult(false);
     if (isLastSentence) {
@@ -345,7 +350,7 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
           userAnswer={userAnswer}
           onRetry={handleRetry}
           onNext={handleResultNext}
-          onClose={() => setShowResult(false)}
+          onClose={handleCloseResult}
         />
       )}
     </>

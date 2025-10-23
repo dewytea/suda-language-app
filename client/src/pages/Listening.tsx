@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Volume2, Clock, BookOpen, FileText } from 'lucide-react';
 import { ListeningCard } from '@/components/listening/ListeningCard';
+import ListeningCardLong from '@/components/listening/ListeningCardLong';
 import { Button } from '@/components/ui/button';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
@@ -73,11 +74,40 @@ export default function Listening() {
     }
   };
   
+  const handleLongContentComplete = async () => {
+    if (currentLesson) {
+      try {
+        await saveProgressMutation.mutateAsync({
+          lessonId: currentLesson.id,
+          userAnswer: '',
+          score: 100,
+          accuracy: 100
+        });
+        
+        setCurrentLesson(null);
+      } catch (error) {
+        console.error('Failed to save progress:', error);
+      }
+    }
+  };
+  
   const lessons = lessonsData?.lessons || [];
   const categories = ['일상', '여행', '비즈니스', 'AI/테크', '명언', '역사', '문학', '환경/과학'];
   const difficulties = [1, 2, 3, 4, 5];
   
   if (currentLesson) {
+    const isLongContent = currentLesson.contentType === 'long';
+    
+    if (isLongContent) {
+      return (
+        <ListeningCardLong
+          lesson={currentLesson}
+          onClose={() => setCurrentLesson(null)}
+          onComplete={handleLongContentComplete}
+        />
+      );
+    }
+    
     return (
       <ListeningCard
         lesson={currentLesson}
