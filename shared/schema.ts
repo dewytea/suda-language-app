@@ -262,3 +262,46 @@ export const insertUserVocabularySchema = z.object({
 
 export type InsertUserVocabulary = z.infer<typeof insertUserVocabularySchema>;
 export type UserVocabulary = InsertUserVocabulary & { id: number; lastReviewedAt?: Date; createdAt: Date };
+
+// Reading Passages (독해 지문)
+export const insertReadingPassageSchema = z.object({
+  title: z.string(),
+  content: z.string(),
+  contentType: z.enum(["news", "story", "essay", "email", "ad"]),
+  difficulty: z.number().min(1).max(5),
+  wordCount: z.number(),
+  estimatedTime: z.number().optional(), // seconds
+  source: z.string().optional(),
+});
+
+export type InsertReadingPassage = z.infer<typeof insertReadingPassageSchema>;
+export type ReadingPassage = InsertReadingPassage & { id: number; createdAt: Date };
+
+// Reading Questions (독해 문제) - Phase 2에서 사용
+export const insertReadingQuestionSchema = z.object({
+  passageId: z.number(),
+  questionText: z.string(),
+  questionType: z.enum(["main_idea", "detail", "inference", "vocabulary"]),
+  options: z.array(z.string()),
+  correctAnswer: z.string(),
+  explanation: z.string().optional(),
+});
+
+export type InsertReadingQuestion = z.infer<typeof insertReadingQuestionSchema>;
+export type ReadingQuestion = InsertReadingQuestion & { id: number; createdAt: Date };
+
+// Reading Progress (독해 학습 진도)
+export const insertReadingProgressSchema = z.object({
+  userId: z.string(),
+  passageId: z.number(),
+  answers: z.record(z.string()).optional(), // questionId -> answer
+  score: z.number().min(0).max(100).optional(),
+  correctCount: z.number().optional(),
+  totalCount: z.number().optional(),
+  readingTime: z.number().optional(), // seconds
+  wpm: z.number().optional(), // Words Per Minute
+  completed: z.boolean().default(false),
+});
+
+export type InsertReadingProgress = z.infer<typeof insertReadingProgressSchema>;
+export type ReadingProgress = InsertReadingProgress & { id: number; completedAt: Date; createdAt: Date };
