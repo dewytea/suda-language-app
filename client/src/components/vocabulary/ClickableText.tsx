@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Volume2, BookmarkPlus, BookmarkCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -141,7 +142,7 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
 
   return (
     <div
-      className="fixed z-[100] bg-card border border-border rounded-md shadow-2xl p-4 max-w-sm"
+      className="fixed z-[9999] bg-card border border-border rounded-md shadow-2xl p-4 max-w-sm"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -301,10 +302,10 @@ export default function ClickableText({ text, className = "" }: ClickableTextPro
         })}
       </div>
 
-      {selectedWord && (
+      {selectedWord && createPortal(
         <>
           <div
-            className="fixed inset-0 z-[90]"
+            className="fixed inset-0 z-[9998]"
             onClick={handleBackdropClick}
             data-testid="popup-backdrop"
           />
@@ -313,7 +314,8 @@ export default function ClickableText({ text, className = "" }: ClickableTextPro
             position={popupPosition}
             onClose={handleClosePopup}
           />
-        </>
+        </>,
+        document.body
       )}
     </>
   );
