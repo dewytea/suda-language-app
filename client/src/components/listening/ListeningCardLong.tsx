@@ -11,7 +11,13 @@ import type { ListeningLesson } from '@shared/schema';
 interface ListeningCardLongProps {
   lesson: ListeningLesson;
   onClose: () => void;
-  onComplete: () => void;
+  onComplete: (score: number, accuracy: number, userAnswer: string) => void;
+}
+
+interface SentenceResult {
+  score: number;
+  accuracy: number;
+  answer: string;
 }
 
 export default function ListeningCardLong({ lesson, onClose, onComplete }: ListeningCardLongProps) {
@@ -30,6 +36,9 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   
+  // 각 문장별 결과 추적
+  const [sentenceResults, setSentenceResults] = useState<Map<number, SentenceResult>>(new Map());
+  
   const paragraphs = lesson.paragraphs || [];
   const currentParagraph = paragraphs[currentSentenceIndex];
   const isLastSentence = currentSentenceIndex === paragraphs.length - 1;
@@ -43,6 +52,7 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
   const handleStartDetailLearning = () => {
     setLearningStage('detail');
     setCurrentSentenceIndex(0);
+    setSentenceResults(new Map()); // Clear any previous results when starting fresh
   };
   
   // 전체 듣기로 돌아가기
@@ -52,6 +62,8 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
     setSubmitted(false);
     setUserAnswer('');
     setResult(null);
+    setShowSentenceTranslation(false);
+    setSentenceResults(new Map()); // Clear previous results
   };
   
   // 다음 문장으로
@@ -98,14 +110,53 @@ export default function ListeningCardLong({ lesson, onClose, onComplete }: Liste
   };
   
   const handleCloseResult = () => {
-    // When user closes the result modal, allow them to retry
-    handleRetry();
+    // When user closes the result modal without choosing retry/next,
+    // return to overview stage for better UX and reset all state
+    setShowResult(false);
+    setLearningStage('overview');
+    setCurrentSentenceIndex(0);
+    setSubmitted(false);
+    setUserAnswer('');
+    setResult(null);
+    setShowSentenceTranslation(false);
+    setSentenceResults(new Map()); // Clear all previous sentence results
   };
   
   const handleResultNext = () => {
+    // Save the current sentence result
+    if (result) {
+      const newResults = new Map(sentenceResults);
+      newResults.set(currentSentenceIndex, {
+        score: result.score,
+        accuracy: result.accuracy,
+        answer: userAnswer
+      });
+      setSentenceResults(newResults);
+    }
+    
     setShowResult(false);
+    
     if (isLastSentence) {
-      onComplete();
+      // Calculate aggregate scores
+      const allResults = Array.from(sentenceResults.values());
+      if (result) {
+        allResults.push({
+          score: result.score,
+          accuracy: result.accuracy,
+          answer: userAnswer
+        });
+      }
+      
+      const avgScore = allResults.length > 0
+        ? Math.round(allResults.reduce((sum, r) => sum + r.score, 0) / allResults.length)
+        : 100;
+      const avgAccuracy = allResults.length > 0
+        ? Math.round(allResults.reduce((sum, r) => sum + r.accuracy, 0) / allResults.length)
+        : 100;
+      const combinedAnswer = allResults.map(r => r.answer).join(' | ');
+      
+      // Call parent's onComplete with actual aggregated scores
+      onComplete(avgScore, avgAccuracy, combinedAnswer);
     } else {
       handleNextSentence();
     }

@@ -74,14 +74,14 @@ export default function Listening() {
     }
   };
   
-  const handleLongContentComplete = async () => {
+  const handleLongContentComplete = async (score: number, accuracy: number, userAnswer: string) => {
     if (currentLesson) {
       try {
         await saveProgressMutation.mutateAsync({
           lessonId: currentLesson.id,
-          userAnswer: '',
-          score: 100,
-          accuracy: 100
+          userAnswer,
+          score,
+          accuracy
         });
         
         setCurrentLesson(null);
