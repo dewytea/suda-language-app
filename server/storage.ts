@@ -37,6 +37,8 @@ import {
   type InsertUserVocabulary,
   type ReadingPassage,
   type InsertReadingPassage,
+  type ReadingQuestion,
+  type InsertReadingQuestion,
   type ReadingProgress,
   type InsertReadingProgress,
 } from "@shared/schema";
@@ -147,6 +149,9 @@ export interface IStorage {
   getReadingPassages(filters?: { difficulty?: number; contentType?: string }): Promise<ReadingPassage[]>;
   getReadingPassage(id: number): Promise<ReadingPassage | undefined>;
   
+  // Reading Questions
+  getReadingQuestions(passageId: number): Promise<ReadingQuestion[]>;
+  
   // Reading Progress
   addReadingProgress(progress: InsertReadingProgress): Promise<ReadingProgress>;
   getReadingProgress(userId: string, passageId?: number): Promise<ReadingProgress[]>;
@@ -181,6 +186,7 @@ export class MemStorage implements IStorage {
   private vocabularyWords: Map<number, VocabularyWord>;
   private userVocabulary: Map<number, UserVocabulary>;
   private readingPassages: Map<number, ReadingPassage>;
+  private readingQuestions: Map<number, ReadingQuestion>;
   private readingProgress: Map<number, ReadingProgress>;
   private nextId: number;
 
@@ -206,6 +212,7 @@ export class MemStorage implements IStorage {
     this.vocabularyWords = new Map();
     this.userVocabulary = new Map();
     this.readingPassages = new Map();
+    this.readingQuestions = new Map();
     this.readingProgress = new Map();
     this.nextId = 1;
 
@@ -214,6 +221,7 @@ export class MemStorage implements IStorage {
     this.initializeListeningLessons();
     this.initializeVocabularyWords();
     this.initializeReadingPassages();
+    this.initializeReadingQuestions();
   }
 
   private initializeAchievementTemplates() {
@@ -1222,7 +1230,13 @@ export class MemStorage implements IStorage {
         contentType: "story",
         difficulty: 1,
         wordCount: 68,
-        estimatedTime: 40
+        estimatedTime: 40,
+        paragraphs: [
+          {
+            text: "My name is Sarah. I am a student. I wake up at 7 AM every day. I eat breakfast with my family. Then I go to school by bus. School starts at 8:30 AM. I have lunch at 12 PM. After school, I do my homework. I like to read books in the evening. I go to bed at 10 PM.",
+            translation: "제 이름은 사라입니다. 저는 학생이에요. 저는 매일 오전 7시에 일어납니다. 가족과 함께 아침을 먹어요. 그리고 버스로 학교에 가요. 학교는 8시 30분에 시작해요. 점심은 12시에 먹어요. 방과 후에는 숙제를 해요. 저는 저녁에 책 읽는 것을 좋아해요. 밤 10시에 잠자리에 들어요."
+          }
+        ]
       },
       {
         title: "Party Invitation",
@@ -1230,7 +1244,21 @@ export class MemStorage implements IStorage {
         contentType: "email",
         difficulty: 2,
         wordCount: 52,
-        estimatedTime: 35
+        estimatedTime: 35,
+        paragraphs: [
+          {
+            text: "Dear friends,",
+            translation: "친애하는 친구들에게,"
+          },
+          {
+            text: "I am having a birthday party next Saturday at 3 PM. The party will be at my house. There will be cake, games, and music. Please bring your friends too! Let me know if you can come.",
+            translation: "다음 주 토요일 오후 3시에 제 생일 파티를 해요. 파티는 제 집에서 할 거예요. 케이크, 게임, 음악이 있을 거예요. 친구들도 데려오세요! 올 수 있는지 알려주세요."
+          },
+          {
+            text: "See you there!\nEmma",
+            translation: "그곳에서 봐요!\n엠마"
+          }
+        ]
       },
       {
         title: "New Park Opens Downtown",
@@ -1238,7 +1266,13 @@ export class MemStorage implements IStorage {
         contentType: "news",
         difficulty: 3,
         wordCount: 85,
-        estimatedTime: 50
+        estimatedTime: 50,
+        paragraphs: [
+          {
+            text: "The city opened a new park downtown yesterday. The park has walking paths, playgrounds, and a small lake. Mayor Johnson said the park will help families enjoy outdoor activities. \"We wanted to create a beautiful space for everyone,\" the mayor explained. The park took two years to build and cost 5 million dollars. Local residents are excited about the new addition to their neighborhood. The park is open daily from 6 AM to 9 PM.",
+            translation: "시에서 어제 도심에 새로운 공원을 열었습니다. 공원에는 산책로, 놀이터, 작은 호수가 있습니다. 존슨 시장은 이 공원이 가족들이 야외 활동을 즐기는 데 도움이 될 것이라고 말했습니다. \"우리는 모두를 위한 아름다운 공간을 만들고 싶었습니다\"라고 시장은 설명했습니다. 공원 건설에는 2년이 걸렸고 500만 달러의 비용이 들었습니다. 지역 주민들은 동네에 새로 추가된 이 공간에 대해 기뻐하고 있습니다. 공원은 오전 6시부터 오후 9시까지 매일 운영됩니다."
+          }
+        ]
       },
       {
         title: "The Benefits of Reading",
@@ -1246,7 +1280,21 @@ export class MemStorage implements IStorage {
         contentType: "essay",
         difficulty: 4,
         wordCount: 128,
-        estimatedTime: 75
+        estimatedTime: 75,
+        paragraphs: [
+          {
+            text: "Reading is one of the most valuable habits a person can develop. It expands our knowledge, improves our vocabulary, and stimulates our imagination. When we read regularly, we expose ourselves to different perspectives and ideas. This helps us understand the world better and makes us more empathetic toward others.",
+            translation: "독서는 사람이 기를 수 있는 가장 가치 있는 습관 중 하나입니다. 독서는 우리의 지식을 넓히고, 어휘력을 향상시키며, 상상력을 자극합니다. 정기적으로 책을 읽을 때, 우리는 다양한 관점과 아이디어에 노출됩니다. 이것은 우리가 세상을 더 잘 이해하고 다른 사람들에 대해 더 공감할 수 있게 해줍니다."
+          },
+          {
+            text: "Research shows that reading can reduce stress levels significantly. Just six minutes of reading can lower stress by up to 68 percent, according to scientists at the University of Sussex. Reading before bed can also improve sleep quality.",
+            translation: "연구에 따르면 독서는 스트레스 수준을 크게 줄일 수 있습니다. 서섹스 대학교의 과학자들에 따르면, 단 6분간의 독서만으로도 스트레스를 최대 68%까지 낮출 수 있다고 합니다. 잠자기 전에 책을 읽는 것은 수면의 질도 향상시킬 수 있습니다."
+          },
+          {
+            text: "Furthermore, reading keeps our minds active and engaged. Like physical exercise strengthens the body, mental exercise through reading strengthens the brain. Studies suggest that regular reading may even help prevent cognitive decline as we age.",
+            translation: "게다가, 독서는 우리의 마음을 활발하고 집중하게 유지합니다. 신체 운동이 몸을 강하게 만드는 것처럼, 독서를 통한 정신 운동은 뇌를 강화합니다. 연구에 따르면 정기적인 독서는 나이가 들면서 인지 능력 저하를 예방하는 데에도 도움이 될 수 있습니다."
+          }
+        ]
       },
       {
         title: "Artificial Intelligence in Healthcare",
@@ -1254,7 +1302,21 @@ export class MemStorage implements IStorage {
         contentType: "news",
         difficulty: 5,
         wordCount: 168,
-        estimatedTime: 100
+        estimatedTime: 100,
+        paragraphs: [
+          {
+            text: "Artificial intelligence is revolutionizing the healthcare industry in unprecedented ways. Machine learning algorithms can now detect diseases from medical images with accuracy that rivals or exceeds human experts. For instance, AI systems have demonstrated remarkable success in identifying early-stage cancers, cardiovascular conditions, and neurological disorders.",
+            translation: "인공지능은 전례 없는 방식으로 의료 산업에 혁명을 일으키고 있습니다. 머신러닝 알고리즘은 이제 의료 영상에서 인간 전문가와 맞먹거나 능가하는 정확도로 질병을 감지할 수 있습니다. 예를 들어, AI 시스템은 초기 단계 암, 심혈관 질환 및 신경 장애를 식별하는 데 놀라운 성공을 보여주었습니다."
+          },
+          {
+            text: "The implementation of AI in healthcare extends beyond diagnosis. Predictive analytics help hospitals optimize resource allocation, reducing wait times and improving patient outcomes. Natural language processing enables automated analysis of medical records, identifying patterns that might escape human observation. Robot-assisted surgeries allow for greater precision, resulting in fewer complications and faster recovery times.",
+            translation: "의료 분야에서 AI의 구현은 진단을 넘어 확장됩니다. 예측 분석은 병원이 자원 배분을 최적화하여 대기 시간을 줄이고 환자 결과를 개선하는 데 도움이 됩니다. 자연어 처리는 의료 기록의 자동 분석을 가능하게 하여 인간의 관찰에서 놓칠 수 있는 패턴을 식별합니다. 로봇 보조 수술은 더 높은 정밀도를 가능하게 하여 합병증을 줄이고 회복 시간을 단축시킵니다."
+          },
+          {
+            text: "However, the integration of AI into healthcare raises important ethical questions. Issues of data privacy, algorithmic bias, and the role of human judgment in medical decision-making require careful consideration. As this technology continues to evolve, establishing appropriate regulatory frameworks and ethical guidelines becomes increasingly crucial to ensure that AI serves the best interests of patients while maintaining the fundamental principles of medical practice.",
+            translation: "그러나 의료 분야에 AI를 통합하는 것은 중요한 윤리적 질문을 제기합니다. 데이터 프라이버시, 알고리즘 편향, 그리고 의료 의사결정에서 인간 판단의 역할에 대한 문제는 신중한 고려가 필요합니다. 이 기술이 계속 발전함에 따라, 의료 실무의 기본 원칙을 유지하면서 AI가 환자의 최선의 이익을 위해 봉사하도록 보장하기 위해 적절한 규제 프레임워크와 윤리 지침을 수립하는 것이 점점 더 중요해지고 있습니다."
+          }
+        ]
       }
     ];
 
@@ -1286,6 +1348,182 @@ export class MemStorage implements IStorage {
 
   async getReadingPassage(id: number): Promise<ReadingPassage | undefined> {
     return this.readingPassages.get(id);
+  }
+
+  // Reading Questions Initialization
+  private initializeReadingQuestions() {
+    const passageIds = Array.from(this.readingPassages.keys());
+    
+    // Level 1: My Daily Routine (passageId = 1)
+    const level1Questions: Omit<InsertReadingQuestion, 'passageId'>[] = [
+      {
+        questionText: "What time does Sarah wake up?",
+        questionType: "detail",
+        options: ["6 AM", "7 AM", "8 AM", "9 AM"],
+        correctAnswer: "7 AM",
+        explanation: "The passage states \"I wake up at 7 AM every day.\""
+      },
+      {
+        questionText: "How does Sarah go to school?",
+        questionType: "detail",
+        options: ["By car", "By bus", "By bike", "By walking"],
+        correctAnswer: "By bus",
+        explanation: "The text says \"Then I go to school by bus.\""
+      },
+      {
+        questionText: "What does Sarah like to do in the evening?",
+        questionType: "detail",
+        options: ["Watch TV", "Play games", "Read books", "Exercise"],
+        correctAnswer: "Read books",
+        explanation: "According to the passage, \"I like to read books in the evening.\""
+      }
+    ];
+
+    // Level 2: Party Invitation (passageId = 2)
+    const level2Questions: Omit<InsertReadingQuestion, 'passageId'>[] = [
+      {
+        questionText: "What is the main purpose of this email?",
+        questionType: "main_idea",
+        options: ["To thank someone", "To invite friends to a party", "To ask for help", "To apologize"],
+        correctAnswer: "To invite friends to a party",
+        explanation: "Emma is inviting friends to her birthday party."
+      },
+      {
+        questionText: "When is the party?",
+        questionType: "detail",
+        options: ["This Saturday", "Next Saturday", "This Sunday", "Next Sunday"],
+        correctAnswer: "Next Saturday",
+        explanation: "The email mentions \"next Saturday at 3 PM\"."
+      },
+      {
+        questionText: "What will NOT be at the party?",
+        questionType: "detail",
+        options: ["Cake", "Games", "Music", "Swimming"],
+        correctAnswer: "Swimming",
+        explanation: "The email lists cake, games, and music, but not swimming."
+      }
+    ];
+
+    // Level 3: New Park Opens Downtown (passageId = 3)
+    const level3Questions: Omit<InsertReadingQuestion, 'passageId'>[] = [
+      {
+        questionText: "What is this article mainly about?",
+        questionType: "main_idea",
+        options: ["A famous mayor", "A new park opening", "Building costs", "City problems"],
+        correctAnswer: "A new park opening",
+        explanation: "The article discusses the opening of a new downtown park."
+      },
+      {
+        questionText: "How long did it take to build the park?",
+        questionType: "detail",
+        options: ["One year", "Two years", "Three years", "Five years"],
+        correctAnswer: "Two years",
+        explanation: "The text states \"The park took two years to build\"."
+      },
+      {
+        questionText: "What can you infer about the local residents?",
+        questionType: "inference",
+        options: ["They are angry", "They are excited", "They are confused", "They are worried"],
+        correctAnswer: "They are excited",
+        explanation: "The passage mentions \"Local residents are excited about the new addition\"."
+      },
+      {
+        questionText: "What does \"addition\" mean in this context?",
+        questionType: "vocabulary",
+        options: ["Math problem", "Something new added", "Building material", "Park equipment"],
+        correctAnswer: "Something new added",
+        explanation: "In this context, \"addition\" refers to something new being added to the neighborhood."
+      }
+    ];
+
+    // Level 4: The Benefits of Reading (passageId = 4)
+    const level4Questions: Omit<InsertReadingQuestion, 'passageId'>[] = [
+      {
+        questionText: "What is the main idea of this essay?",
+        questionType: "main_idea",
+        options: ["Reading is expensive", "Reading has many benefits", "Books are old-fashioned", "Reading is difficult"],
+        correctAnswer: "Reading has many benefits",
+        explanation: "The essay discusses various benefits of reading."
+      },
+      {
+        questionText: "According to the passage, how much can reading reduce stress?",
+        questionType: "detail",
+        options: ["50%", "60%", "68%", "80%"],
+        correctAnswer: "68%",
+        explanation: "The text states \"lower stress by up to 68 percent\"."
+      },
+      {
+        questionText: "Reading is compared to what in the essay?",
+        questionType: "detail",
+        options: ["Eating healthy", "Physical exercise", "Sleeping well", "Watching movies"],
+        correctAnswer: "Physical exercise",
+        explanation: "The passage compares reading to physical exercise: \"Like physical exercise strengthens the body, mental exercise through reading strengthens the brain.\""
+      },
+      {
+        questionText: "What can be inferred about reading before bed?",
+        questionType: "inference",
+        options: ["It causes headaches", "It helps you sleep better", "It wastes time", "It is too difficult"],
+        correctAnswer: "It helps you sleep better",
+        explanation: "The passage mentions \"Reading before bed can also improve sleep quality\"."
+      }
+    ];
+
+    // Level 5: Artificial Intelligence in Healthcare (passageId = 5)
+    const level5Questions: Omit<InsertReadingQuestion, 'passageId'>[] = [
+      {
+        questionText: "What is the main topic of this article?",
+        questionType: "main_idea",
+        options: ["Computer problems", "AI transforming healthcare", "Medical school training", "Hospital costs"],
+        correctAnswer: "AI transforming healthcare",
+        explanation: "The article discusses how AI is revolutionizing healthcare."
+      },
+      {
+        questionText: "According to the passage, what can AI detect from medical images?",
+        questionType: "detail",
+        options: ["Only broken bones", "Only cancers", "Various diseases", "Only heart problems"],
+        correctAnswer: "Various diseases",
+        explanation: "The text mentions AI can identify \"early-stage cancers, cardiovascular conditions, and neurological disorders\"."
+      },
+      {
+        questionText: "What ethical concerns does the article mention?",
+        questionType: "detail",
+        options: ["Cost only", "Data privacy and algorithmic bias", "Doctor unemployment", "Patient confusion"],
+        correctAnswer: "Data privacy and algorithmic bias",
+        explanation: "The passage specifically mentions \"Issues of data privacy, algorithmic bias\"."
+      },
+      {
+        questionText: "What does \"unprecedented\" most likely mean?",
+        questionType: "vocabulary",
+        options: ["Expected", "Never seen before", "Expensive", "Dangerous"],
+        correctAnswer: "Never seen before",
+        explanation: "\"Unprecedented\" means something that has never happened or been seen before."
+      }
+    ];
+
+    const allQuestions = [
+      ...level1Questions.map(q => ({ ...q, passageId: passageIds[0] })),
+      ...level2Questions.map(q => ({ ...q, passageId: passageIds[1] })),
+      ...level3Questions.map(q => ({ ...q, passageId: passageIds[2] })),
+      ...level4Questions.map(q => ({ ...q, passageId: passageIds[3] })),
+      ...level5Questions.map(q => ({ ...q, passageId: passageIds[4] }))
+    ];
+
+    allQuestions.forEach(question => {
+      const id = this.nextId++;
+      const readingQuestion: ReadingQuestion = {
+        id,
+        ...question,
+        createdAt: new Date()
+      };
+      this.readingQuestions.set(id, readingQuestion);
+    });
+  }
+
+  // Reading Questions
+  async getReadingQuestions(passageId: number): Promise<ReadingQuestion[]> {
+    return Array.from(this.readingQuestions.values())
+      .filter(q => q.passageId === passageId)
+      .sort((a, b) => a.id - b.id);
   }
 
   // Reading Progress

@@ -15,6 +15,7 @@ import Speaking from "@/pages/Speaking";
 import SpeakingHistory from "@/pages/SpeakingHistory";
 import SpeakingStats from "@/pages/SpeakingStats";
 import Reading from "@/pages/Reading";
+import ReadingPassage from "@/pages/ReadingPassage";
 import Listening from "@/pages/Listening";
 import ListeningHistory from "@/pages/ListeningHistory";
 import ListeningStats from "@/pages/ListeningStats";
@@ -97,6 +98,7 @@ function AppLayout() {
                 <Route path="/learn/speaking/history" component={SpeakingHistory} />
                 <Route path="/learn/speaking/stats" component={SpeakingStats} />
                 <Route path="/learn/speaking" component={Speaking} />
+                <Route path="/learn/reading/:id" component={ReadingPassage} />
                 <Route path="/learn/reading" component={Reading} />
                 <Route path="/learn/listening/history" component={ListeningHistory} />
                 <Route path="/learn/listening/stats" component={ListeningStats} />

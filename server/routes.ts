@@ -1142,6 +1142,18 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  app.get("/api/reading/questions/:passageId", requireAuth, async (req, res) => {
+    try {
+      const passageId = parseInt(req.params.passageId);
+      const questions = await storage.getReadingQuestions(passageId);
+      
+      res.json({ questions });
+    } catch (error: any) {
+      console.error('Reading questions fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch questions' });
+    }
+  });
+
   // Reading Progress API
   app.post("/api/reading/progress", requireAuth, async (req, res) => {
     try {

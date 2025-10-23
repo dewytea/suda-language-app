@@ -272,6 +272,10 @@ export const insertReadingPassageSchema = z.object({
   wordCount: z.number(),
   estimatedTime: z.number().optional(), // seconds
   source: z.string().optional(),
+  paragraphs: z.array(z.object({
+    text: z.string(),
+    translation: z.string(),
+  })).optional(),
 });
 
 export type InsertReadingPassage = z.infer<typeof insertReadingPassageSchema>;

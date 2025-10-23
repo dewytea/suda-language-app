@@ -1,0 +1,960 @@
+[피드백 #4] ✅ Reading 지문에 단어 기능 필요
+- 문제: 지문에 단어 클릭 기능 없음
+- 요구사항:
+  ✓ 단어 클릭 → 뜻 팝업
+  ✓ 단어장 저장 기능
+  ✓ 문단별 해석 보기/숨기기
+- 해결: Phase 2에 포함
+```
+
+---
+
+## 📝 **Reading Phase 2 프롬프트 (Replit Agent에 붙여넣기)**
+```
+Reading 모듈의 Phase 2를 개발해줘.
+
+=== Reading Phase 2: 독해 문제 + 단어 기능 ===
+
+이번 단계에서는:
+1. 독해 문제 시스템
+2. 답안 제출 및 채점
+3. 지문에 단어 클릭 기능 추가 (중요!)
+4. 문단별 해석 토글 기능
+
+=== 1. 독해 문제 데이터 추가 ===
+
+각 지문에 독해 문제 3-4개씩 추가:
+```sql
+-- Level 1: My Daily Routine 문제
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation) 
+SELECT id, 
+  'What time does Sarah wake up?',
+  'detail',
+  '["6 AM", "7 AM", "8 AM", "9 AM"]'::jsonb,
+  '7 AM',
+  'The passage states "I wake up at 7 AM every day."'
+FROM reading_passages WHERE title = 'My Daily Routine';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'How does Sarah go to school?',
+  'detail',
+  '["By car", "By bus", "By bike", "By walking"]'::jsonb,
+  'By bus',
+  'The text says "Then I go to school by bus."'
+FROM reading_passages WHERE title = 'My Daily Routine';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What does Sarah like to do in the evening?',
+  'detail',
+  '["Watch TV", "Play games", "Read books", "Exercise"]'::jsonb,
+  'Read books',
+  'According to the passage, "I like to read books in the evening."'
+FROM reading_passages WHERE title = 'My Daily Routine';
+
+-- Level 2: Party Invitation 문제
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What is the main purpose of this email?',
+  'main_idea',
+  '["To thank someone", "To invite friends to a party", "To ask for help", "To apologize"]'::jsonb,
+  'To invite friends to a party',
+  'Emma is inviting friends to her birthday party.'
+FROM reading_passages WHERE title = 'Party Invitation';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'When is the party?',
+  'detail',
+  '["This Saturday", "Next Saturday", "This Sunday", "Next Sunday"]'::jsonb,
+  'Next Saturday',
+  'The email mentions "next Saturday at 3 PM".'
+FROM reading_passages WHERE title = 'Party Invitation';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What will NOT be at the party?',
+  'detail',
+  '["Cake", "Games", "Music", "Swimming"]'::jsonb,
+  'Swimming',
+  'The email lists cake, games, and music, but not swimming.'
+FROM reading_passages WHERE title = 'Party Invitation';
+
+-- Level 3: New Park Opens Downtown 문제
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What is this article mainly about?',
+  'main_idea',
+  '["A famous mayor", "A new park opening", "Building costs", "City problems"]'::jsonb,
+  'A new park opening',
+  'The article discusses the opening of a new downtown park.'
+FROM reading_passages WHERE title = 'New Park Opens Downtown';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'How long did it take to build the park?',
+  'detail',
+  '["One year", "Two years", "Three years", "Five years"]'::jsonb,
+  'Two years',
+  'The text states "The park took two years to build".'
+FROM reading_passages WHERE title = 'New Park Opens Downtown';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What can you infer about the local residents?',
+  'inference',
+  '["They are angry", "They are excited", "They are confused", "They are worried"]'::jsonb,
+  'They are excited',
+  'The passage mentions "Local residents are excited about the new addition".'
+FROM reading_passages WHERE title = 'New Park Opens Downtown';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What does "addition" mean in this context?',
+  'vocabulary',
+  '["Math problem", "Something new added", "Building material", "Park equipment"]'::jsonb,
+  'Something new added',
+  'In this context, "addition" refers to something new being added to the neighborhood.'
+FROM reading_passages WHERE title = 'New Park Opens Downtown';
+
+-- Level 4: The Benefits of Reading 문제
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What is the main idea of this essay?',
+  'main_idea',
+  '["Reading is expensive", "Reading has many benefits", "Books are old-fashioned", "Reading is difficult"]'::jsonb,
+  'Reading has many benefits',
+  'The essay discusses various benefits of reading.'
+FROM reading_passages WHERE title = 'The Benefits of Reading';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'According to the passage, how much can reading reduce stress?',
+  'detail',
+  '["50%", "60%", "68%", "80%"]'::jsonb,
+  '68%',
+  'The text states "lower stress by up to 68 percent".'
+FROM reading_passages WHERE title = 'The Benefits of Reading';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'Reading is compared to what in the essay?',
+  'detail',
+  '["Eating healthy", "Physical exercise", "Sleeping well", "Watching movies"]'::jsonb,
+  'Physical exercise',
+  'The passage compares reading to physical exercise: "Like physical exercise strengthens the body, mental exercise through reading strengthens the brain."'
+FROM reading_passages WHERE title = 'The Benefits of Reading';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What can be inferred about reading before bed?',
+  'inference',
+  '["It causes headaches", "It helps you sleep better", "It wastes time", "It is too difficult"]'::jsonb,
+  'It helps you sleep better',
+  'The passage mentions "Reading before bed can also improve sleep quality".'
+FROM reading_passages WHERE title = 'The Benefits of Reading';
+
+-- Level 5: Artificial Intelligence in Healthcare 문제
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What is the main topic of this article?',
+  'main_idea',
+  '["Computer problems", "AI transforming healthcare", "Medical school training", "Hospital costs"]'::jsonb,
+  'AI transforming healthcare',
+  'The article discusses how AI is revolutionizing healthcare.'
+FROM reading_passages WHERE title = 'Artificial Intelligence in Healthcare';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'According to the passage, what can AI detect from medical images?',
+  'detail',
+  '["Only broken bones", "Only cancers", "Various diseases", "Only heart problems"]'::jsonb,
+  'Various diseases',
+  'The text mentions AI can identify "early-stage cancers, cardiovascular conditions, and neurological disorders".'
+FROM reading_passages WHERE title = 'Artificial Intelligence in Healthcare';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What ethical concerns does the article mention?',
+  'detail',
+  '["Cost only", "Data privacy and algorithmic bias", "Doctor unemployment", "Patient confusion"]'::jsonb,
+  'Data privacy and algorithmic bias',
+  'The passage specifically mentions "Issues of data privacy, algorithmic bias".'
+FROM reading_passages WHERE title = 'Artificial Intelligence in Healthcare';
+
+INSERT INTO reading_questions (passage_id, question_text, question_type, options, correct_answer, explanation)
+SELECT id,
+  'What does "unprecedented" most likely mean?',
+  'vocabulary',
+  '["Expected", "Never seen before", "Expensive", "Dangerous"]'::jsonb,
+  'Never seen before',
+  '"Unprecedented" means something that has never happened or been seen before.'
+FROM reading_passages WHERE title = 'Artificial Intelligence in Healthcare';
+```
+
+=== 2. 지문 읽기 페이지 개선 ===
+
+app/learn/reading/[id]/page.tsx를 전면 수정:
+
+단어 클릭 가능 + 해석 토글 + 독해 문제
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { ArrowLeft, Clock, BookOpen, Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import ClickableText from '@/components/listening/ClickableText'
+import ReadingQuestions from '@/components/reading/ReadingQuestions'
+
+interface Passage {
+  id: string
+  title: string
+  content: string
+  content_type: string
+  difficulty: number
+  word_count: number
+  estimated_time: number
+}
+
+interface Question {
+  id: string
+  question_text: string
+  question_type: string
+  options: string[]
+  correct_answer: string
+  explanation: string
+}
+
+export default function ReadingPassagePage() {
+  const params = useParams()
+  const [passage, setPassage] = useState<Passage | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [loading, setLoading] = useState(true)
+  const [startTime] = useState<Date>(new Date())
+  const [showQuestions, setShowQuestions] = useState(false)
+  const [showTranslation, setShowTranslation] = useState(false)
+  
+  // 문단별로 분리 (영어 + 한국어)
+  const paragraphs = passage ? passage.content.split('\n\n').map((para, index) => ({
+    text: para,
+    translation: getTranslation(passage.title, index) // 임시 함수, 실제로는 DB에서
+  })) : []
+  
+  useEffect(() => {
+    if (params.id) {
+      fetchPassage(params.id as string)
+      fetchQuestions(params.id as string)
+    }
+  }, [params.id])
+  
+  const fetchPassage = async (id: string) => {
+    try {
+      const response = await fetch(`/api/reading/passages/${id}`)
+      const data = await response.json()
+      setPassage(data.passage)
+    } catch (error) {
+      console.error('Failed to fetch passage:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const fetchQuestions = async (id: string) => {
+    try {
+      const response = await fetch(`/api/reading/questions/${id}`)
+      const data = await response.json()
+      setQuestions(data.questions || [])
+    } catch (error) {
+      console.error('Failed to fetch questions:', error)
+    }
+  }
+  
+  // 임시 번역 함수 (나중에 DB에서 가져오도록 개선)
+  function getTranslation(title: string, paragraphIndex: number): string {
+    const translations: Record<string, string[]> = {
+      'My Daily Routine': [
+        '제 이름은 사라입니다. 저는 학생이에요. 저는 매일 오전 7시에 일어납니다. 가족과 함께 아침을 먹어요. 그리고 버스로 학교에 가요. 학교는 8시 30분에 시작해요. 점심은 12시에 먹어요. 방과 후에는 숙제를 해요. 저는 저녁에 책 읽는 것을 좋아해요. 밤 10시에 잠자리에 들어요.'
+      ],
+      'Party Invitation': [
+        '친애하는 친구들에게,\n\n다음 주 토요일 오후 3시에 제 생일 파티를 해요. 파티는 제 집에서 할 거예요. 케이크, 게임, 음악이 있을 거예요. 친구들도 데려오세요! 올 수 있는지 알려주세요.\n\n그곳에서 봐요!\n엠마'
+      ],
+      'New Park Opens Downtown': [
+        '시에서 어제 도심에 새로운 공원을 열었습니다. 공원에는 산책로, 놀이터, 작은 호수가 있습니다. 존슨 시장은 이 공원이 가족들이 야외 활동을 즐기는 데 도움이 될 것이라고 말했습니다. "우리는 모두를 위한 아름다운 공간을 만들고 싶었습니다"라고 시장은 설명했습니다. 공원 건설에는 2년이 걸렸고 500만 달러의 비용이 들었습니다. 지역 주민들은 동네에 새로 추가된 이것에 대해 기대하고 있습니다. 공원은 오전 6시부터 오후 9시까지 매일 열려 있습니다.'
+      ],
+      'The Benefits of Reading': [
+        '독서는 사람이 개발할 수 있는 가장 가치 있는 습관 중 하나입니다. 독서는 우리의 지식을 확장하고, 어휘력을 향상시키며, 상상력을 자극합니다. 정기적으로 독서를 하면 다양한 관점과 아이디어에 노출됩니다. 이는 세상을 더 잘 이해하고 다른 사람들에 대해 더 공감하게 만듭니다.',
+        '연구에 따르면 독서는 스트레스 수준을 크게 줄일 수 있습니다. 서식스 대학교의 과학자들에 따르면 단 6분의 독서만으로도 스트레스를 최대 68% 낮출 수 있습니다. 자기 전 독서는 수면의 질도 향상시킬 수 있습니다.',
+        '게다가 독서는 우리의 정신을 활동적이고 참여하게 유지합니다. 신체 운동이 몸을 강화하듯이, 독서를 통한 정신 운동은 뇌를 강화합니다. 연구에 따르면 정기적인 독서는 나이가 들면서 인지 능력 저하를 예방하는 데 도움이 될 수 있습니다.'
+      ],
+      'Artificial Intelligence in Healthcare': [
+        '인공지능은 전례 없는 방식으로 의료 산업에 혁명을 일으키고 있습니다. 기계 학습 알고리즘은 이제 의료 영상에서 질병을 감지할 수 있으며, 그 정확도는 인간 전문가와 맞먹거나 능가합니다. 예를 들어, AI 시스템은 초기 단계 암, 심혈관 질환 및 신경 장애를 식별하는 데 놀라운 성공을 보여주었습니다.',
+        '의료 분야에서 AI의 구현은 진단을 넘어 확장됩니다. 예측 분석은 병원이 자원 할당을 최적화하여 대기 시간을 줄이고 환자 결과를 개선하는 데 도움이 됩니다. 자연어 처리는 의료 기록의 자동 분석을 가능하게 하여 인간의 관찰을 벗어날 수 있는 패턴을 식별합니다. 로봇 보조 수술은 더 높은 정밀도를 가능하게 하여 합병증을 줄이고 회복 시간을 단축시킵니다.',
+        '그러나 의료 분야에 AI를 통합하는 것은 중요한 윤리적 질문을 제기합니다. 데이터 프라이버시, 알고리즘 편향, 의료 의사 결정에서 인간 판단의 역할 문제는 신중한 고려가 필요합니다. 이 기술이 계속 발전함에 따라, AI가 의료 실무의 기본 원칙을 유지하면서 환자의 최선의 이익을 제공하도록 적절한 규제 프레임워크와 윤리 지침을 확립하는 것이 점점 더 중요해지고 있습니다.'
+      ]
+    }
+    
+    return translations[title]?.[paragraphIndex] || '번역이 준비 중입니다.'
+  }
+  
+  const handleStartQuestions = () => {
+    setShowQuestions(true)
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+      </div>
+    )
+  }
+  
+  if (!passage) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <BookOpen className="w-16 h-16 text-gray-300 mb-4" />
+        <p className="text-gray-600 mb-4">지문을 찾을 수 없어요</p>
+        <Link
+          href="/learn/reading"
+          className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+        >
+          목록으로 돌아가기
+        </Link>
+      </div>
+    )
+  }
+  
+  if (showQuestions && questions.length > 0) {
+    return (
+      <ReadingQuestions
+        passage={passage}
+        questions={questions}
+        startTime={startTime}
+        onBack={() => setShowQuestions(false)}
+      />
+    )
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-6">
+        <Link
+          href="/learn/reading"
+          className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록으로
+        </Link>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                {passage.title}
+              </h1>
+              <div className="flex items-center gap-4 text-sm text-gray-600">
+                <span>Level {passage.difficulty}</span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <BookOpen className="w-4 h-4" />
+                  {passage.word_count} 단어
+                </span>
+                <span>•</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  약 {Math.ceil(passage.estimated_time / 60)}분
+                </span>
+              </div>
+            </div>
+            
+            {/* 해석 토글 */}
+            <button
+              onClick={() => setShowTranslation(!showTranslation)}
+              className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+                showTranslation
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {showTranslation ? (
+                <>
+                  <EyeOff className="w-4 h-4" />
+                  해석 숨기기
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4 h-4" />
+                  해석 보기
+                </>
+              )}
+            </button>
+          </div>
+          
+          {/* 안내 메시지 */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-purple-900">
+              💡 <strong>팁:</strong> 단어를 클릭하면 뜻을 볼 수 있어요. 
+              천천히 읽으며 내용을 이해하세요.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* 지문 내용 (단어 클릭 가능 + 해석) */}
+      <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+        <div className="space-y-6">
+          {paragraphs.map((para, index) => (
+            <div
+              key={index}
+              className={`p-4 rounded-lg ${
+                showTranslation ? 'bg-purple-50 border border-purple-200' : ''
+              }`}
+            >
+              <div className="text-lg leading-relaxed text-gray-800 mb-2">
+                <ClickableText text={para.text} />
+              </div>
+              
+              {showTranslation && (
+                <div className="pt-3 border-t border-purple-200">
+                  <p className="text-sm text-purple-800">
+                    {para.translation}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* 독해 문제 시작 버튼 */}
+      <div className="flex justify-center">
+        <button
+          onClick={handleStartQuestions}
+          disabled={questions.length === 0}
+          className="px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          독해 문제 풀기 ({questions.length}문제)
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 3. 독해 문제 컴포넌트 ===
+
+components/reading/ReadingQuestions.tsx 생성:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { ArrowLeft, CheckCircle, XCircle, Award } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+interface Question {
+  id: string
+  question_text: string
+  question_type: string
+  options: string[]
+  correct_answer: string
+  explanation: string
+}
+
+interface Passage {
+  id: string
+  title: string
+  word_count: number
+}
+
+interface ReadingQuestionsProps {
+  passage: Passage
+  questions: Question[]
+  startTime: Date
+  onBack: () => void
+}
+
+const questionTypeNames: Record<string, string> = {
+  main_idea: '주제 찾기',
+  detail: '세부 정보',
+  inference: '추론',
+  vocabulary: '어휘'
+}
+
+export default function ReadingQuestions({
+  passage,
+  questions,
+  startTime,
+  onBack
+}: ReadingQuestionsProps) {
+  const router = useRouter()
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, string>>({})
+  const [submitted, setSubmitted] = useState(false)
+  const [showExplanation, setShowExplanation] = useState(false)
+  
+  const currentQuestion = questions[currentQuestionIndex]
+  const isLastQuestion = currentQuestionIndex === questions.length - 1
+  const currentAnswer = answers[currentQuestion.id]
+  
+  const handleAnswer = (answer: string) => {
+    setAnswers({
+      ...answers,
+      [currentQuestion.id]: answer
+    })
+    setShowExplanation(false)
+  }
+  
+  const handleNext = () => {
+    if (isLastQuestion) {
+      handleSubmit()
+    } else {
+      setCurrentQuestionIndex(currentQuestionIndex + 1)
+      setShowExplanation(false)
+    }
+  }
+  
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1)
+      setShowExplanation(false)
+    }
+  }
+  
+  const handleSubmit = async () => {
+    setSubmitted(true)
+    
+    // 점수 계산
+    const correctCount = questions.filter(
+      q => answers[q.id] === q.correct_answer
+    ).length
+    const score = Math.round((correctCount / questions.length) * 100)
+    
+    // 읽기 시간 계산
+    const endTime = new Date()
+    const readingTime = Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
+    
+    // WPM 계산 (Words Per Minute)
+    const minutes = readingTime / 60
+    const wpm = Math.round(passage.word_count / minutes)
+    
+    // 진도 저장
+    try {
+      const response = await fetch('/api/reading/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passageId: passage.id,
+          answers: answers,
+          score: score,
+          correctCount: correctCount,
+          totalCount: questions.length,
+          readingTime: readingTime,
+          wpm: wpm,
+          completed: score >= 70
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to save progress')
+      
+      // XP 적립
+      const xpAmount = Math.floor(score / 5) + 10
+      await fetch('/api/gamification/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: xpAmount,
+          source: 'reading'
+        })
+      })
+      
+    } catch (error) {
+      console.error('Failed to save progress:', error)
+    }
+  }
+  
+  // 결과 화면
+  if (submitted) {
+    const correctCount = questions.filter(
+      q => answers[q.id] === q.correct_answer
+    ).length
+    const score = Math.round((correctCount / questions.length) * 100)
+    const endTime = new Date()
+    const readingTime = Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
+    const minutes = readingTime / 60
+    const wpm = Math.round(passage.word_count / minutes)
+    
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-8">
+          {/* 점수 */}
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">
+              {score >= 90 ? '🏆' : score >= 70 ? '⭐' : score >= 50 ? '💡' : '📖'}
+            </div>
+            <h2 className={`text-4xl font-bold mb-2 ${
+              score >= 90 ? 'text-green-600' :
+              score >= 70 ? 'text-blue-600' :
+              score >= 50 ? 'text-orange-600' : 'text-red-600'
+            }`}>
+              {score}점
+            </h2>
+            <p className="text-gray-600">
+              {correctCount} / {questions.length} 정답
+            </p>
+          </div>
+          
+          {/* 통계 */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-purple-50 rounded-lg p-4 text-center">
+              <p className="text-sm text-purple-600 mb-1">읽기 속도</p>
+              <p className="text-2xl font-bold text-purple-900">{wpm} WPM</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-4 text-center">
+              <p className="text-sm text-blue-600 mb-1">소요 시간</p>
+              <p className="text-2xl font-bold text-blue-900">
+                {Math.floor(minutes)}분 {Math.round((minutes % 1) * 60)}초
+              </p>
+            </div>
+          </div>
+          
+          {/* 문제별 결과 */}
+          <div className="space-y-3 mb-6">
+            <h3 className="font-semibold text-gray-900">문제별 결과</h3>
+            {questions.map((q, index) => {
+              const isCorrect = answers[q.id] === q.correct_answer
+              return (
+                <div
+                  key={q.id}
+                  className={`p-4 rounded-lg border-2 ${
+                    isCorrect
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {isCorrect ? (
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 mb-2">
+                        {index + 1}. {q.question_text}
+                      </p>
+                      {!isCorrect && (
+                        <div className="space-y-1 text-sm">
+                          <p className="text-red-700">
+                            당신의 답변: {answers[q.id] || '(답하지 않음)'}
+                          </p>
+                          <p className="text-green-700">
+                            정답: {q.correct_answer}
+                          </p>
+                          <p className="text-gray-600 mt-2">
+                            {q.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          
+          {/* 버튼 */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/learn/reading')}
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            >
+              목록으로
+            </button>
+            <button
+              onClick={onBack}
+              className="flex-1 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            >
+              지문 다시 보기
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
+  // 문제 풀이 화면
+  return (
+    <div className="max-w-3xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-6">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          지문으로 돌아가기
+        </button>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {passage.title} - 독해 문제
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                문제 {currentQuestionIndex + 1} / {questions.length}
+              </p>
+            </div>
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+              {questionTypeNames[currentQuestion.question_type]}
+            </span>
+          </div>
+          
+          {/* 진행 바 */}
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+            <div
+              className="bg-purple-600 h-2 rounded-full transition-all"
+              style={{
+                width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`
+              }}
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* 문제 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          {currentQuestion.question_text}
+        </h3>
+        
+        <div className="space-y-3">
+          {currentQuestion.options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => handleAnswer(option)}
+              className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
+                currentAnswer === option
+                  ? 'border-purple-600 bg-purple-50'
+                  : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+              }`}
+            >
+              <span className="font-medium">
+                {String.fromCharCode(65 + index)}. {option}
+              </span>
+            </button>
+          ))}
+        </div>
+        
+        {/* 해설 보기 */}
+        {currentAnswer && (
+          <button
+            onClick={() => setShowExplanation(!showExplanation)}
+            className="mt-4 text-sm text-purple-600 hover:text-purple-700"
+          >
+            {showExplanation ? '해설 숨기기' : '해설 보기'}
+          </button>
+        )}
+        
+        {showExplanation && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              <strong>정답:</strong> {currentQuestion.correct_answer}
+            </p>
+            <p className="text-sm text-blue-800 mt-2">
+              {currentQuestion.explanation}
+            </p>
+          </div>
+        )}
+      </div>
+      
+      {/* 네비게이션 */}
+      <div className="flex gap-3">
+        <button
+          onClick={handlePrev}
+          disabled={currentQuestionIndex === 0}
+          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          이전
+        </button>
+        <button
+          onClick={handleNext}
+          disabled={!currentAnswer}
+          className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+        >
+          {isLastQuestion ? '제출하기' : '다음'}
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 4. API 엔드포인트 추가 ===
+
+1. app/api/reading/questions/[passageId]/route.ts:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(
+  req: Request,
+  { params }: { params: { passageId: string } }
+) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const { data, error } = await supabase
+      .from('reading_questions')
+      .select('*')
+      .eq('passage_id', params.passageId)
+      .order('created_at', { ascending: true })
+    
+    if (error) throw error
+    
+    return NextResponse.json({ questions: data })
+  } catch (error) {
+    console.error('Questions fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch questions' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+2. app/api/reading/progress/route.ts:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const {
+      passageId,
+      answers,
+      score,
+      correctCount,
+      totalCount,
+      readingTime,
+      wpm,
+      completed
+    } = await req.json()
+
+    const { data, error } = await supabase
+      .from('reading_progress')
+      .insert({
+        user_id: session.user.id,
+        passage_id: passageId,
+        answers: answers,
+        score: score,
+        correct_count: correctCount,
+        total_count: totalCount,
+        reading_time: readingTime,
+        wpm: wpm,
+        completed: completed
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error('Progress save error:', error)
+    return NextResponse.json(
+      { error: 'Failed to save progress' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 출력 요구사항 ===
+
+1. ✅ 모든 지문에 독해 문제 3-4개 추가
+2. ✅ 지문 페이지에 ClickableText 추가 (단어 클릭)
+3. ✅ 문단별 해석 보기/숨기기
+4. ✅ 단어장 저장 기능 연동
+5. ✅ 독해 문제 컴포넌트
+6. ✅ 4가지 문제 유형 (주제/세부/추론/어휘)
+7. ✅ 답안 선택 UI
+8. ✅ 이전/다음 버튼
+9. ✅ 해설 보기 기능
+10. ✅ 최종 제출 및 채점
+11. ✅ 결과 화면 (점수, 통계)
+12. ✅ WPM 계산
+13. ✅ 문제별 정답/오답 표시
+14. ✅ 진도 저장 API
+15. ✅ XP 자동 적립
+16. ✅ 모바일 반응형
+
+완성 후:
+- Reading Phase 2 완료!
+- 단어 클릭 기능 추가
+- 해석 보기 기능
+- 독해 문제 시스템 완성
+- 내일 Phase 3 (통계/기록) 진행
+
+테스트:
+1. 지문에서 단어 클릭 → 뜻 팝업
+2. 해석 보기/숨기기
+3. 독해 문제 풀기
+4. 답안 선택
+5. 해설 보기
+6. 제출 후 결과 확인
+7. WPM 계산 확인
+8. 단어장에 저장 확인
+
+중요:
+- Listening에서 만든 ClickableText 재사용
+- 단어장 시스템 연동
+- 읽기 속도(WPM) 측정
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## 🎯 **Phase 2 주요 기능**
+
+### **1. 단어 기능 (요청사항!)**
+```
+✅ 지문에 ClickableText 추가
+✅ 단어 클릭 → 뜻 팝업
+✅ 발음 듣기
+✅ 단어장 저장
+✅ Listening과 동일한 시스템
+```
+
+### **2. 해석 기능 (요청사항!)**
+```
+✅ 문단별 해석 제공
+✅ 해석 보기/숨기기 토글
+✅ 깔끔한 UI
+```
+
+### **3. 독해 문제 (원래 계획)**
+```
+✅ 4가지 유형
+✅ 객관식 4지선다
+✅ 해설 제공
+✅ 점수 계산
+✅ WPM 측정

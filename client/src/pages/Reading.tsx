@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { BookOpen, Clock, TrendingUp, FileText, BookText, Mail, Newspaper, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,9 +33,9 @@ const contentTypeColors = {
 };
 
 export default function Reading() {
+  const [, setLocation] = useLocation();
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedPassage, setSelectedPassage] = useState<ReadingPassage | null>(null);
 
   const { data: passagesData, isLoading } = useQuery<{ passages: ReadingPassage[] }>({
     queryKey: ['/api/reading/passages', { difficulty: selectedDifficulty, type: selectedType }],
@@ -97,37 +98,6 @@ export default function Reading() {
   
   const contentTypes = ['news', 'story', 'essay', 'email'];
   const difficulties = [1, 2, 3, 4, 5];
-
-  if (selectedPassage) {
-    // Phase 2에서 구현할 지문 상세 보기
-    return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="max-w-4xl mx-auto">
-          <Button 
-            variant="ghost" 
-            onClick={() => setSelectedPassage(null)}
-            className="mb-4"
-            data-testid="button-back"
-          >
-            ← 목록으로
-          </Button>
-          <Card>
-            <CardContent className="p-6">
-              <h1 className="text-2xl font-bold mb-4" data-testid="text-passage-title">
-                {selectedPassage.title}
-              </h1>
-              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap" data-testid="text-passage-content">
-                {selectedPassage.content}
-              </div>
-              <p className="text-muted-foreground mt-6 text-center" data-testid="text-phase2-notice">
-                Phase 2에서 독해 문제가 추가될 예정입니다
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -284,7 +254,7 @@ export default function Reading() {
                   <Card
                     key={passage.id}
                     className="hover-elevate active-elevate-2 cursor-pointer"
-                    onClick={() => setSelectedPassage(passage)}
+                    onClick={() => setLocation(`/learn/reading/${passage.id}`)}
                     data-testid={`card-passage-${passage.id}`}
                   >
                     <CardContent className="p-5">
