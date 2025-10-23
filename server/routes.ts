@@ -930,14 +930,14 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       const userId = req.user!.id;
       const { lessonId, userAnswer, score, accuracy } = req.body;
       
-      if (!lessonId || !userAnswer || score === undefined || accuracy === undefined) {
+      if (!lessonId || score === undefined || accuracy === undefined) {
         return res.status(400).json({ error: 'Missing required fields' });
       }
       
       const progress = await storage.addListeningProgress({
         userId,
         lessonId,
-        userAnswer,
+        userAnswer: userAnswer || '', // Allow empty string for long content lessons
         score,
         accuracy,
         completed: true
