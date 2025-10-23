@@ -1376,6 +1376,135 @@ Respond in JSON format:
     }
   });
 
+  app.post("/api/writing/feedback/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const submission = await storage.getWritingSubmission(id);
+      
+      if (!submission) {
+        return res.status(404).json({ error: 'Submission not found' });
+      }
+      
+      const topic = await storage.getWritingTopic(submission.topicId);
+      if (!topic) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({ 
+          error: "OpenAI API 키가 설정되지 않았습니다. 환경 변수에서 OPENAI_API_KEY를 설정해주세요."
+        });
+      }
+      
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert English writing tutor. Analyze the student's writing and provide detailed feedback in JSON format.
+
+Your response must be a valid JSON object with this exact structure:
+{
+  "score": <number 0-100>,
+  "grammar_errors": [
+    {
+      "original": "<incorrect text>",
+      "corrected": "<corrected text>",
+      "explanation": "<why it's wrong and how to fix it>",
+      "type": "<error type: grammar/spelling/punctuation>"
+    }
+  ],
+  "suggestions": [
+    {
+      "category": "<vocabulary/structure/clarity/style>",
+      "issue": "<what needs improvement>",
+      "suggestion": "<specific suggestion>",
+      "example": "<example of improved version>"
+    }
+  ],
+  "corrected_content": "<fully corrected version of the text>",
+  "strengths": ["<strength 1>", "<strength 2>", ...],
+  "areas_for_improvement": ["<area 1>", "<area 2>", ...],
+  "overall_feedback": "<2-3 sentences of encouraging overall feedback>"
+}
+
+Scoring guidelines:
+- 90-100: Excellent - Very few errors, clear and natural expression
+- 80-89: Good - Minor errors, generally clear communication
+- 70-79: Satisfactory - Some errors but message is understandable
+- 60-69: Needs improvement - Multiple errors affecting clarity
+- Below 60: Significant revision needed
+
+Be encouraging and constructive. Focus on helping the student improve.`
+          },
+          {
+            role: "user",
+            content: `Please analyze this writing:
+
+Writing Prompt: ${topic.prompt}
+
+Student's Writing:
+${submission.content}
+
+Provide detailed feedback in JSON format as specified.`
+          }
+        ],
+        temperature: 0.7,
+        response_format: { type: "json_object" }
+      });
+      
+      const feedbackText = completion.choices[0].message.content;
+      if (!feedbackText) {
+        throw new Error('No feedback received from AI');
+      }
+      
+      const feedback = JSON.parse(feedbackText);
+      
+      const updatedSubmission = await storage.updateWritingSubmission(id, {
+        aiScore: feedback.score,
+        grammarErrors: feedback.grammar_errors,
+        suggestions: feedback.suggestions,
+        correctedContent: feedback.corrected_content,
+        aiStrengths: feedback.strengths,
+        areasForImprovement: feedback.areas_for_improvement,
+        aiFeedback: feedback.overall_feedback
+      });
+      
+      res.json({
+        success: true,
+        feedback: {
+          score: feedback.score,
+          grammarErrors: feedback.grammar_errors,
+          suggestions: feedback.suggestions,
+          correctedContent: feedback.corrected_content,
+          strengths: feedback.strengths,
+          areasForImprovement: feedback.areas_for_improvement,
+          overallFeedback: feedback.overall_feedback
+        },
+        submission: updatedSubmission
+      });
+    } catch (error: any) {
+      console.error('GPT-4 feedback error:', error);
+      
+      if (error.status === 401) {
+        return res.status(503).json({ 
+          error: 'OpenAI API 키가 유효하지 않습니다.'
+        });
+      } else if (error.status === 429) {
+        return res.status(503).json({ 
+          error: 'OpenAI API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'AI 첨삭 중 오류가 발생했습니다. 다시 시도해주세요.'
+      });
+    }
+  });
+
   app.get("/api/writing/stats", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
