@@ -42,7 +42,7 @@ export default function WritingFeedback() {
   const id = params?.id ? parseInt(params.id) : null;
   
   const { data: submission, isLoading } = useQuery<SubmissionWithTopic>({
-    queryKey: ['/api/writing/submissions', id],
+    queryKey: [`/api/writing/submissions/${id}`],
     enabled: !!id
   });
   
