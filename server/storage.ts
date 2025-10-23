@@ -41,6 +41,10 @@ import {
   type InsertReadingQuestion,
   type ReadingProgress,
   type InsertReadingProgress,
+  type WritingTopic,
+  type InsertWritingTopic,
+  type WritingSubmission,
+  type InsertWritingSubmission,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -162,6 +166,22 @@ export interface IStorage {
     difficultyStats: { difficulty: number; count: number; avgScore: number }[];
     recentProgress: ReadingProgress[];
   }>;
+
+  // Writing Topics
+  getWritingTopics(filters?: { difficulty?: number; category?: string }): Promise<WritingTopic[]>;
+  getWritingTopic(id: number): Promise<WritingTopic | undefined>;
+
+  // Writing Submissions
+  saveWritingSubmission(submission: InsertWritingSubmission): Promise<WritingSubmission>;
+  getWritingSubmissions(userId: string): Promise<WritingSubmission[]>;
+  getWritingSubmission(id: number): Promise<WritingSubmission | undefined>;
+  updateWritingSubmission(id: number, updates: Partial<WritingSubmission>): Promise<WritingSubmission>;
+  getWritingStats(userId: string): Promise<{
+    totalSubmitted: number;
+    averageScore: number;
+    averageWordCount: number;
+    recentSubmissions: WritingSubmission[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -188,6 +208,8 @@ export class MemStorage implements IStorage {
   private readingPassages: Map<number, ReadingPassage>;
   private readingQuestions: Map<number, ReadingQuestion>;
   private readingProgress: Map<number, ReadingProgress>;
+  private writingTopics: Map<number, WritingTopic>;
+  private writingSubmissions: Map<number, WritingSubmission>;
   private nextId: number;
 
   constructor() {
@@ -214,6 +236,8 @@ export class MemStorage implements IStorage {
     this.readingPassages = new Map();
     this.readingQuestions = new Map();
     this.readingProgress = new Map();
+    this.writingTopics = new Map();
+    this.writingSubmissions = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
@@ -221,6 +245,7 @@ export class MemStorage implements IStorage {
     this.initializeListeningLessons();
     this.initializeVocabularyWords();
     this.initializeReadingPassages();
+    this.initializeWritingTopics();
     this.initializeReadingQuestions();
   }
 
@@ -1595,6 +1620,191 @@ export class MemStorage implements IStorage {
       averageWPM,
       difficultyStats,
       recentProgress
+    };
+  }
+
+  // Writing Topics - Initialize 5 sample topics
+  private initializeWritingTopics() {
+    const topics: Omit<WritingTopic, 'id' | 'createdAt'>[] = [
+      {
+        title: "Introduce Yourself",
+        description: "새로운 친구에게 자기소개 이메일 쓰기",
+        category: "email",
+        difficulty: 1,
+        prompt: "Write an email to introduce yourself to a new friend. Include your name, age, hobbies, and where you are from.",
+        guidelines: [
+          "Start with a greeting (Dear friend, Hi, Hello)",
+          "Introduce your name and age",
+          "Tell about your hobbies",
+          "Mention where you are from",
+          "End with a friendly closing"
+        ],
+        wordCountMin: 50,
+        wordCountMax: 100
+      },
+      {
+        title: "Thank You Letter",
+        description: "선물을 받은 것에 대한 감사 편지 쓰기",
+        category: "letter",
+        difficulty: 2,
+        prompt: "Write a thank you letter to someone who gave you a gift. Explain what the gift was and why you like it.",
+        guidelines: [
+          'Start with "Dear [Name]"',
+          "Say thank you for the gift",
+          "Describe what the gift is",
+          "Explain why you like it",
+          "Mention how you will use it",
+          'End with "Thank you again" or similar'
+        ],
+        wordCountMin: 80,
+        wordCountMax: 150
+      },
+      {
+        title: "Movie Review",
+        description: "최근에 본 영화에 대한 리뷰 작성하기",
+        category: "review",
+        difficulty: 3,
+        prompt: "Write a review of a movie you recently watched. Include the plot summary, your opinion, and a recommendation.",
+        guidelines: [
+          "Introduce the movie title and genre",
+          "Write a brief plot summary (no spoilers)",
+          "Explain what you liked or disliked",
+          "Mention the acting, music, or visuals",
+          "Give a rating (out of 5 stars or 10 points)",
+          "Recommend whether others should watch it"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Social Media Impact",
+        description: "소셜 미디어가 사회에 미치는 영향에 대한 의견 쓰기",
+        category: "opinion",
+        difficulty: 4,
+        prompt: "Write an essay about the impact of social media on society. Discuss both positive and negative effects, and give your opinion.",
+        guidelines: [
+          "Introduction: Introduce the topic",
+          "Body paragraph 1: Positive effects",
+          "Body paragraph 2: Negative effects",
+          "Body paragraph 3: Your personal opinion",
+          "Conclusion: Summarize your main points",
+          "Use transition words (however, moreover, in addition)",
+          "Support your ideas with examples"
+        ],
+        wordCountMin: 200,
+        wordCountMax: 300
+      },
+      {
+        title: "Climate Change Solutions",
+        description: "기후 변화 문제에 대한 해결책 제안하기",
+        category: "essay",
+        difficulty: 5,
+        prompt: "Write an essay proposing solutions to climate change. Discuss the problem, suggest practical solutions, and explain how they can be implemented.",
+        guidelines: [
+          "Introduction: Explain why climate change is a serious problem",
+          "Problem analysis: Describe the current situation and consequences",
+          "Solution 1: Individual actions (with examples)",
+          "Solution 2: Government policies (with examples)",
+          "Solution 3: Technological innovations (with examples)",
+          "Implementation: How these solutions can be put into practice",
+          "Conclusion: Summarize and emphasize the urgency",
+          "Use formal academic language",
+          "Include specific examples and data when possible"
+        ],
+        wordCountMin: 300,
+        wordCountMax: 500
+      }
+    ];
+
+    topics.forEach(topic => {
+      const id = this.nextId++;
+      const writingTopic: WritingTopic = {
+        id,
+        ...topic,
+        createdAt: new Date()
+      };
+      this.writingTopics.set(id, writingTopic);
+    });
+  }
+
+  // Writing Topics
+  async getWritingTopics(filters?: { difficulty?: number; category?: string }): Promise<WritingTopic[]> {
+    let topics = Array.from(this.writingTopics.values());
+    
+    if (filters?.difficulty) {
+      topics = topics.filter(t => t.difficulty === filters.difficulty);
+    }
+    
+    if (filters?.category) {
+      topics = topics.filter(t => t.category === filters.category);
+    }
+    
+    return topics.sort((a, b) => a.difficulty - b.difficulty);
+  }
+
+  async getWritingTopic(id: number): Promise<WritingTopic | undefined> {
+    return this.writingTopics.get(id);
+  }
+
+  // Writing Submissions
+  async saveWritingSubmission(submission: InsertWritingSubmission): Promise<WritingSubmission> {
+    const id = this.nextId++;
+    const writingSubmission: WritingSubmission = {
+      id,
+      ...submission,
+      submittedAt: new Date(),
+      createdAt: new Date()
+    };
+    this.writingSubmissions.set(id, writingSubmission);
+    return writingSubmission;
+  }
+
+  async getWritingSubmissions(userId: string): Promise<WritingSubmission[]> {
+    return Array.from(this.writingSubmissions.values())
+      .filter(s => s.userId === userId)
+      .sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+  }
+
+  async getWritingSubmission(id: number): Promise<WritingSubmission | undefined> {
+    return this.writingSubmissions.get(id);
+  }
+
+  async updateWritingSubmission(id: number, updates: Partial<WritingSubmission>): Promise<WritingSubmission> {
+    const submission = this.writingSubmissions.get(id);
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+    
+    const updated = { ...submission, ...updates };
+    this.writingSubmissions.set(id, updated);
+    return updated;
+  }
+
+  async getWritingStats(userId: string): Promise<{
+    totalSubmitted: number;
+    averageScore: number;
+    averageWordCount: number;
+    recentSubmissions: WritingSubmission[];
+  }> {
+    const submissions = await this.getWritingSubmissions(userId);
+    const totalSubmitted = submissions.length;
+    
+    const scoredSubmissions = submissions.filter(s => s.aiScore !== undefined);
+    const averageScore = scoredSubmissions.length > 0
+      ? scoredSubmissions.reduce((sum, s) => sum + (s.aiScore || 0), 0) / scoredSubmissions.length
+      : 0;
+    
+    const averageWordCount = submissions.length > 0
+      ? submissions.reduce((sum, s) => sum + s.wordCount, 0) / submissions.length
+      : 0;
+    
+    const recentSubmissions = submissions.slice(0, 10);
+    
+    return {
+      totalSubmitted,
+      averageScore,
+      averageWordCount,
+      recentSubmissions
     };
   }
 }
