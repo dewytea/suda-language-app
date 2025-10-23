@@ -24,12 +24,17 @@ The application features a hybrid design inspired by Duolingo, Notion, and Linea
 - **Listening Module**: Offers short-form dictation with Levenshtein distance scoring and long-form content listening with paragraph-by-paragraph navigation, translation toggles, and playback speed control.
 - **Vocabulary & Notebook**: Provides an interactive dictionary feature where words in content are clickable, offering definitions, phonetics, examples, and instant saving to a personal vocabulary notebook with filtering and status tracking.
 - **Reading Module**: Supports reading passages across multiple difficulty levels and content types. It includes paragraph-by-paragraph translations, clickable words for vocabulary lookup, and comprehension questions (main idea, detail, inference, vocabulary) with automatic scoring and explanations.
+- **Writing Module**: Comprehensive writing practice with AI-powered feedback. Features include:
+  - **Phase 1**: Topic selection with filtering by difficulty (Lv.1-5) and category (email, essay, letter, review, story, opinion). Real-time word count tracking and basic AI evaluation using Gemini AI.
+  - **Phase 2**: Advanced GPT-4 powered detailed feedback system including grammar error detection with corrections and explanations, improvement suggestions with examples, fully corrected content for comparison, strengths and areas for improvement analysis, and comprehensive scoring (0-100). Automated submission-to-feedback flow with instant redirection to detailed results. "My Writings" page for viewing all submitted work with scores and error counts.
 - **Authentication**: Implemented using Supabase Auth, supporting email/password and Google OAuth. Features include secure password handling, session management with automatic token refresh, and Row-Level Security (RLS) for data protection.
 - **API Key Management**: Securely handles Supabase and Google Gemini AI API keys via Replit Secrets. Includes server-side validation, client-side status monitoring, and clear user guidance for configuration and error handling.
 
 ## External Dependencies
 
-- **AI Integration**: Google Gemini AI (@google/genai) for pronunciation and writing evaluation.
+- **AI Integration**: 
+  - OpenAI GPT-4o for detailed writing feedback and corrections
+  - Google Gemini AI (@google/genai) for pronunciation and basic writing evaluation
 - **Authentication**: Supabase Auth for user authentication and management.
 - **Database**: PostgreSQL, Drizzle ORM, `connect-pg-simple` for session storage.
 - **Frontend Frameworks**: React, TypeScript, Vite.
