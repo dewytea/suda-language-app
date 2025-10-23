@@ -1,0 +1,843 @@
+Writing 모듈의 Phase 2를 개발해줘.
+
+=== Writing Phase 2: AI 첨삭 시스템 ===
+
+이번 단계에서는 GPT-4를 사용해서:
+1. 제출된 글을 분석
+2. 문법 오류 찾기
+3. 개선 제안하기
+4. 교정된 글 생성
+5. 점수 계산
+6. 피드백 제공
+
+중요: OpenAI API 키는 환경변수 OPENAI_API_KEY로 설정되어 있어야 함.
+
+=== 1. AI 첨삭 API 엔드포인트 ===
+
+app/api/writing/feedback/route.ts 생성:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+})
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { submissionId, content, prompt } = await req.json()
+
+    // GPT-4에게 첨삭 요청
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert English writing tutor. Analyze the student's writing and provide detailed feedback in JSON format.
+
+Your response must be a valid JSON object with this exact structure:
+{
+  "score": <number 0-100>,
+  "grammar_errors": [
+    {
+      "original": "<incorrect text>",
+      "corrected": "<corrected text>",
+      "explanation": "<why it's wrong and how to fix it>",
+      "type": "<error type: grammar/spelling/punctuation>"
+    }
+  ],
+  "suggestions": [
+    {
+      "category": "<vocabulary/structure/clarity/style>",
+      "issue": "<what needs improvement>",
+      "suggestion": "<specific suggestion>",
+      "example": "<example of improved version>"
+    }
+  ],
+  "corrected_content": "<fully corrected version of the text>",
+  "strengths": ["<strength 1>", "<strength 2>", ...],
+  "areas_for_improvement": ["<area 1>", "<area 2>", ...],
+  "overall_feedback": "<2-3 sentences of encouraging overall feedback>"
+}
+
+Scoring guidelines:
+- 90-100: Excellent - Very few errors, clear and natural expression
+- 80-89: Good - Minor errors, generally clear communication
+- 70-79: Satisfactory - Some errors but message is understandable
+- 60-69: Needs improvement - Multiple errors affecting clarity
+- Below 60: Significant revision needed
+
+Be encouraging and constructive. Focus on helping the student improve.`
+        },
+        {
+          role: "user",
+          content: `Please analyze this writing:
+
+Writing Prompt: ${prompt}
+
+Student's Writing:
+${content}
+
+Provide detailed feedback in JSON format as specified.`
+        }
+      ],
+      temperature: 0.7,
+      response_format: { type: "json_object" }
+    })
+
+    const feedbackText = completion.choices[0].message.content
+    if (!feedbackText) {
+      throw new Error('No feedback received from AI')
+    }
+
+    const feedback = JSON.parse(feedbackText)
+
+    // 데이터베이스 업데이트
+    const { error: updateError } = await supabase
+      .from('writing_submissions')
+      .update({
+        ai_score: feedback.score,
+        grammar_errors: feedback.grammar_errors,
+        suggestions: feedback.suggestions,
+        corrected_content: feedback.corrected_content,
+        feedback_summary: feedback.overall_feedback
+      })
+      .eq('id', submissionId)
+
+    if (updateError) throw updateError
+
+    // XP 추가 적립 (첨삭 받으면 보너스)
+    const bonusXp = Math.floor(feedback.score / 10)
+    await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/gamification/xp`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cookie': req.headers.get('cookie') || ''
+      },
+      body: JSON.stringify({
+        amount: bonusXp,
+        source: 'writing_feedback'
+      })
+    })
+
+    return NextResponse.json({
+      success: true,
+      feedback: {
+        score: feedback.score,
+        grammarErrors: feedback.grammar_errors,
+        suggestions: feedback.suggestions,
+        correctedContent: feedback.corrected_content,
+        strengths: feedback.strengths,
+        areasForImprovement: feedback.areas_for_improvement,
+        overallFeedback: feedback.overall_feedback
+      }
+    })
+
+  } catch (error) {
+    console.error('AI feedback error:', error)
+    return NextResponse.json(
+      { error: 'Failed to get AI feedback' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 2. 글쓰기 페이지 수정 (AI 첨삭 연동) ===
+
+app/learn/writing/[id]/page.tsx를 수정해서 제출 후 AI 첨삭 받도록:
+
+기존 handleSubmit 함수를 다음과 같이 수정:
+```tsx
+const handleSubmit = async () => {
+  if (!topic || !isWithinRange) return
+  
+  setSubmitting(true)
+  
+  try {
+    // 1. 글 제출
+    const submitResponse = await fetch('/api/writing/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topicId: topic.id,
+        content: content,
+        wordCount: wordCount
+      })
+    })
+    
+    if (!submitResponse.ok) throw new Error('Failed to submit')
+    
+    const submitData = await submitResponse.json()
+    const submissionId = submitData.data.id
+    
+    // 2. AI 첨삭 요청
+    const feedbackResponse = await fetch('/api/writing/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        submissionId: submissionId,
+        content: content,
+        prompt: topic.prompt
+      })
+    })
+    
+    if (!feedbackResponse.ok) throw new Error('Failed to get feedback')
+    
+    const feedbackData = await feedbackResponse.json()
+    
+    // 3. 피드백 페이지로 이동
+    router.push(`/learn/writing/feedback/${submissionId}`)
+    
+  } catch (error) {
+    console.error('Submit error:', error)
+    alert('제출에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    setSubmitting(false)
+  }
+}
+```
+
+제출 버튼 텍스트도 수정:
+```tsx
+<button
+  onClick={handleSubmit}
+  disabled={!content.trim() || !isWithinRange || submitting}
+  className="px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+>
+  {submitting ? (
+    <>
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+      AI 첨삭 중...
+    </>
+  ) : (
+    <>
+      <Send className="w-5 h-5" />
+      제출하고 AI 첨삭 받기
+    </>
+  )}
+</button>
+```
+
+=== 3. AI 피드백 페이지 ===
+
+app/learn/writing/feedback/[id]/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { 
+  ArrowLeft, 
+  Award, 
+  CheckCircle, 
+  AlertCircle,
+  Lightbulb,
+  ThumbsUp,
+  TrendingUp
+} from 'lucide-react'
+import Link from 'next/link'
+
+interface GrammarError {
+  original: string
+  corrected: string
+  explanation: string
+  type: string
+}
+
+interface Suggestion {
+  category: string
+  issue: string
+  suggestion: string
+  example: string
+}
+
+interface Feedback {
+  score: number
+  grammarErrors: GrammarError[]
+  suggestions: Suggestion[]
+  correctedContent: string
+  strengths: string[]
+  areasForImprovement: string[]
+  overallFeedback: string
+}
+
+interface Submission {
+  id: string
+  content: string
+  word_count: number
+  topic_title: string
+  topic_prompt: string
+}
+
+export default function FeedbackPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [submission, setSubmission] = useState<Submission | null>(null)
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [showCorrected, setShowCorrected] = useState(false)
+  
+  useEffect(() => {
+    if (params.id) {
+      fetchFeedback(params.id as string)
+    }
+  }, [params.id])
+  
+  const fetchFeedback = async (id: string) => {
+    try {
+      const response = await fetch(`/api/writing/submission/${id}`)
+      const data = await response.json()
+      
+      setSubmission({
+        id: data.submission.id,
+        content: data.submission.content,
+        word_count: data.submission.word_count,
+        topic_title: data.submission.writing_topics.title,
+        topic_prompt: data.submission.writing_topics.prompt
+      })
+      
+      if (data.submission.ai_score) {
+        setFeedback({
+          score: data.submission.ai_score,
+          grammarErrors: data.submission.grammar_errors || [],
+          suggestions: data.submission.suggestions || [],
+          correctedContent: data.submission.corrected_content || '',
+          strengths: [],
+          areasForImprovement: [],
+          overallFeedback: data.submission.feedback_summary || ''
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch feedback:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4" />
+        <p className="text-gray-600">AI가 첨삭 중입니다...</p>
+      </div>
+    )
+  }
+  
+  if (!submission || !feedback) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-gray-600 mb-4">피드백을 찾을 수 없어요</p>
+        <Link
+          href="/learn/writing"
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+          목록으로 돌아가기
+        </Link>
+      </div>
+    )
+  }
+  
+  const scoreColor = 
+    feedback.score >= 90 ? 'text-green-600' :
+    feedback.score >= 80 ? 'text-blue-600' :
+    feedback.score >= 70 ? 'text-yellow-600' :
+    feedback.score >= 60 ? 'text-orange-600' : 'text-red-600'
+  
+  const scoreEmoji = 
+    feedback.score >= 90 ? '🏆' :
+    feedback.score >= 80 ? '⭐' :
+    feedback.score >= 70 ? '💡' :
+    feedback.score >= 60 ? '📖' : '💪'
+  
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-6">
+        <Link
+          href="/learn/writing/my-writings"
+          className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          내가 쓴 글 목록
+        </Link>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {submission.topic_title}
+          </h1>
+          <p className="text-sm text-gray-600">{submission.topic_prompt}</p>
+        </div>
+      </div>
+      
+      {/* 점수 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+        <div className="text-center">
+          <div className="text-6xl mb-4">{scoreEmoji}</div>
+          <div className={`text-5xl font-bold mb-2 ${scoreColor}`}>
+            {feedback.score}점
+          </div>
+          <p className="text-gray-600 mb-6">
+            {feedback.score >= 90 ? 'Excellent! 훌륭해요!' :
+             feedback.score >= 80 ? 'Good! 잘했어요!' :
+             feedback.score >= 70 ? 'Satisfactory. 괜찮아요!' :
+             feedback.score >= 60 ? 'Needs improvement. 조금 더 노력해봐요!' :
+             'Keep practicing! 계속 연습하면 잘하게 될 거예요!'}
+          </p>
+          
+          {feedback.overallFeedback && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <p className="text-sm text-blue-900">{feedback.overallFeedback}</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* 원본 vs 교정본 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900">내가 쓴 글</h2>
+          <button
+            onClick={() => setShowCorrected(!showCorrected)}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              showCorrected
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {showCorrected ? '원본 보기' : '교정본 보기'}
+          </button>
+        </div>
+        
+        <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+          <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+            {showCorrected ? feedback.correctedContent : submission.content}
+          </p>
+        </div>
+        
+        {showCorrected && (
+          <div className="mt-3 text-sm text-gray-500">
+            💡 이것은 AI가 교정한 버전입니다. 원본과 비교해보세요!
+          </div>
+        )}
+      </div>
+      
+      {/* 문법 오류 */}
+      {feedback.grammarErrors.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              문법 오류 ({feedback.grammarErrors.length}개)
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            {feedback.grammarErrors.map((error, index) => (
+              <div
+                key={index}
+                className="bg-red-50 border border-red-200 rounded-lg p-4"
+              >
+                <div className="flex items-start gap-3 mb-2">
+                  <span className="px-2 py-1 bg-red-200 text-red-800 rounded text-xs font-medium">
+                    {error.type}
+                  </span>
+                  <div className="flex-1">
+                    <div className="mb-2">
+                      <span className="text-sm text-red-700 font-medium">틀린 표현: </span>
+                      <span className="text-sm text-red-900 line-through">
+                        {error.original}
+                      </span>
+                    </div>
+                    <div className="mb-2">
+                      <span className="text-sm text-green-700 font-medium">올바른 표현: </span>
+                      <span className="text-sm text-green-900 font-semibold">
+                        {error.corrected}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700">
+                      {error.explanation}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* 개선 제안 */}
+      {feedback.suggestions.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-6 h-6 text-yellow-600" />
+            <h2 className="text-xl font-bold text-gray-900">
+              개선 제안 ({feedback.suggestions.length}개)
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            {feedback.suggestions.map((suggestion, index) => (
+              <div
+                key={index}
+                className="bg-yellow-50 border border-yellow-200 rounded-lg p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs font-medium">
+                    {suggestion.category}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900 mb-1">
+                      {suggestion.issue}
+                    </p>
+                    <p className="text-sm text-gray-700 mb-2">
+                      💡 {suggestion.suggestion}
+                    </p>
+                    {suggestion.example && (
+                      <div className="bg-white rounded p-3 border border-yellow-300">
+                        <p className="text-xs text-gray-500 mb-1">예시:</p>
+                        <p className="text-sm text-gray-800">
+                          {suggestion.example}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* 잘한 점 */}
+      {feedback.strengths && feedback.strengths.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ThumbsUp className="w-6 h-6 text-green-600" />
+            <h2 className="text-xl font-bold text-gray-900">잘한 점</h2>
+          </div>
+          
+          <ul className="space-y-2">
+            {feedback.strengths.map((strength, index) => (
+              <li key={index} className="flex items-start gap-2 text-gray-700">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <span>{strength}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      {/* 개선할 점 */}
+      {feedback.areasForImprovement && feedback.areasForImprovement.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-6 h-6 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-900">개선할 점</h2>
+          </div>
+          
+          <ul className="space-y-2">
+            {feedback.areasForImprovement.map((area, index) => (
+              <li key={index} className="flex items-start gap-2 text-gray-700">
+                <span className="text-blue-600 mt-0.5">•</span>
+                <span>{area}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      {/* 액션 버튼 */}
+      <div className="flex gap-3">
+        <Link
+          href="/learn/writing"
+          className="flex-1 py-3 text-center border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+        >
+          새 글 쓰기
+        </Link>
+        <Link
+          href="/learn/writing/my-writings"
+          className="flex-1 py-3 text-center bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+          내 글 목록
+        </Link>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 4. 제출 상세 API ===
+
+app/api/writing/submission/[id]/route.ts 생성:
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('writing_submissions')
+      .select(`
+        id,
+        content,
+        word_count,
+        ai_score,
+        grammar_errors,
+        suggestions,
+        corrected_content,
+        feedback_summary,
+        submitted_at,
+        writing_topics (
+          title,
+          prompt
+        )
+      `)
+      .eq('id', params.id)
+      .eq('user_id', session.user.id)
+      .single()
+    
+    if (error) throw error
+    
+    return NextResponse.json({ submission: data })
+  } catch (error) {
+    console.error('Submission fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch submission' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 5. 내가 쓴 글 페이지 업데이트 ===
+
+app/learn/writing/my-writings/page.tsx 수정:
+
+AI 점수 표시 및 피드백 링크 추가:
+```tsx
+// 기존 Submission 인터페이스에 ai_score 추가
+interface Submission {
+  id: string
+  topic_title: string
+  content: string
+  word_count: number
+  ai_score: number | null
+  submitted_at: string
+}
+
+// fetchSubmissions에서 ai_score도 가져오기
+const { data, error } = await supabase
+  .from('writing_submissions')
+  .select(`
+    id,
+    content,
+    word_count,
+    ai_score,
+    submitted_at,
+    writing_topics (
+      title
+    )
+  `)
+  .eq('user_id', session.user.id)
+  .order('submitted_at', { ascending: false })
+
+// 카드 UI 수정
+{submissions.map((sub) => (
+  <Link
+    key={sub.id}
+    href={`/learn/writing/feedback/${sub.id}`}
+    className="bg-white rounded-xl border border-gray-200 p-6 hover:border-green-300 hover:shadow-md transition-all"
+  >
+    <div className="flex items-start justify-between mb-3">
+      <h3 className="text-lg font-semibold text-gray-900">
+        {sub.topic_title}
+      </h3>
+      <div className="flex items-center gap-2">
+        {sub.ai_score !== null && (
+          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+            sub.ai_score >= 90 ? 'bg-green-100 text-green-700' :
+            sub.ai_score >= 80 ? 'bg-blue-100 text-blue-700' :
+            sub.ai_score >= 70 ? 'bg-yellow-100 text-yellow-700' :
+            'bg-orange-100 text-orange-700'
+          }`}>
+            {sub.ai_score}점
+          </span>
+        )}
+        <span className="text-sm text-gray-500 flex items-center gap-1">
+          <Calendar className="w-4 h-4" />
+          {new Date(sub.submitted_at).toLocaleDateString('ko-KR')}
+        </span>
+      </div>
+    </div>
+    
+    <p className="text-gray-600 mb-4 line-clamp-3">
+      {sub.content}
+    </p>
+    
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-500">
+        {sub.word_count} 단어
+      </span>
+      {sub.ai_score !== null ? (
+        <span className="text-sm text-green-600 font-medium">
+          AI 첨삭 완료 →
+        </span>
+      ) : (
+        <span className="text-sm text-gray-400">
+          첨삭 대기 중
+        </span>
+      )}
+    </div>
+  </Link>
+))}
+```
+
+=== 6. 환경변수 설정 안내 ===
+
+.env 파일에 OpenAI API 키 추가 필요:
+```
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Replit Secrets에 추가:
+1. Replit 좌측 메뉴에서 "Tools" → "Secrets" 클릭
+2. "New Secret" 클릭
+3. Key: OPENAI_API_KEY
+4. Value: 실제 OpenAI API 키 입력
+5. "Add new secret" 클릭
+
+=== 출력 요구사항 ===
+
+1. ✅ AI 첨삭 API 엔드포인트
+2. ✅ OpenAI GPT-4 연동
+3. ✅ 문법 오류 검출
+4. ✅ 개선 제안 생성
+5. ✅ 교정된 글 생성
+6. ✅ 점수 계산 (0-100)
+7. ✅ 전반적 피드백
+8. ✅ 피드백 페이지 UI
+9. ✅ 원본/교정본 비교
+10. ✅ 문법 오류 상세 표시
+11. ✅ 개선 제안 상세 표시
+12. ✅ 잘한 점/개선할 점
+13. ✅ 점수별 색상 구분
+14. ✅ 글쓰기 페이지에서 자동 첨삭
+15. ✅ 내가 쓴 글 목록에 점수 표시
+16. ✅ 제출 상세 API
+17. ✅ XP 보너스 적립
+18. ✅ 모바일 반응형
+
+완성 후:
+- Writing Phase 2 완료!
+- AI 첨삭 시스템 작동
+- GPT-4로 실시간 피드백
+- 내일 Phase 3 (예시 답안) 또는 테스트
+
+주의사항:
+- OpenAI API 키 필수
+- API 비용 발생 (제출당 약 $0.03-0.05)
+- 첨삭에 10-20초 소요
+
+테스트:
+1. 글 작성 및 제출
+2. AI 첨삭 대기 (10-20초)
+3. 피드백 페이지 확인
+4. 문법 오류 확인
+5. 개선 제안 확인
+6. 교정본 비교
+7. 점수 확인
+8. 내 글 목록에서 점수 확인
+
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⚠️ **중요 사전 준비**
+
+### **OpenAI API 키 발급:**
+```
+1. https://platform.openai.com 접속
+2. 로그인 또는 회가입
+3. API Keys 메뉴 클릭
+4. "Create new secret key" 클릭
+5. 키 복사 (한 번만 표시됨!)
+6. Replit Secrets에 저장
+```
+
+### **예상 비용:**
+```
+GPT-4o 사용:
+- Input: $2.50 / 1M tokens
+- Output: $10.00 / 1M tokens
+
+글 1개 첨삭 예상:
+- Input: ~1,000 tokens (글 + 프롬프트)
+- Output: ~500 tokens (피드백)
+→ 약 $0.008 (8원 정도)
+
+→ 월 100개 첨삭: ~$0.80
+→ 월 1,000개 첨삭: ~$8
+→ 매우 저렴함!
+```
+
+---
+
+## 🎯 **Phase 2 핵심 기능**
+
+### **1. 자동 첨삭**
+```
+제출 → AI 분석 → 피드백 생성
+→ 10-20초 소요
+→ 자동으로 피드백 페이지로 이동
+```
+
+### **2. 상세 피드백**
+```
+✅ 점수 (0-100)
+✅ 문법 오류 목록
+✅ 개선 제안
+✅ 교정된 글
+✅ 전반적 피드백
+```
+
+### **3. 학습 효과**
+```
+✅ 구체적인 오류 설명
+✅ 올바른 표현 제시
+✅ 개선 방법 제안
+✅ 격려 메시지

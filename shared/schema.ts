@@ -337,6 +337,20 @@ export const insertWritingSubmissionSchema = z.object({
   aiWeaknesses: z.array(z.string()).optional(),
   aiFeedback: z.string().optional(),
   aiSuggestions: z.array(z.string()).optional(),
+  grammarErrors: z.array(z.object({
+    original: z.string(),
+    corrected: z.string(),
+    explanation: z.string(),
+    type: z.string(),
+  })).optional(),
+  suggestions: z.array(z.object({
+    category: z.string(),
+    issue: z.string(),
+    suggestion: z.string(),
+    example: z.string().optional(),
+  })).optional(),
+  correctedContent: z.string().optional(),
+  areasForImprovement: z.array(z.string()).optional(),
 });
 
 export type InsertWritingSubmission = z.infer<typeof insertWritingSubmissionSchema>;
