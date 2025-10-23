@@ -1,0 +1,1085 @@
+Day 1 (오늘): Phase 1 - 기본 구조 + 글쓰기 UI
+├─ 데이터베이스 설계
+├─ 주제 선택 페이지
+├─ 글쓰기 에디터
+└─ 글 저장 기능
+
+Day 2: Phase 2 - AI 첨삭 시스템
+├─ OpenAI API 연동
+├─ 문법 교정
+├─ 개선 제안
+└─ 점수 계산
+
+Day 3: Phase 3 - 예시 답안 + 피드백
+├─ 모범 답안 제공
+├─ 비교 기능
+├─ 학습 가이드
+└─ 피드백 저장
+
+Day 4: Phase 4 - 콘텐츠 추가
+├─ 주제 20-30개
+├─ 가이드라인
+├─ 예시 답안
+└─ 난이도별 분류
+
+Day 5: Phase 5 - 마무리
+├─ 통계 페이지
+├─ 내 글 관리
+├─ 버그 수정
+└─ 최종 테스트
+```
+
+---
+
+## 🚀 **Phase 1: 기본 구조 + 글쓰기 UI (지금 시작!)**
+
+### ⏰ **예상 소요 시간: 4-5시간**
+
+---
+
+## 📝 **Replit Agent에 바로 붙여넣으세요!**
+```
+Suda 앱에 Writing (글쓰기) 모듈을 새로 추가해줘.
+
+=== Writing 모듈: Phase 1 - 기본 구조 + 글쓰기 UI ===
+
+Writing은 영어로 글을 쓰고 AI 첨삭을 받는 모듈이야.
+이번 단계에서는 기본 구조와 글쓰기 인터페이스를 만들 거야.
+AI 첨삭은 Phase 2에서 추가할 예정이야.
+
+=== 데이터베이스 테이블 생성 ===
+
+1. writing_topics 테이블 (글쓰기 주제):
+```sql
+CREATE TABLE writing_topics (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL, -- 'email', 'essay', 'letter', 'review', 'story', 'opinion'
+  difficulty INTEGER NOT NULL CHECK (difficulty BETWEEN 1 AND 5),
+  prompt TEXT NOT NULL, -- 글쓰기 지시사항
+  guidelines TEXT[], -- 작성 가이드라인 (배열)
+  word_count_min INTEGER, -- 최소 단어 수
+  word_count_max INTEGER, -- 최대 단어 수
+  example_answer TEXT, -- 모범 답안 (Phase 3에서 추가)
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_writing_topics_difficulty ON writing_topics(difficulty);
+CREATE INDEX idx_writing_topics_category ON writing_topics(category);
+
+-- 샘플 주제 추가 (5개)
+
+-- Level 1: 초급 - 자기소개 이메일
+INSERT INTO writing_topics (title, description, category, difficulty, prompt, guidelines, word_count_min, word_count_max) VALUES (
+  'Introduce Yourself',
+  '새로운 친구에게 자기소개 이메일 쓰기',
+  'email',
+  1,
+  'Write an email to introduce yourself to a new friend. Include your name, age, hobbies, and where you are from.',
+  ARRAY[
+    'Start with a greeting (Dear friend, Hi, Hello)',
+    'Introduce your name and age',
+    'Tell about your hobbies',
+    'Mention where you are from',
+    'End with a friendly closing'
+  ],
+  50,
+  100
+);
+
+-- Level 2: 초급 - 감사 편지
+INSERT INTO writing_topics (title, description, category, difficulty, prompt, guidelines, word_count_min, word_count_max) VALUES (
+  'Thank You Letter',
+  '선물을 받은 것에 대한 감사 편지 쓰기',
+  'letter',
+  2,
+  'Write a thank you letter to someone who gave you a gift. Explain what the gift was and why you like it.',
+  ARRAY[
+    'Start with "Dear [Name]"',
+    'Say thank you for the gift',
+    'Describe what the gift is',
+    'Explain why you like it',
+    'Mention how you will use it',
+    'End with "Thank you again" or similar'
+  ],
+  80,
+  150
+);
+
+-- Level 3: 중급 - 영화 리뷰
+INSERT INTO writing_topics (title, description, category, difficulty, prompt, guidelines, word_count_min, word_count_max) VALUES (
+  'Movie Review',
+  '최근에 본 영화에 대한 리뷰 작성하기',
+  'review',
+  3,
+  'Write a review of a movie you recently watched. Include the plot summary, your opinion, and a recommendation.',
+  ARRAY[
+    'Introduce the movie title and genre',
+    'Write a brief plot summary (no spoilers)',
+    'Explain what you liked or disliked',
+    'Mention the acting, music, or visuals',
+    'Give a rating (out of 5 stars or 10 points)',
+    'Recommend whether others should watch it'
+  ],
+  150,
+  250
+);
+
+-- Level 4: 중상급 - 의견 에세이
+INSERT INTO writing_topics (title, description, category, difficulty, prompt, guidelines, word_count_min, word_count_max) VALUES (
+  'Social Media Impact',
+  '소셜 미디어가 사회에 미치는 영향에 대한 의견 쓰기',
+  'opinion',
+  4,
+  'Write an essay about the impact of social media on society. Discuss both positive and negative effects, and give your opinion.',
+  ARRAY[
+    'Introduction: Introduce the topic',
+    'Body paragraph 1: Positive effects',
+    'Body paragraph 2: Negative effects',
+    'Body paragraph 3: Your personal opinion',
+    'Conclusion: Summarize your main points',
+    'Use transition words (however, moreover, in addition)',
+    'Support your ideas with examples'
+  ],
+  200,
+  300
+);
+
+-- Level 5: 고급 - 문제 해결 에세이
+INSERT INTO writing_topics (title, description, category, difficulty, prompt, guidelines, word_count_min, word_count_max) VALUES (
+  'Climate Change Solutions',
+  '기후 변화 문제에 대한 해결책 제안하기',
+  'essay',
+  5,
+  'Write an essay proposing solutions to climate change. Discuss the problem, suggest practical solutions, and explain how they can be implemented.',
+  ARRAY[
+    'Introduction: Explain why climate change is a serious problem',
+    'Problem analysis: Describe the current situation and consequences',
+    'Solution 1: Individual actions (with examples)',
+    'Solution 2: Government policies (with examples)',
+    'Solution 3: Technological innovations (with examples)',
+    'Implementation: How these solutions can be put into practice',
+    'Conclusion: Summarize and emphasize the urgency',
+    'Use formal academic language',
+    'Include specific examples and data when possible'
+  ],
+  300,
+  500
+);
+```
+
+2. writing_submissions 테이블 (제출한 글):
+```sql
+CREATE TABLE writing_submissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  topic_id UUID REFERENCES writing_topics(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  word_count INTEGER NOT NULL,
+  
+  -- AI 피드백 (Phase 2에서 추가)
+  ai_score INTEGER CHECK (ai_score BETWEEN 0 AND 100),
+  grammar_errors JSONB, -- 문법 오류 목록
+  suggestions JSONB, -- 개선 제안
+  corrected_content TEXT, -- 교정된 글
+  feedback_summary TEXT, -- 전반적 피드백
+  
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 인덱스
+CREATE INDEX idx_writing_submissions_user_id ON writing_submissions(user_id);
+CREATE INDEX idx_writing_submissions_topic_id ON writing_submissions(topic_id);
+```
+
+=== 메인 페이지 ===
+
+app/learn/writing/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { PenTool, FileText, TrendingUp, Award } from 'lucide-react'
+import Link from 'next/link'
+
+interface Topic {
+  id: string
+  title: string
+  description: string
+  category: string
+  difficulty: number
+  word_count_min: number
+  word_count_max: number
+}
+
+const categoryIcons: Record<string, string> = {
+  email: '✉️',
+  essay: '📝',
+  letter: '💌',
+  review: '⭐',
+  story: '📖',
+  opinion: '💭'
+}
+
+const categoryNames: Record<string, string> = {
+  email: '이메일',
+  essay: '에세이',
+  letter: '편지',
+  review: '리뷰',
+  story: '이야기',
+  opinion: '의견'
+}
+
+export default function WritingPage() {
+  const [topics, setTopics] = useState<Topic[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  
+  useEffect(() => {
+    fetchTopics()
+  }, [selectedDifficulty, selectedCategory])
+  
+  const fetchTopics = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (selectedDifficulty) params.append('difficulty', selectedDifficulty.toString())
+      if (selectedCategory) params.append('category', selectedCategory)
+      
+      const response = await fetch(`/api/writing/topics?${params}`)
+      const data = await response.json()
+      setTopics(data.topics || [])
+    } catch (error) {
+      console.error('Failed to fetch topics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const categories = ['email', 'essay', 'letter', 'review', 'opinion']
+  const difficulties = [1, 2, 3, 4, 5]
+  
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
+            <PenTool className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Writing</h1>
+            <p className="text-gray-600">영어로 글을 쓰고 AI 첨삭을 받아요</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Link
+          href="/learn/writing/my-writings"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">내가 쓴 글</p>
+              <p className="text-2xl font-bold text-gray-900">-</p>
+            </div>
+            <FileText className="w-8 h-8 text-green-600" />
+          </div>
+        </Link>
+        
+        <Link
+          href="/learn/writing/stats"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:border-green-300 hover:shadow-md transition-all"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">통계</p>
+              <p className="text-2xl font-bold text-gray-900">-</p>
+            </div>
+            <TrendingUp className="w-8 h-8 text-green-600" />
+          </div>
+        </Link>
+        
+        <div className="bg-gradient-to-br from-green-50 to-teal-50 rounded-xl border border-green-200 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-green-900 font-medium">평균 점수</p>
+              <p className="text-2xl font-bold text-green-900">- 점</p>
+            </div>
+            <Award className="w-8 h-8 text-green-600" />
+          </div>
+        </div>
+      </div>
+      
+      {/* 필터 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="space-y-4">
+          {/* 난이도 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">난이도</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedDifficulty(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedDifficulty === null
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                전체
+              </button>
+              {difficulties.map((diff) => (
+                <button
+                  key={diff}
+                  onClick={() => setSelectedDifficulty(diff)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedDifficulty === diff
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Level {diff}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* 카테고리 필터 */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">카테고리</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === null
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                전체
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {categoryIcons[cat]} {categoryNames[cat]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 주제 리스트 */}
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
+        </div>
+      ) : topics.length === 0 ? (
+        <div className="text-center py-12">
+          <PenTool className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600">선택한 조건의 주제가 없어요</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {topics.map((topic) => (
+            <Link
+              key={topic.id}
+              href={`/learn/writing/${topic.id}`}
+              className="bg-white rounded-xl border border-gray-200 p-5 hover:border-green-300 hover:shadow-lg transition-all"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">
+                    {categoryIcons[topic.category]}
+                  </span>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500">
+                      Level {topic.difficulty}
+                    </span>
+                    <p className="text-xs text-gray-400">
+                      {categoryNames[topic.category]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {topic.title}
+              </h3>
+              
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                {topic.description}
+              </p>
+              
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <FileText className="w-3 h-3" />
+                <span>
+                  {topic.word_count_min}-{topic.word_count_max} 단어
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+=== 글쓰기 페이지 ===
+
+app/learn/writing/[id]/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Send, AlertCircle, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+
+interface Topic {
+  id: string
+  title: string
+  description: string
+  category: string
+  difficulty: number
+  prompt: string
+  guidelines: string[]
+  word_count_min: number
+  word_count_max: number
+}
+
+export default function WritingTopicPage() {
+  const params = useParams()
+  const router = useRouter()
+  const [topic, setTopic] = useState<Topic | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [content, setContent] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  
+  const wordCount = content.trim().split(/\s+/).filter(word => word.length > 0).length
+  const isWithinRange = wordCount >= (topic?.word_count_min || 0) && 
+                        wordCount <= (topic?.word_count_max || 999)
+  
+  useEffect(() => {
+    if (params.id) {
+      fetchTopic(params.id as string)
+    }
+  }, [params.id])
+  
+  const fetchTopic = async (id: string) => {
+    try {
+      const response = await fetch(`/api/writing/topics/${id}`)
+      const data = await response.json()
+      setTopic(data.topic)
+    } catch (error) {
+      console.error('Failed to fetch topic:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleSubmit = async () => {
+    if (!topic || !isWithinRange) return
+    
+    setSubmitting(true)
+    
+    try {
+      const response = await fetch('/api/writing/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topicId: topic.id,
+          content: content,
+          wordCount: wordCount
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to submit')
+      
+      const data = await response.json()
+      setSubmitted(true)
+      
+      // Phase 2에서 AI 첨삭 결과 페이지로 이동
+      // 지금은 임시로 완료 메시지만
+      setTimeout(() => {
+        router.push('/learn/writing/my-writings')
+      }, 2000)
+      
+    } catch (error) {
+      console.error('Submit error:', error)
+      alert('제출에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
+      </div>
+    )
+  }
+  
+  if (!topic) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <p className="text-gray-600 mb-4">주제를 찾을 수 없어요</p>
+        <Link
+          href="/learn/writing"
+          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+        >
+          목록으로 돌아가기
+        </Link>
+      </div>
+    )
+  }
+  
+  if (submitted) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
+          <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            제출 완료!
+          </h2>
+          <p className="text-gray-600 mb-6">
+            글이 성공적으로 제출되었습니다.<br/>
+            AI 첨삭 기능은 Phase 2에서 추가될 예정입니다.
+          </p>
+          <Link
+            href="/learn/writing/my-writings"
+            className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            내가 쓴 글 보기
+          </Link>
+        </div>
+      </div>
+    )
+  }
+  
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      {/* 헤더 */}
+      <div className="mb-6">
+        <Link
+          href="/learn/writing"
+          className="inline-flex items-center gap-2 text-green-600 hover:text-green-700 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          목록으로
+        </Link>
+        
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                Level {topic.difficulty}
+              </span>
+              <span className="text-sm text-gray-500">
+                {topic.word_count_min}-{topic.word_count_max} 단어
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {topic.title}
+            </h1>
+            <p className="text-gray-600 mt-2">{topic.description}</p>
+          </div>
+          
+          {/* 작성 지시사항 */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+            <h3 className="font-semibold text-green-900 mb-2">✍️ 작성 지시사항</h3>
+            <p className="text-sm text-green-800">{topic.prompt}</p>
+          </div>
+          
+          {/* 가이드라인 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 mb-2">📝 작성 가이드</h3>
+            <ul className="space-y-1">
+              {topic.guidelines.map((guide, index) => (
+                <li key={index} className="text-sm text-blue-800 flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">•</span>
+                  <span>{guide}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+      {/* 글쓰기 에디터 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">글 작성하기</h2>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-medium ${
+              !content.trim() ? 'text-gray-400' :
+              !isWithinRange ? 'text-orange-600' :
+              'text-green-600'
+            }`}>
+              {wordCount} / {topic.word_count_min}-{topic.word_count_max} 단어
+            </span>
+          </div>
+        </div>
+        
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="여기에 영어로 글을 작성하세요..."
+          className="w-full h-96 p-4 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none text-gray-900 leading-relaxed"
+        />
+        
+        {/* 경고 메시지 */}
+        {content.trim() && !isWithinRange && (
+          <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-orange-800">
+              {wordCount < topic.word_count_min ? (
+                <span>최소 {topic.word_count_min - wordCount}단어를 더 작성해주세요.</span>
+              ) : (
+                <span>최대 단어 수를 {wordCount - topic.word_count_max}단어 초과했습니다.</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* 제출 버튼 */}
+      <div className="flex justify-center">
+        <button
+          onClick={handleSubmit}
+          disabled={!content.trim() || !isWithinRange || submitting}
+          className="px-8 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+        >
+          {submitting ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              제출 중...
+            </>
+          ) : (
+            <>
+              <Send className="w-5 h-5" />
+              제출하기
+            </>
+          )}
+        </button>
+      </div>
+      
+      {/* Phase 2 안내 */}
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-500">
+          💡 AI 첨삭 기능은 Phase 2에서 추가될 예정입니다
+        </p>
+      </div>
+    </div>
+  )
+}
+```
+
+=== 내가 쓴 글 페이지 (간단) ===
+
+app/learn/writing/my-writings/page.tsx 생성:
+```tsx
+'use client'
+
+import { useEffect, useState } from 'react'
+import { FileText, Calendar } from 'lucide-react'
+import Link from 'next/link'
+
+interface Submission {
+  id: string
+  topic_title: string
+  content: string
+  word_count: number
+  submitted_at: string
+}
+
+export default function MyWritingsPage() {
+  const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    fetchSubmissions()
+  }, [])
+  
+  const fetchSubmissions = async () => {
+    try {
+      const response = await fetch('/api/writing/my-submissions')
+      const data = await response.json()
+      setSubmissions(data.submissions || [])
+    } catch (error) {
+      console.error('Failed to fetch submissions:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
+      </div>
+    )
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">내가 쓴 글</h1>
+        <p className="text-gray-600">작성한 글을 확인하세요</p>
+      </div>
+      
+      {submissions.length === 0 ? (
+        <div className="text-center py-12">
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600 mb-6">아직 작성한 글이 없어요</p>
+          <Link
+            href="/learn/writing"
+            className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            글쓰기 시작하기
+          </Link>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {submissions.map((sub) => (
+            <div
+              key={sub.id}
+              className="bg-white rounded-xl border border-gray-200 p-6 hover:border-green-300 hover:shadow-md transition-all"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {sub.topic_title}
+                </h3>
+                <span className="text-sm text-gray-500 flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(sub.submitted_at).toLocaleDateString('ko-KR')}
+                </span>
+              </div>
+              
+              <p className="text-gray-600 mb-4 line-clamp-3">
+                {sub.content}
+              </p>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">
+                  {sub.word_count} 단어
+                </span>
+                <span className="text-sm text-gray-400">
+                  AI 첨삭은 Phase 2에서 추가 예정
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+=== API 엔드포인트 ===
+
+1. app/api/writing/topics/route.ts (주제 목록):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const difficulty = searchParams.get('difficulty')
+    const category = searchParams.get('category')
+    
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    let query = supabase
+      .from('writing_topics')
+      .select('*')
+      .order('difficulty', { ascending: true })
+    
+    if (difficulty) {
+      query = query.eq('difficulty', parseInt(difficulty))
+    }
+    
+    if (category) {
+      query = query.eq('category', category)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    
+    return NextResponse.json({ topics: data })
+  } catch (error) {
+    console.error('Topics fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch topics' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+2. app/api/writing/topics/[id]/route.ts (단일 주제):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const { data, error } = await supabase
+      .from('writing_topics')
+      .select('*')
+      .eq('id', params.id)
+      .single()
+    
+    if (error) throw error
+    
+    return NextResponse.json({ topic: data })
+  } catch (error) {
+    console.error('Topic fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch topic' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+3. app/api/writing/submit/route.ts (글 제출):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function POST(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { topicId, content, wordCount } = await req.json()
+
+    const { data, error } = await supabase
+      .from('writing_submissions')
+      .insert({
+        user_id: session.user.id,
+        topic_id: topicId,
+        content: content,
+        word_count: wordCount
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    
+    // XP 적립
+    await fetch('/api/gamification/xp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: 15,
+        source: 'writing'
+      })
+    })
+
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error('Submit error:', error)
+    return NextResponse.json(
+      { error: 'Failed to submit' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+4. app/api/writing/my-submissions/route.ts (내가 쓴 글):
+```tsx
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
+
+export async function GET(req: Request) {
+  try {
+    const supabase = createRouteHandlerClient({ cookies })
+    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('writing_submissions')
+      .select(`
+        id,
+        content,
+        word_count,
+        submitted_at,
+        writing_topics (
+          title
+        )
+      `)
+      .eq('user_id', session.user.id)
+      .order('submitted_at', { ascending: false })
+    
+    if (error) throw error
+    
+    // 데이터 평탄화
+    const submissions = data.map(item => ({
+      id: item.id,
+      topic_title: item.writing_topics.title,
+      content: item.content,
+      word_count: item.word_count,
+      submitted_at: item.submitted_at
+    }))
+    
+    return NextResponse.json({ submissions })
+  } catch (error) {
+    console.error('Submissions fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch submissions' },
+      { status: 500 }
+    )
+  }
+}
+```
+
+=== 사이드바 메뉴 업데이트 ===
+
+기존 사이드바에 Writing 메뉴 추가:
+
+Writing 메뉴:
+- 아이콘: ✍️ 또는 <PenTool />
+- 링크: /learn/writing
+- 하위 메뉴:
+  ├─ 글쓰기 (/learn/writing)
+  ├─ 내가 쓴 글 (/learn/writing/my-writings)
+  └─ 통계 (/learn/writing/stats)
+
+=== 출력 요구사항 ===
+
+1. ✅ writing_topics 테이블 생성
+2. ✅ writing_submissions 테이블 생성
+3. ✅ 샘플 주제 5개 추가 (Level 1-5)
+4. ✅ 메인 페이지 (/learn/writing)
+5. ✅ 난이도 필터 (1-5)
+6. ✅ 카테고리 필터 (이메일/에세이/편지/리뷰/의견)
+7. ✅ 주제 카드 UI
+8. ✅ 글쓰기 페이지 (/learn/writing/[id])
+9. ✅ 작성 지시사항 표시
+10. ✅ 가이드라인 표시
+11. ✅ 글쓰기 에디터 (textarea)
+12. ✅ 단어 수 실시간 카운트
+13. ✅ 단어 수 제한 검증
+14. ✅ 글 제출 기능
+15. ✅ 내가 쓴 글 페이지
+16. ✅ API 엔드포인트 4개
+17. ✅ 사이드바 메뉴 추가
+18. ✅ 모바일 반응형
+
+완성 후:
+- Writing Phase 1 완료!
+- 기본 구조 완성
+- 글쓰기 인터페이스 작동
+- 내일 Phase 2 (AI 첨삭) 진행
+
+테스트:
+1. /learn/writing 접속
+2. 필터 작동 확인
+3. 주제 카드 클릭
+4. 지시사항 확인
+5. 글 작성
+6. 단어 수 카운트 확인
+7. 제출
+8. 내가 쓴 글 확인
+
+AI 첨삭은 Phase 2에서!
+지금 바로 만들어줘!
+완성되면 알려줘!
+```
+
+---
+
+## ⏰ **예상 소요 시간**
+
+- Replit Agent 구현: 4-5시간
+
+---
+
+## 🎉 **완성되면**
+
+**Writing Phase 1 완료!**
+```
+✅ 기본 구조
+✅ 데이터베이스
+✅ 글쓰기 UI
+✅ 글 제출
+
+다음 (Phase 2):
+- AI 첨삭 (GPT-4)
+- 문법 교정
+- 개선 제안
+- 점수 계산
+
+→ 내일 계속!
+```
+
+---
+
+## 📊 **현재 진행 상황**
+```
+완성:
+├─ Speaking ✅
+├─ AI Chat ✅
+├─ Gamification ✅
+└─ Writing Phase 1 ← 진행중!
+
+보류 (나중에):
+├─ Listening Phase 2
+├─ Reading Phase 1-2
+└─ 단어 팝업
+
+다음:
+├─ Writing Phase 2-5
+├─ 에러 수정
+└─ 최종 완성!
+
+→ 4가지 스킬 거의 완성!

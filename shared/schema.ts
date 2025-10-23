@@ -309,3 +309,41 @@ export const insertReadingProgressSchema = z.object({
 
 export type InsertReadingProgress = z.infer<typeof insertReadingProgressSchema>;
 export type ReadingProgress = InsertReadingProgress & { id: number; completedAt: Date; createdAt: Date };
+
+// Writing Topics (글쓰기 주제)
+export const insertWritingTopicSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  category: z.enum(["email", "essay", "letter", "review", "story", "opinion"]),
+  difficulty: z.number().min(1).max(5),
+  prompt: z.string(),
+  guidelines: z.array(z.string()),
+  wordCountMin: z.number().optional(),
+  wordCountMax: z.number().optional(),
+  exampleAnswer: z.string().optional(),
+});
+
+export type InsertWritingTopic = z.infer<typeof insertWritingTopicSchema>;
+export type WritingTopic = InsertWritingTopic & { id: number; createdAt: Date };
+
+// Writing Submissions (제출한 글)
+export const insertWritingSubmissionSchema = z.object({
+  userId: z.string(),
+  topicId: z.number(),
+  content: z.string(),
+  wordCount: z.number(),
+  aiScore: z.number().min(0).max(100).optional(),
+  grammarErrors: z.array(z.object({
+    text: z.string(),
+    offset: z.number(),
+    length: z.number(),
+    message: z.string(),
+    replacements: z.array(z.string()),
+  })).optional(),
+  suggestions: z.array(z.string()).optional(),
+  correctedContent: z.string().optional(),
+  feedbackSummary: z.string().optional(),
+});
+
+export type InsertWritingSubmission = z.infer<typeof insertWritingSubmissionSchema>;
+export type WritingSubmission = InsertWritingSubmission & { id: number; submittedAt: Date; createdAt: Date };
