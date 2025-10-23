@@ -856,7 +856,19 @@ export class MemStorage implements IStorage {
   // Initialize Vocabulary Words
   private initializeVocabularyWords() {
     const words = [
-      // Level 1 - Basic (초급)
+      // Level 1 - Basic (초급) - Most common words
+      { word: "the", definition: "그, 그것(정관사)", phonetic: "/ðə/", partOfSpeech: "article", exampleSentence: "The sun is shining.", difficultyLevel: 1, frequencyRank: 1 },
+      { word: "is", definition: "~이다, ~있다", phonetic: "/ɪz/", partOfSpeech: "verb", exampleSentence: "She is happy.", difficultyLevel: 1, frequencyRank: 2 },
+      { word: "it", definition: "그것", phonetic: "/ɪt/", partOfSpeech: "pronoun", exampleSentence: "It is only with the heart that one can see rightly.", difficultyLevel: 1, frequencyRank: 3 },
+      { word: "a", definition: "하나의(부정관사)", phonetic: "/ə/", partOfSpeech: "article", exampleSentence: "A dog is barking.", difficultyLevel: 1, frequencyRank: 4 },
+      { word: "can", definition: "~할 수 있다", phonetic: "/kæn/", partOfSpeech: "verb", exampleSentence: "I can speak English.", difficultyLevel: 1, frequencyRank: 5 },
+      { word: "with", definition: "~와 함께", phonetic: "/wɪð/", partOfSpeech: "preposition", exampleSentence: "Come with me.", difficultyLevel: 1, frequencyRank: 6 },
+      { word: "one", definition: "하나, 사람", phonetic: "/wʌn/", partOfSpeech: "number/pronoun", exampleSentence: "One person can make a difference.", difficultyLevel: 1, frequencyRank: 7 },
+      { word: "see", definition: "보다", phonetic: "/siː/", partOfSpeech: "verb", exampleSentence: "I can see the mountain.", difficultyLevel: 1, frequencyRank: 8 },
+      { word: "that", definition: "그것, ~라는 것", phonetic: "/ðæt/", partOfSpeech: "pronoun/conjunction", exampleSentence: "I know that you care.", difficultyLevel: 1, frequencyRank: 9 },
+      { word: "only", definition: "오직, 단지", phonetic: "/ˈəʊnli/", partOfSpeech: "adverb", exampleSentence: "There is only one way.", difficultyLevel: 1, frequencyRank: 10 },
+      { word: "heart", definition: "마음, 심장", phonetic: "/hɑːrt/", partOfSpeech: "noun", exampleSentence: "Follow your heart.", difficultyLevel: 1, frequencyRank: 11 },
+      { word: "rightly", definition: "올바르게, 제대로", phonetic: "/ˈraɪtli/", partOfSpeech: "adverb", exampleSentence: "You judged rightly.", difficultyLevel: 1, frequencyRank: 12 },
       { word: "hello", definition: "인사말, 안녕", phonetic: "/həˈləʊ/", partOfSpeech: "interjection", exampleSentence: "Hello, how are you today?", difficultyLevel: 1, frequencyRank: 100 },
       { word: "good", definition: "좋은, 훌륭한", phonetic: "/ɡʊd/", partOfSpeech: "adjective", exampleSentence: "That is a good idea.", difficultyLevel: 1, frequencyRank: 50 },
       { word: "time", definition: "시간", phonetic: "/taɪm/", partOfSpeech: "noun", exampleSentence: "What time is it?", difficultyLevel: 1, frequencyRank: 30 },

@@ -1,0 +1,489 @@
+현재 Listening 긴 컨텐츠의 학습 플로우를 개선해줘.
+
+=== 문제점 ===
+현재는 문장이 개별적으로 나뉘어 있어서
+전체 흐름을 파악하기 어려움.
+
+실제 리스닝 학습은:
+1단계: 전체를 먼저 듣기 (큰 그림)
+2단계: 문장별로 집중 학습 (세부)
+
+이렇게 2단계로 진행되어야 효과적임.
+
+=== 개선 방향 ===
+
+ListeningCardLong 컴포넌트를 2단계 학습 플로우로 개선:
+
+**1단계: 전체 듣기 모드**
+- 전체 텍스트를 한 번에 보여줌
+- 전체 오디오를 쭉 재생
+- 여러 번 반복 재생 가능
+- 전체 번역 토글
+- "다음 단계" 버튼 → 2단계로 이동
+
+**2단계: 문장별 학습 모드**
+- 문장별로 나누어서 표시 (현재 방식)
+- 각 문장 개별 재생
+- 문장별 번역
+- 받아쓰기 → 점수
+
+=== 상세 구현 사항 ===
+
+components/listening/ListeningCardLong.tsx 전면 수정:
+```tsx
+'use client'
+
+import { useState } from 'react'
+import { X, Volume2, ArrowRight, ArrowLeft } from 'lucide-react'
+import AudioPlayerAdvanced from './AudioPlayerAdvanced'
+import DictationInput from './DictationInput'
+import ResultModal from './ResultModal'
+import ClickableText from './ClickableText'
+import { compareTexts, getHighlightedWords } from '@/lib/listening/scoreUtils'
+import type { ComparisonResult } from '@/lib/listening/scoreUtils'
+
+interface Paragraph {
+  text: string
+  translation: string
+}
+
+interface LongLesson {
+  id: string
+  text: string
+  translation: string
+  difficulty: number
+  category: string
+  content_type: string
+  paragraphs: Paragraph[]
+  word_count: number
+  estimated_duration: number
+}
+
+interface ListeningCardLongProps {
+  lesson: LongLesson
+  onClose: () => void
+  onComplete: () => void
+}
+
+export default function ListeningCardLong({ lesson, onClose, onComplete }: ListeningCardLongProps) {
+  // 학습 단계: 'overview' (전체 듣기) → 'detail' (문장별 학습)
+  const [learningStage, setLearningStage] = useState<'overview' | 'detail'>('overview')
+  
+  // 전체 듣기 모드 상태
+  const [showFullTranslation, setShowFullTranslation] = useState(false)
+  const [fullListenCount, setFullListenCount] = useState(0)
+  
+  // 문장별 학습 모드 상태
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0)
+  const [showSentenceTranslation, setShowSentenceTranslation] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [userAnswer, setUserAnswer] = useState('')
+  const [result, setResult] = useState<ComparisonResult | null>(null)
+  const [showResult, setShowResult] = useState(false)
+  
+  const currentParagraph = lesson.paragraphs[currentSentenceIndex]
+  const isLastSentence = currentSentenceIndex === lesson.paragraphs.length - 1
+  
+  // 전체 듣기 완료 핸들러
+  const handleFullAudioComplete = () => {
+    setFullListenCount(prev => prev + 1)
+  }
+  
+  // 문장별 학습 단계로 이동
+  const handleStartDetailLearning = () => {
+    setLearningStage('detail')
+    setCurrentSentenceIndex(0)
+  }
+  
+  // 전체 듣기로 돌아가기
+  const handleBackToOverview = () => {
+    setLearningStage('overview')
+    setCurrentSentenceIndex(0)
+    setSubmitted(false)
+    setUserAnswer('')
+    setResult(null)
+  }
+  
+  // 다음 문장으로
+  const handleNextSentence = () => {
+    if (currentSentenceIndex < lesson.paragraphs.length - 1) {
+      setCurrentSentenceIndex(prev => prev + 1)
+      setSubmitted(false)
+      setUserAnswer('')
+      setResult(null)
+      setShowResult(false)
+      setShowSentenceTranslation(false)
+    }
+  }
+  
+  // 이전 문장으로
+  const handlePrevSentence = () => {
+    if (currentSentenceIndex > 0) {
+      setCurrentSentenceIndex(prev => prev - 1)
+      setSubmitted(false)
+      setUserAnswer('')
+      setResult(null)
+      setShowResult(false)
+      setShowSentenceTranslation(false)
+    }
+  }
+  
+  // 받아쓰기 제출
+  const handleSubmit = async (answer: string) => {
+    setUserAnswer(answer)
+    setSubmitted(true)
+    
+    const comparisonResult = compareTexts(currentParagraph.text, answer)
+    setResult(comparisonResult)
+    
+    try {
+      const response = await fetch('/api/listening/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lessonId: lesson.id,
+          userAnswer: answer,
+          score: comparisonResult.score,
+          accuracy: comparisonResult.accuracy,
+          completed: comparisonResult.score >= 70
+        })
+      })
+      
+      if (!response.ok) throw new Error('Failed to save progress')
+      
+      const xpAmount = Math.floor(comparisonResult.score / 5)
+      await fetch('/api/gamification/xp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: xpAmount,
+          source: 'listening'
+        })
+      })
+      
+      setShowResult(true)
+    } catch (error) {
+      console.error('Failed to save progress:', error)
+    }
+  }
+  
+  const handleRetry = () => {
+    setSubmitted(false)
+    setUserAnswer('')
+    setResult(null)
+    setShowResult(false)
+  }
+  
+  const handleResultNext = () => {
+    setShowResult(false)
+    if (isLastSentence) {
+      onComplete()
+    } else {
+      handleNextSentence()
+    }
+  }
+  
+  return (
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* 헤더 */}
+          <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between z-10">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                {learningStage === 'overview' ? '1단계: 전체 듣기' : '2단계: 문장별 학습'}
+              </h2>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-sm text-gray-600">
+                  Level {lesson.difficulty}
+                </span>
+                <span className="text-sm text-gray-400">•</span>
+                <span className="text-sm text-gray-600">
+                  {lesson.category}
+                </span>
+                {learningStage === 'detail' && (
+                  <>
+                    <span className="text-sm text-gray-400">•</span>
+                    <span className="text-sm text-gray-600">
+                      {currentSentenceIndex + 1} / {lesson.paragraphs.length}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          {/* 컨텐츠 */}
+          <div className="p-6">
+            {learningStage === 'overview' ? (
+              /* ===== 1단계: 전체 듣기 모드 ===== */
+              <div className="space-y-6">
+                {/* 안내 메시지 */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <h3 className="font-semibold text-blue-900 mb-2">
+                    💡 1단계: 전체 내용 파악하기
+                  </h3>
+                  <p className="text-sm text-blue-800">
+                    먼저 전체 내용을 여러 번 들으며 큰 흐름을 파악하세요.
+                    준비가 되면 "문장별 학습 시작" 버튼을 눌러주세요.
+                  </p>
+                </div>
+                
+                {/* 전체 오디오 플레이어 */}
+                <AudioPlayerAdvanced
+                  text={lesson.text}
+                  onPlayComplete={handleFullAudioComplete}
+                />
+                
+                {/* 재생 횟수 */}
+                {fullListenCount > 0 && (
+                  <div className="text-center">
+                    <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                      ✓ {fullListenCount}회 들었어요
+                    </span>
+                  </div>
+                )}
+                
+                {/* 전체 스크립트 */}
+                <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">
+                      전체 스크립트
+                      <span className="text-sm text-gray-500 font-normal ml-2">
+                        (단어를 클릭하면 뜻을 볼 수 있어요)
+                      </span>
+                    </h3>
+                    <button
+                      onClick={() => setShowFullTranslation(!showFullTranslation)}
+                      className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                        showFullTranslation
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {showFullTranslation ? '번역 숨기기' : '번역 보기'}
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {lesson.paragraphs.map((para, index) => (
+                      <div
+                        key={index}
+                        className="p-4 bg-white border border-gray-200 rounded-lg"
+                      >
+                        <div className="text-gray-900 mb-2 leading-relaxed">
+                          <ClickableText text={para.text} />
+                        </div>
+                        {showFullTranslation && (
+                          <p className="text-sm text-gray-600 pt-2 border-t">
+                            {para.translation}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* 다음 단계 버튼 */}
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={handleStartDetailLearning}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-lg flex items-center gap-3 shadow-lg hover:shadow-xl transition-all"
+                  >
+                    문장별 학습 시작하기
+                    <ArrowRight className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ===== 2단계: 문장별 학습 모드 ===== */
+              <div className="space-y-6">
+                {/* 진행 상황 */}
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-purple-900">
+                      문장 {currentSentenceIndex + 1} / {lesson.paragraphs.length}
+                    </span>
+                    <button
+                      onClick={handleBackToOverview}
+                      className="text-sm text-purple-700 hover:text-purple-900 flex items-center gap-1"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      전체 듣기로 돌아가기
+                    </button>
+                  </div>
+                  <div className="w-full bg-purple-200 rounded-full h-2">
+                    <div
+                      className="bg-purple-600 h-2 rounded-full transition-all"
+                      style={{
+                        width: `${((currentSentenceIndex + 1) / lesson.paragraphs.length) * 100}%`
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* 현재 문장 */}
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-xl p-6">
+                  <h3 className="font-semibold text-gray-900 mb-4">
+                    현재 문장
+                  </h3>
+                  <div className="text-lg text-gray-900 mb-3 leading-relaxed">
+                    <ClickableText text={currentParagraph.text} />
+                  </div>
+                  <button
+                    onClick={() => setShowSentenceTranslation(!showSentenceTranslation)}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    {showSentenceTranslation ? '번역 숨기기' : '번역 보기'}
+                  </button>
+                  {showSentenceTranslation && (
+                    <p className="text-sm text-gray-600 mt-2 pt-2 border-t">
+                      {currentParagraph.translation}
+                    </p>
+                  )}
+                </div>
+                
+                {/* 오디오 플레이어 */}
+                <AudioPlayerAdvanced
+                  text={currentParagraph.text}
+                />
+                
+                {/* 받아쓰기 */}
+                {!submitted && (
+                  <DictationInput onSubmit={handleSubmit} />
+                )}
+                
+                {/* 네비게이션 버튼 */}
+                {!submitted && (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handlePrevSentence}
+                      disabled={currentSentenceIndex === 0}
+                      className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                      이전 문장
+                    </button>
+                    <button
+                      onClick={handleNextSentence}
+                      disabled={isLastSentence}
+                      className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      다음 문장
+                      <ArrowRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* 결과 모달 */}
+      {result && (
+        <ResultModal
+          isOpen={showResult}
+          result={result}
+          highlightedWords={getHighlightedWords(currentParagraph.text, result)}
+          originalText={currentParagraph.text}
+          userAnswer={userAnswer}
+          onRetry={handleRetry}
+          onNext={handleResultNext}
+        />
+      )}
+    </>
+  )
+}
+```
+
+=== 출력 요구사항 ===
+
+1. ✅ 2단계 학습 플로우
+   - 1단계: 전체 듣기
+   - 2단계: 문장별 학습
+
+2. ✅ 1단계 기능
+   - 전체 오디오 재생
+   - 여러 번 반복 가능
+   - 재생 횟수 표시
+   - 전체 스크립트 한눈에
+   - 전체 번역 토글
+   - 단어 클릭 기능
+   - "문장별 학습 시작" 버튼
+
+3. ✅ 2단계 기능
+   - 현재 문장 강조
+   - 진행률 표시
+   - 문장별 오디오
+   - 이전/다음 버튼
+   - 받아쓰기
+   - 전체 듣기로 돌아가기
+
+4. ✅ UI/UX
+   - 단계별 안내 메시지
+   - 시각적 구분 (색상)
+   - 직관적인 네비게이션
+   - 모바일 반응형
+
+완성 후:
+- 학습 플로우 개선 완료!
+- 실제 리스닝 학습 방식 반영
+- 사용자 경험 대폭 개선
+
+지금 바로 수정해줘!
+완성되면 알려줘!
+```
+
+---
+
+## 🎯 **개선 포인트 요약**
+
+### **Before (현재):**
+```
+문장1 | 문장2 | 문장3 | 문장4 ...
+→ 개별적으로만 표시
+→ 전체 흐름 파악 어려움
+```
+
+### **After (개선):**
+```
+1단계: 전체 듣기
+├─ 전체 오디오 쭉 재생
+├─ 전체 스크립트 보기
+├─ 여러 번 반복
+└─ 큰 그림 파악
+
+↓ (준비되면)
+
+2단계: 문장별 학습
+├─ 문장1 집중 → 받아쓰기
+├─ 문장2 집중 → 받아쓰기
+├─ 문장3 집중 → 받아쓰기
+└─ 세부 학습
+```
+
+---
+
+## 💡 **왜 이게 더 좋은가?**
+```
+실제 리스닝 시험/실전:
+1. 전체를 먼저 듣고
+2. 질문에 답하거나
+3. 세부 내용 파악
+
+현재 방식:
+❌ 문장만 개별적으로
+→ 맥락 파악 어려움
+
+개선된 방식:
+✅ 전체 → 부분
+→ 실전과 동일
+→ 학습 효과 UP!
