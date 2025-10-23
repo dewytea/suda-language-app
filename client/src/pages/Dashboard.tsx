@@ -44,7 +44,7 @@ export default function Dashboard() {
   ];
 
   const handleSkillClick = (skill: string) => {
-    setLocation(`/${skill.toLowerCase()}`);
+    setLocation(`/learn/${skill.toLowerCase()}`);
   };
 
   return (
