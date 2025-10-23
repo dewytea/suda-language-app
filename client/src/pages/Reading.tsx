@@ -1,126 +1,327 @@
-import { ReadingContent } from "@/components/ReadingContent";
-import { VocabularyItem } from "@/components/VocabularyItem";
-import { LevelGuide } from "@/components/LevelGuide";
-import { Card } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Vocabulary, UserProgress } from "@shared/schema";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, Clock, TrendingUp, FileText, BookText, Mail, Newspaper, PenLine } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/lib/supabase';
+import type { ReadingPassage } from '@shared/schema';
+
+const contentTypeIcons = {
+  news: Newspaper,
+  story: BookText,
+  essay: PenLine,
+  email: Mail,
+  ad: FileText
+};
+
+const contentTypeNames = {
+  news: '뉴스',
+  story: '이야기',
+  essay: '에세이',
+  email: '이메일',
+  ad: '광고'
+};
+
+const contentTypeColors = {
+  news: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  story: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  essay: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  email: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
+  ad: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
+};
 
 export default function Reading() {
-  const [selectedLanguage] = useState("en");
-  const { toast } = useToast();
+  const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedPassage, setSelectedPassage] = useState<ReadingPassage | null>(null);
 
-  const { data: progress } = useQuery<UserProgress>({
-    queryKey: ["/api/progress", selectedLanguage],
-  });
-
-  const { data: vocabulary = [] } = useQuery<Vocabulary[]>({
-    queryKey: ["/api/vocabulary", selectedLanguage],
-  });
-
-  const deleteVocabulary = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/vocabulary/${id}`, undefined);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vocabulary", selectedLanguage] });
-    },
-  });
-
-  const addVocabulary = useMutation({
-    mutationFn: async (vocab: Omit<Vocabulary, "id">) => {
-      const res = await apiRequest("POST", "/api/vocabulary", vocab);
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/vocabulary", selectedLanguage] });
-    },
-  });
-
-  const translateWord = useMutation({
-    mutationFn: async (word: string) => {
-      const res = await apiRequest("POST", "/api/translate", {
-        text: word,
-        targetLanguage: "Korean",
-        sourceLanguage: selectedLanguage
+  const { data: passagesData, isLoading } = useQuery<{ passages: ReadingPassage[] }>({
+    queryKey: ['/api/reading/passages', { difficulty: selectedDifficulty, type: selectedType }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedDifficulty) params.append('difficulty', selectedDifficulty.toString());
+      if (selectedType) params.append('type', selectedType);
+      
+      const url = params.toString() 
+        ? `/api/reading/passages?${params}` 
+        : '/api/reading/passages';
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers,
       });
-      return await res.json();
-    },
-    onSuccess: (data, word) => {
-      const newVocab = {
-        word,
-        translation: data.translation,
-        language: selectedLanguage,
-      };
-      addVocabulary.mutate(newVocab);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "번역 실패",
-        description: error.message || "단어를 번역할 수 없습니다. 잠시 후 다시 시도해주세요.",
-        variant: "destructive"
-      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
     },
   });
 
-  const handleDeleteWord = (id: number) => {
-    deleteVocabulary.mutate(id);
-  };
+  const { data: statsData } = useQuery({
+    queryKey: ['/api/reading/stats'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      
+      const response = await fetch('/api/reading/stats', {
+        credentials: 'include',
+        headers,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    },
+  });
 
-  const handleWordClick = (word: string) => {
-    translateWord.mutate(word);
+  const passages = passagesData?.passages || [];
+  const stats = statsData || {
+    totalCompleted: 0,
+    averageScore: 0,
+    averageWPM: 0
   };
+  
+  const contentTypes = ['news', 'story', 'essay', 'email'];
+  const difficulties = [1, 2, 3, 4, 5];
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-3">
-        <BookOpen className="h-8 w-8 text-skill-reading" />
-        <div>
-          <h1 className="font-serif font-bold text-4xl">읽기 연습</h1>
-          <p className="text-muted-foreground mt-1">10분 • 독해력 향상에 집중하세요</p>
+  if (selectedPassage) {
+    // Phase 2에서 구현할 지문 상세 보기
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto">
+          <Button 
+            variant="ghost" 
+            onClick={() => setSelectedPassage(null)}
+            className="mb-4"
+            data-testid="button-back"
+          >
+            ← 목록으로
+          </Button>
+          <Card>
+            <CardContent className="p-6">
+              <h1 className="text-2xl font-bold mb-4" data-testid="text-passage-title">
+                {selectedPassage.title}
+              </h1>
+              <div className="prose dark:prose-invert max-w-none whitespace-pre-wrap" data-testid="text-passage-content">
+                {selectedPassage.content}
+              </div>
+              <p className="text-muted-foreground mt-6 text-center" data-testid="text-phase2-notice">
+                Phase 2에서 독해 문제가 추가될 예정입니다
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
+    );
+  }
 
-      <LevelGuide level={progress?.level || 1} skill="reading" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <ReadingContent
-            title="The Little Prince"
-            content="Once when I was six years old I saw a magnificent picture in a book about the primeval forest. It was a picture of a boa constrictor swallowing an animal. In the book it said: 'Boa constrictors swallow their prey whole, without chewing it. After that they are not able to move, and they sleep through the six months that they need for digestion.'"
-            translation="내가 여섯 살이었을 때, 원시림에 관한 책에서 멋진 그림을 보았습니다. 그것은 보아뱀이 동물을 삼키는 그림이었습니다. 책에는 이렇게 쓰여 있었습니다: '보아뱀은 먹이를 씹지 않고 통째로 삼킵니다. 그 후 그들은 움직일 수 없으며, 소화에 필요한 6개월 동안 잠을 잡니다.'"
-            onWordClick={handleWordClick}
-          />
-        </div>
-
-        <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="font-semibold text-lg mb-4">나의 어휘장</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              본문의 단어를 클릭하면 여기에 저장됩니다
-            </p>
-            {vocabulary.length === 0 ? (
-              <p className="text-sm text-center text-muted-foreground py-8">
-                아직 저장된 단어가 없습니다. 단어를 클릭해보세요!
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* 헤더 */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground" data-testid="text-page-title">Reading</h1>
+              <p className="text-muted-foreground" data-testid="text-page-description">
+                영어 지문을 읽고 독해력을 키워요
               </p>
-            ) : (
-              <div className="space-y-3">
-                {vocabulary.map((item) => (
-                  <VocabularyItem
-                    key={item.id}
-                    word={item.word}
-                    translation={item.translation}
-                    example={item.example}
-                    onDelete={() => handleDeleteWord(item.id)}
-                  />
-                ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* 통계 카드 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="hover-elevate" data-testid="card-total-completed">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">완료한 지문</p>
+                  <p className="text-2xl font-bold text-foreground" data-testid="text-total-completed">
+                    {stats.totalCompleted}개
+                  </p>
+                </div>
+                <FileText className="w-8 h-8 text-purple-600" />
               </div>
-            )}
+            </CardContent>
           </Card>
+          
+          <Card className="hover-elevate" data-testid="card-average-score">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">평균 점수</p>
+                  <p className="text-2xl font-bold text-foreground" data-testid="text-average-score">
+                    {stats.averageScore > 0 ? `${Math.round(stats.averageScore)}점` : '-'}
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-purple-200 dark:border-purple-800" data-testid="card-average-wpm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-900 dark:text-purple-100">평균 읽기 속도</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100" data-testid="text-average-wpm">
+                    {stats.averageWPM > 0 ? `${Math.round(stats.averageWPM)} WPM` : '- WPM'}
+                  </p>
+                </div>
+                <Clock className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 필터 */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {/* 난이도 필터 */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">난이도</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={selectedDifficulty === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedDifficulty(null)}
+                    data-testid="button-difficulty-all"
+                  >
+                    전체
+                  </Button>
+                  {difficulties.map((diff) => (
+                    <Button
+                      key={diff}
+                      variant={selectedDifficulty === diff ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedDifficulty(diff)}
+                      data-testid={`button-difficulty-${diff}`}
+                    >
+                      Level {diff}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* 콘텐츠 타입 필터 */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-3">콘텐츠 타입</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant={selectedType === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedType(null)}
+                    data-testid="button-type-all"
+                  >
+                    전체
+                  </Button>
+                  {contentTypes.map((type) => {
+                    const Icon = contentTypeIcons[type as keyof typeof contentTypeIcons];
+                    return (
+                      <Button
+                        key={type}
+                        variant={selectedType === type ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedType(type)}
+                        data-testid={`button-type-${type}`}
+                      >
+                        <Icon className="w-4 h-4 mr-1" />
+                        {contentTypeNames[type as keyof typeof contentTypeNames]}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* 지문 목록 */}
+        <div>
+          <h2 className="text-xl font-bold text-foreground mb-4" data-testid="text-passages-title">
+            {selectedDifficulty || selectedType ? '필터링된 ' : '모든 '}지문
+            <span className="text-muted-foreground text-sm ml-2">
+              ({passages.length}개)
+            </span>
+          </h2>
+          
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground" data-testid="text-loading">불러오는 중...</p>
+            </div>
+          ) : passages.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground" data-testid="text-no-passages">
+                조건에 맞는 지문이 없습니다
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {passages.map((passage) => {
+                const Icon = contentTypeIcons[passage.contentType as keyof typeof contentTypeIcons];
+                const colorClass = contentTypeColors[passage.contentType as keyof typeof contentTypeColors];
+                
+                return (
+                  <Card
+                    key={passage.id}
+                    className="hover-elevate active-elevate-2 cursor-pointer"
+                    onClick={() => setSelectedPassage(passage)}
+                    data-testid={`card-passage-${passage.id}`}
+                  >
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between mb-3">
+                        <Badge className={colorClass} data-testid={`badge-type-${passage.id}`}>
+                          <Icon className="w-3 h-3 mr-1" />
+                          {contentTypeNames[passage.contentType as keyof typeof contentTypeNames]}
+                        </Badge>
+                        <Badge variant="secondary" data-testid={`badge-difficulty-${passage.id}`}>
+                          Level {passage.difficulty}
+                        </Badge>
+                      </div>
+                      
+                      <h3 className="font-bold text-lg mb-2 text-foreground line-clamp-2" data-testid={`text-title-${passage.id}`}>
+                        {passage.title}
+                      </h3>
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-3 mb-4" data-testid={`text-preview-${passage.id}`}>
+                        {passage.content}
+                      </p>
+                      
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1" data-testid={`text-wordcount-${passage.id}`}>
+                          <FileText className="w-3 h-3" />
+                          {passage.wordCount} words
+                        </span>
+                        <span className="flex items-center gap-1" data-testid={`text-time-${passage.id}`}>
+                          <Clock className="w-3 h-3" />
+                          ~{passage.estimatedTime}초
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
