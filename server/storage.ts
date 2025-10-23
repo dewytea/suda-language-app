@@ -35,6 +35,10 @@ import {
   type InsertVocabularyWord,
   type UserVocabulary,
   type InsertUserVocabulary,
+  type ReadingPassage,
+  type InsertReadingPassage,
+  type ReadingProgress,
+  type InsertReadingProgress,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -138,6 +142,21 @@ export interface IStorage {
   updateUserVocabulary(userId: string, id: number, updates: Partial<UserVocabulary>): Promise<UserVocabulary>;
   deleteUserVocabulary(userId: string, id: number): Promise<void>;
   isWordSaved(userId: string, wordId: number): Promise<boolean>;
+
+  // Reading Passages
+  getReadingPassages(filters?: { difficulty?: number; contentType?: string }): Promise<ReadingPassage[]>;
+  getReadingPassage(id: number): Promise<ReadingPassage | undefined>;
+  
+  // Reading Progress
+  addReadingProgress(progress: InsertReadingProgress): Promise<ReadingProgress>;
+  getReadingProgress(userId: string, passageId?: number): Promise<ReadingProgress[]>;
+  getReadingStats(userId: string): Promise<{
+    totalCompleted: number;
+    averageScore: number;
+    averageWPM: number;
+    difficultyStats: { difficulty: number; count: number; avgScore: number }[];
+    recentProgress: ReadingProgress[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -161,6 +180,8 @@ export class MemStorage implements IStorage {
   private listeningProgress: Map<number, ListeningProgress>;
   private vocabularyWords: Map<number, VocabularyWord>;
   private userVocabulary: Map<number, UserVocabulary>;
+  private readingPassages: Map<number, ReadingPassage>;
+  private readingProgress: Map<number, ReadingProgress>;
   private nextId: number;
 
   constructor() {
@@ -184,12 +205,15 @@ export class MemStorage implements IStorage {
     this.listeningProgress = new Map();
     this.vocabularyWords = new Map();
     this.userVocabulary = new Map();
+    this.readingPassages = new Map();
+    this.readingProgress = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
     this.initializeSentences();
     this.initializeListeningLessons();
     this.initializeVocabularyWords();
+    this.initializeReadingPassages();
   }
 
   private initializeAchievementTemplates() {
@@ -1187,6 +1211,153 @@ export class MemStorage implements IStorage {
       v => v.userId === userId && v.wordId === wordId
     );
     return !!saved;
+  }
+
+  // Reading Passages Initialization
+  private initializeReadingPassages() {
+    const passages: InsertReadingPassage[] = [
+      {
+        title: "My Daily Routine",
+        content: "My name is Sarah. I am a student. I wake up at 7 AM every day. I eat breakfast with my family. Then I go to school by bus. School starts at 8:30 AM. I have lunch at 12 PM. After school, I do my homework. I like to read books in the evening. I go to bed at 10 PM.",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 68,
+        estimatedTime: 40
+      },
+      {
+        title: "Party Invitation",
+        content: "Dear friends,\n\nI am having a birthday party next Saturday at 3 PM. The party will be at my house. There will be cake, games, and music. Please bring your friends too! Let me know if you can come.\n\nSee you there!\nEmma",
+        contentType: "email",
+        difficulty: 2,
+        wordCount: 52,
+        estimatedTime: 35
+      },
+      {
+        title: "New Park Opens Downtown",
+        content: "The city opened a new park downtown yesterday. The park has walking paths, playgrounds, and a small lake. Mayor Johnson said the park will help families enjoy outdoor activities. \"We wanted to create a beautiful space for everyone,\" the mayor explained. The park took two years to build and cost 5 million dollars. Local residents are excited about the new addition to their neighborhood. The park is open daily from 6 AM to 9 PM.",
+        contentType: "news",
+        difficulty: 3,
+        wordCount: 85,
+        estimatedTime: 50
+      },
+      {
+        title: "The Benefits of Reading",
+        content: "Reading is one of the most valuable habits a person can develop. It expands our knowledge, improves our vocabulary, and stimulates our imagination. When we read regularly, we expose ourselves to different perspectives and ideas. This helps us understand the world better and makes us more empathetic toward others.\n\nResearch shows that reading can reduce stress levels significantly. Just six minutes of reading can lower stress by up to 68 percent, according to scientists at the University of Sussex. Reading before bed can also improve sleep quality.\n\nFurthermore, reading keeps our minds active and engaged. Like physical exercise strengthens the body, mental exercise through reading strengthens the brain. Studies suggest that regular reading may even help prevent cognitive decline as we age.",
+        contentType: "essay",
+        difficulty: 4,
+        wordCount: 128,
+        estimatedTime: 75
+      },
+      {
+        title: "Artificial Intelligence in Healthcare",
+        content: "Artificial intelligence is revolutionizing the healthcare industry in unprecedented ways. Machine learning algorithms can now detect diseases from medical images with accuracy that rivals or exceeds human experts. For instance, AI systems have demonstrated remarkable success in identifying early-stage cancers, cardiovascular conditions, and neurological disorders.\n\nThe implementation of AI in healthcare extends beyond diagnosis. Predictive analytics help hospitals optimize resource allocation, reducing wait times and improving patient outcomes. Natural language processing enables automated analysis of medical records, identifying patterns that might escape human observation. Robot-assisted surgeries allow for greater precision, resulting in fewer complications and faster recovery times.\n\nHowever, the integration of AI into healthcare raises important ethical questions. Issues of data privacy, algorithmic bias, and the role of human judgment in medical decision-making require careful consideration. As this technology continues to evolve, establishing appropriate regulatory frameworks and ethical guidelines becomes increasingly crucial to ensure that AI serves the best interests of patients while maintaining the fundamental principles of medical practice.",
+        contentType: "news",
+        difficulty: 5,
+        wordCount: 168,
+        estimatedTime: 100
+      }
+    ];
+
+    passages.forEach(passage => {
+      const id = this.nextId++;
+      const readingPassage: ReadingPassage = {
+        id,
+        ...passage,
+        createdAt: new Date()
+      };
+      this.readingPassages.set(id, readingPassage);
+    });
+  }
+
+  // Reading Passages
+  async getReadingPassages(filters?: { difficulty?: number; contentType?: string }): Promise<ReadingPassage[]> {
+    let passages = Array.from(this.readingPassages.values());
+    
+    if (filters?.difficulty) {
+      passages = passages.filter(p => p.difficulty === filters.difficulty);
+    }
+    
+    if (filters?.contentType) {
+      passages = passages.filter(p => p.contentType === filters.contentType);
+    }
+    
+    return passages.sort((a, b) => a.difficulty - b.difficulty);
+  }
+
+  async getReadingPassage(id: number): Promise<ReadingPassage | undefined> {
+    return this.readingPassages.get(id);
+  }
+
+  // Reading Progress
+  async addReadingProgress(progress: InsertReadingProgress): Promise<ReadingProgress> {
+    const id = this.nextId++;
+    const readingProgress: ReadingProgress = {
+      id,
+      ...progress,
+      completedAt: new Date(),
+      createdAt: new Date()
+    };
+    this.readingProgress.set(id, readingProgress);
+    return readingProgress;
+  }
+
+  async getReadingProgress(userId: string, passageId?: number): Promise<ReadingProgress[]> {
+    let progressList = Array.from(this.readingProgress.values())
+      .filter(p => p.userId === userId);
+    
+    if (passageId) {
+      progressList = progressList.filter(p => p.passageId === passageId);
+    }
+    
+    return progressList.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }
+
+  async getReadingStats(userId: string): Promise<{
+    totalCompleted: number;
+    averageScore: number;
+    averageWPM: number;
+    difficultyStats: { difficulty: number; count: number; avgScore: number }[];
+    recentProgress: ReadingProgress[];
+  }> {
+    const progressList = await this.getReadingProgress(userId);
+    const completed = progressList.filter(p => p.completed);
+    
+    const totalCompleted = completed.length;
+    const averageScore = completed.length > 0
+      ? completed.reduce((sum, p) => sum + (p.score || 0), 0) / completed.length
+      : 0;
+    const averageWPM = completed.length > 0
+      ? completed.reduce((sum, p) => sum + (p.wpm || 0), 0) / completed.length
+      : 0;
+    
+    // Difficulty stats
+    const difficultyMap = new Map<number, { count: number; totalScore: number }>();
+    for (const progress of completed) {
+      const passage = await this.getReadingPassage(progress.passageId);
+      if (passage && progress.score !== undefined) {
+        const difficulty = passage.difficulty;
+        const stats = difficultyMap.get(difficulty) || { count: 0, totalScore: 0 };
+        stats.count++;
+        stats.totalScore += progress.score;
+        difficultyMap.set(difficulty, stats);
+      }
+    }
+    
+    const difficultyStats = Array.from(difficultyMap.entries()).map(([difficulty, stats]) => ({
+      difficulty,
+      count: stats.count,
+      avgScore: stats.totalScore / stats.count
+    })).sort((a, b) => a.difficulty - b.difficulty);
+    
+    const recentProgress = progressList.slice(0, 10);
+    
+    return {
+      totalCompleted,
+      averageScore,
+      averageWPM,
+      difficultyStats,
+      recentProgress
+    };
   }
 }
 
