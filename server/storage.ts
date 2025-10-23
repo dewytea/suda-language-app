@@ -1623,9 +1623,10 @@ export class MemStorage implements IStorage {
     };
   }
 
-  // Writing Topics - Initialize 5 sample topics
+  // Writing Topics - Initialize sample topics (난이도별, 카테고리별 2개씩)
   private initializeWritingTopics() {
     const topics: Omit<WritingTopic, 'id' | 'createdAt'>[] = [
+      // Difficulty 1 Topics
       {
         title: "Introduce Yourself",
         description: "새로운 친구에게 자기소개 이메일 쓰기",
@@ -1643,6 +1644,56 @@ export class MemStorage implements IStorage {
         wordCountMax: 100
       },
       {
+        title: "Invitation Email",
+        description: "친구를 생일 파티에 초대하는 이메일 쓰기",
+        category: "email",
+        difficulty: 1,
+        prompt: "Write an email inviting a friend to your birthday party. Include the date, time, and place.",
+        guidelines: [
+          "Start with a friendly greeting",
+          "Invite them to your party",
+          "Tell them the date and time",
+          "Tell them where it will be",
+          "Ask them to confirm if they can come"
+        ],
+        wordCountMin: 50,
+        wordCountMax: 100
+      },
+      {
+        title: "My Favorite Day",
+        description: "내가 가장 좋아하는 날에 대한 짧은 이야기",
+        category: "story",
+        difficulty: 1,
+        prompt: "Write a short story about your favorite day. What happened? Why was it special?",
+        guidelines: [
+          "Start by saying when it was",
+          "Describe what you did",
+          "Explain why it was special",
+          "Use simple past tense",
+          "End with how you felt"
+        ],
+        wordCountMin: 60,
+        wordCountMax: 120
+      },
+      {
+        title: "My Pet",
+        description: "나의 반려동물에 대한 이야기",
+        category: "story",
+        difficulty: 1,
+        prompt: "Write about your pet or a pet you would like to have. Describe what it looks like and what you do together.",
+        guidelines: [
+          "Introduce your pet (or dream pet)",
+          "Describe its appearance",
+          "Tell about its personality",
+          "Explain what you do together",
+          "Say why you love it"
+        ],
+        wordCountMin: 60,
+        wordCountMax: 120
+      },
+      
+      // Difficulty 2 Topics
+      {
         title: "Thank You Letter",
         description: "선물을 받은 것에 대한 감사 편지 쓰기",
         category: "letter",
@@ -1658,6 +1709,93 @@ export class MemStorage implements IStorage {
         ],
         wordCountMin: 80,
         wordCountMax: 150
+      },
+      {
+        title: "Apology Letter",
+        description: "친구에게 사과하는 편지 쓰기",
+        category: "letter",
+        difficulty: 2,
+        prompt: "Write a letter to apologize to a friend for something you did wrong. Explain what happened and how you will fix it.",
+        guidelines: [
+          "Start with a respectful greeting",
+          "Say you are sorry",
+          "Explain what you did wrong",
+          "Tell them how you feel about it",
+          "Promise to do better",
+          "Ask for forgiveness"
+        ],
+        wordCountMin: 80,
+        wordCountMax: 150
+      },
+      {
+        title: "Restaurant Review",
+        description: "최근에 방문한 식당 리뷰 쓰기",
+        category: "review",
+        difficulty: 2,
+        prompt: "Write a review of a restaurant you visited recently. Describe the food, service, and atmosphere.",
+        guidelines: [
+          "Name the restaurant and location",
+          "Describe what you ordered",
+          "Comment on the taste and quality",
+          "Mention the service",
+          "Describe the atmosphere",
+          "Give a rating and recommendation"
+        ],
+        wordCountMin: 100,
+        wordCountMax: 180
+      },
+      {
+        title: "Book Review",
+        description: "읽은 책에 대한 간단한 리뷰",
+        category: "review",
+        difficulty: 2,
+        prompt: "Write a review of a book you read. Include the title, author, main idea, and your opinion.",
+        guidelines: [
+          "Introduce the book title and author",
+          "Briefly describe the story",
+          "Mention your favorite part",
+          "Say what you learned",
+          "Recommend it to others (or not)",
+          "Give a star rating"
+        ],
+        wordCountMin: 100,
+        wordCountMax: 180
+      },
+      
+      // Difficulty 3 Topics
+      {
+        title: "Job Application Email",
+        description: "일자리 지원 이메일 작성하기",
+        category: "email",
+        difficulty: 3,
+        prompt: "Write an email applying for a part-time job. Explain why you are interested and what skills you have.",
+        guidelines: [
+          "Use a formal greeting",
+          "State which job you are applying for",
+          "Explain why you want the job",
+          "Describe your relevant skills and experience",
+          "Request an interview",
+          "Thank them for considering you"
+        ],
+        wordCountMin: 120,
+        wordCountMax: 200
+      },
+      {
+        title: "Complaint Email",
+        description: "제품 불량에 대한 불만 이메일",
+        category: "email",
+        difficulty: 3,
+        prompt: "Write an email to a company complaining about a faulty product. Explain the problem and what you want them to do.",
+        guidelines: [
+          "Be polite but firm",
+          "Describe what product you bought",
+          "Explain what is wrong with it",
+          "Say when and where you bought it",
+          "Request a refund or replacement",
+          "Include any order numbers or receipts"
+        ],
+        wordCountMin: 120,
+        wordCountMax: 200
       },
       {
         title: "Movie Review",
@@ -1677,6 +1815,42 @@ export class MemStorage implements IStorage {
         wordCountMax: 250
       },
       {
+        title: "A Memorable Trip",
+        description: "기억에 남는 여행 이야기",
+        category: "story",
+        difficulty: 3,
+        prompt: "Write about a memorable trip you took. Describe where you went, what you did, and why it was special.",
+        guidelines: [
+          "Introduce where and when you went",
+          "Describe the journey there",
+          "Tell about the main activities",
+          "Include interesting or funny moments",
+          "Explain why it was memorable",
+          "Conclude with your overall feelings"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Overcoming a Challenge",
+        description: "어려움을 극복한 경험 이야기",
+        category: "story",
+        difficulty: 3,
+        prompt: "Write a story about a time you faced a challenge and overcame it. What was the problem and how did you solve it?",
+        guidelines: [
+          "Set the scene and introduce the challenge",
+          "Describe how you felt initially",
+          "Explain what you tried to do",
+          "Describe the turning point",
+          "Tell how you finally solved it",
+          "Reflect on what you learned"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      
+      // Difficulty 4 Topics
+      {
         title: "Social Media Impact",
         description: "소셜 미디어가 사회에 미치는 영향에 대한 의견 쓰기",
         category: "opinion",
@@ -1695,6 +1869,62 @@ export class MemStorage implements IStorage {
         wordCountMax: 300
       },
       {
+        title: "Online Learning vs Traditional Learning",
+        description: "온라인 학습과 전통적 학습 방식 비교",
+        category: "opinion",
+        difficulty: 4,
+        prompt: "Compare online learning with traditional classroom learning. Which do you think is better and why?",
+        guidelines: [
+          "Introduction: Present both learning methods",
+          "Advantages of online learning",
+          "Advantages of traditional learning",
+          "Disadvantages of each method",
+          "Your personal preference with reasons",
+          "Conclusion: Summarize your view",
+          "Use comparative language"
+        ],
+        wordCountMin: 200,
+        wordCountMax: 300
+      },
+      {
+        title: "Technology and Family Life",
+        description: "기술이 가족 생활에 미치는 영향 분석",
+        category: "essay",
+        difficulty: 4,
+        prompt: "Write an essay analyzing how technology has changed family life. Include both benefits and drawbacks.",
+        guidelines: [
+          "Introduction: State the topic clearly",
+          "How technology brings families together",
+          "How technology creates distance",
+          "Impact on children and parents",
+          "Real-life examples",
+          "Balanced conclusion",
+          "Use formal essay structure"
+        ],
+        wordCountMin: 250,
+        wordCountMax: 350
+      },
+      {
+        title: "The Importance of Education",
+        description: "교육의 중요성에 대한 에세이",
+        category: "essay",
+        difficulty: 4,
+        prompt: "Write an essay about why education is important for individuals and society. Support your points with examples.",
+        guidelines: [
+          "Introduction: Define what education means",
+          "Personal benefits of education",
+          "Social benefits of education",
+          "Economic impact",
+          "Examples from real life or history",
+          "Counter-arguments and responses",
+          "Strong conclusion"
+        ],
+        wordCountMin: 250,
+        wordCountMax: 350
+      },
+      
+      // Difficulty 5 Topics
+      {
         title: "Climate Change Solutions",
         description: "기후 변화 문제에 대한 해결책 제안하기",
         category: "essay",
@@ -1710,6 +1940,66 @@ export class MemStorage implements IStorage {
           "Conclusion: Summarize and emphasize the urgency",
           "Use formal academic language",
           "Include specific examples and data when possible"
+        ],
+        wordCountMin: 300,
+        wordCountMax: 500
+      },
+      {
+        title: "Artificial Intelligence Ethics",
+        description: "인공지능의 윤리적 문제에 대한 학술적 분석",
+        category: "essay",
+        difficulty: 5,
+        prompt: "Write an academic essay discussing the ethical implications of artificial intelligence. Address privacy, job displacement, and decision-making.",
+        guidelines: [
+          "Abstract: Brief overview of the topic",
+          "Introduction: Background and thesis statement",
+          "Section 1: Privacy concerns with AI",
+          "Section 2: Economic impact and job displacement",
+          "Section 3: Ethical decision-making in AI systems",
+          "Section 4: Regulatory frameworks and solutions",
+          "Conclusion: Future outlook and recommendations",
+          "Use academic tone and citations format",
+          "Include real-world case studies"
+        ],
+        wordCountMin: 350,
+        wordCountMax: 600
+      },
+      {
+        title: "Universal Basic Income Debate",
+        description: "기본소득제에 대한 찬반 논쟁",
+        category: "opinion",
+        difficulty: 5,
+        prompt: "Write a well-reasoned opinion piece on Universal Basic Income. Present arguments from both sides and defend your position.",
+        guidelines: [
+          "Introduction: Define UBI and its context",
+          "Arguments in favor (economic, social)",
+          "Arguments against (economic, practical)",
+          "Analysis of real-world pilot programs",
+          "Address counter-arguments to your position",
+          "Your reasoned opinion with evidence",
+          "Conclusion: Policy recommendations",
+          "Use persuasive yet balanced language",
+          "Reference economic theories or studies"
+        ],
+        wordCountMin: 300,
+        wordCountMax: 500
+      },
+      {
+        title: "Research Proposal Letter",
+        description: "연구 프로젝트 제안 편지 작성",
+        category: "letter",
+        difficulty: 5,
+        prompt: "Write a formal letter proposing a research project to a professor or institution. Include your research question, methodology, and expected outcomes.",
+        guidelines: [
+          "Formal salutation and introduction",
+          "State your research question clearly",
+          "Explain the significance of the research",
+          "Describe your proposed methodology",
+          "Outline expected outcomes and timeline",
+          "Budget considerations (if applicable)",
+          "Request for approval or funding",
+          "Professional closing",
+          "Use academic formal language"
         ],
         wordCountMin: 300,
         wordCountMax: 500
