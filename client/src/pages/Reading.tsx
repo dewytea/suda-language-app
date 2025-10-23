@@ -39,7 +39,7 @@ export default function Reading() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedDifficulty) params.append('difficulty', selectedDifficulty.toString());
-      if (selectedType) params.append('contentType', selectedType);
+      if (selectedType) params.append('type', selectedType);
       
       const url = params.toString() 
         ? `/api/reading/passages?${params}` 
