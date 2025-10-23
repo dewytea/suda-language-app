@@ -275,7 +275,7 @@ export default function Writing() {
                 <Card 
                   key={topic.id} 
                   className="hover-elevate active-elevate-2 cursor-pointer" 
-                  onClick={() => setLocation(`/writing/editor/${topic.id}`)}
+                  onClick={() => setLocation(`/learn/writing/editor/${topic.id}`)}
                   data-testid={`card-topic-${topic.id}`}
                 >
                   <CardContent className="p-6">

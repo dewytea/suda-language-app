@@ -104,7 +104,7 @@ function AppLayout() {
                 <Route path="/learn/listening/history" component={ListeningHistory} />
                 <Route path="/learn/listening/stats" component={ListeningStats} />
                 <Route path="/learn/listening" component={Listening} />
-                <Route path="/writing/editor/:id" component={WritingEditor} />
+                <Route path="/learn/writing/editor/:id" component={WritingEditor} />
                 <Route path="/learn/writing" component={Writing} />
                 <Route path="/learn/review" component={Review} />
                 <Route path="/learn/vocabulary" component={Vocabulary} />

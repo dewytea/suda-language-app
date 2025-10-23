@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { WritingTopic, WritingSubmission } from '@shared/schema';
 
 export default function WritingEditor() {
-  const [, params] = useRoute('/writing/editor/:id');
+  const [, params] = useRoute('/learn/writing/editor/:id');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const topicId = params?.id ? parseInt(params.id) : null;
@@ -164,7 +164,7 @@ export default function WritingEditor() {
             <CardContent className="p-12 text-center">
               <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
               <p className="text-muted-foreground">주제를 찾을 수 없습니다</p>
-              <Button onClick={() => setLocation('/writing')} className="mt-4" data-testid="button-back-to-list">
+              <Button onClick={() => setLocation('/learn/writing')} className="mt-4" data-testid="button-back-to-list">
                 목록으로 돌아가기
               </Button>
             </CardContent>
@@ -196,7 +196,7 @@ export default function WritingEditor() {
       <div className="max-w-4xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => setLocation('/writing')}
+          onClick={() => setLocation('/learn/writing')}
           className="mb-4"
           data-testid="button-back"
         >
@@ -458,7 +458,7 @@ export default function WritingEditor() {
                 <div className="flex items-center justify-center gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => setLocation('/writing')}
+                    onClick={() => setLocation('/learn/writing')}
                     data-testid="button-back-to-topics"
                   >
                     목록으로
