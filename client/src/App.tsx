@@ -21,6 +21,8 @@ import ListeningHistory from "@/pages/ListeningHistory";
 import ListeningStats from "@/pages/ListeningStats";
 import Writing from "@/pages/Writing";
 import WritingEditor from "@/pages/WritingEditor";
+import WritingFeedback from "@/pages/WritingFeedback";
+import MyWritings from "@/pages/MyWritings";
 import Review from "@/pages/Review";
 import Vocabulary from "@/pages/Vocabulary";
 import AIChat from "@/pages/AIChat";
@@ -104,6 +106,8 @@ function AppLayout() {
                 <Route path="/learn/listening/history" component={ListeningHistory} />
                 <Route path="/learn/listening/stats" component={ListeningStats} />
                 <Route path="/learn/listening" component={Listening} />
+                <Route path="/learn/writing/feedback/:id" component={WritingFeedback} />
+                <Route path="/learn/writing/my-writings" component={MyWritings} />
                 <Route path="/learn/writing/editor/:id" component={WritingEditor} />
                 <Route path="/learn/writing" component={Writing} />
                 <Route path="/learn/review" component={Review} />
