@@ -60,14 +60,32 @@ export default function WritingEditor() {
       });
       return await res.json();
     },
-    onSuccess: (data: WritingSubmission) => {
+    onSuccess: async (data: WritingSubmission) => {
       setSubmission(data);
-      toast({
-        title: '제출 완료',
-        description: '글이 성공적으로 제출되었습니다.',
-      });
       queryClient.invalidateQueries({ queryKey: ['/api/writing/submissions'] });
       queryClient.invalidateQueries({ queryKey: ['/api/writing/stats'] });
+      
+      toast({
+        title: '제출 완료',
+        description: 'AI가 첨삭하고 있습니다...',
+      });
+      
+      try {
+        setIsEvaluating(true);
+        const feedbackRes = await apiRequest('POST', `/api/writing/feedback/${data.id}`, {});
+        await feedbackRes.json();
+        
+        queryClient.invalidateQueries({ queryKey: ['/api/writing/submissions'] });
+        
+        setLocation(`/learn/writing/feedback/${data.id}`);
+      } catch (error: any) {
+        setIsEvaluating(false);
+        toast({
+          title: 'AI 첨삭 실패',
+          description: error.message || 'AI 첨삭에 실패했습니다. 나중에 다시 시도해주세요.',
+          variant: 'destructive',
+        });
+      }
     },
     onError: (error: any) => {
       toast({
@@ -304,12 +322,12 @@ export default function WritingEditor() {
                   {submitMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      제출 중...
+                      AI 첨삭 중...
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      제출하기
+                      제출하고 AI 첨삭 받기
                     </>
                   )}
                 </Button>
