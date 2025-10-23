@@ -982,11 +982,15 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
   app.get("/api/vocabulary/word", requireAuth, async (req, res) => {
     try {
       const { word } = req.query;
+      console.log('[DEBUG] Vocabulary word request:', { word, query: req.query });
+      
       if (!word || typeof word !== 'string') {
+        console.log('[DEBUG] Word validation failed:', word);
         return res.status(400).json({ error: 'Word is required' });
       }
       
       const wordData = await storage.getVocabularyWord(word);
+      console.log('[DEBUG] Word data found:', wordData ? wordData.word : 'not found');
       
       if (!wordData) {
         return res.status(404).json({ error: 'Word not found' });

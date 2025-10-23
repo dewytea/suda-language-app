@@ -141,7 +141,7 @@ function WordPopup({ word, position, onClose }: WordPopupProps) {
 
   return (
     <div
-      className="fixed z-50 bg-card border border-border rounded-md shadow-lg p-4 max-w-sm"
+      className="fixed z-[100] bg-card border border-border rounded-md shadow-2xl p-4 max-w-sm"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
@@ -304,7 +304,7 @@ export default function ClickableText({ text, className = "" }: ClickableTextPro
       {selectedWord && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[90]"
             onClick={handleBackdropClick}
             data-testid="popup-backdrop"
           />
