@@ -1211,6 +1211,182 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     }
   });
 
+  // Writing Topics API
+  app.get("/api/writing/topics", requireAuth, async (req, res) => {
+    try {
+      const difficulty = req.query.difficulty ? parseInt(req.query.difficulty as string) : undefined;
+      const category = req.query.category as string | undefined;
+      
+      const topics = await storage.getWritingTopics({ difficulty, category });
+      res.json({ topics });
+    } catch (error: any) {
+      console.error('Writing topics fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch topics' });
+    }
+  });
+
+  app.get("/api/writing/topics/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const topic = await storage.getWritingTopic(id);
+      
+      if (!topic) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      
+      res.json(topic);
+    } catch (error: any) {
+      console.error('Writing topic fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch topic' });
+    }
+  });
+
+  // Writing Submissions API
+  app.post("/api/writing/submit", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { topicId, content, wordCount } = req.body;
+      
+      if (!topicId || !content) {
+        return res.status(400).json({ error: 'Topic ID and content are required' });
+      }
+      
+      const submission = await storage.saveWritingSubmission({
+        userId,
+        topicId,
+        content,
+        wordCount: wordCount || content.trim().split(/\s+/).length
+      });
+      
+      res.json(submission);
+    } catch (error: any) {
+      console.error('Writing submission error:', error);
+      res.status(500).json({ error: 'Failed to save submission' });
+    }
+  });
+
+  app.get("/api/writing/submissions", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const submissions = await storage.getWritingSubmissions(userId);
+      res.json({ submissions });
+    } catch (error: any) {
+      console.error('Writing submissions fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+  });
+
+  app.get("/api/writing/submissions/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const submission = await storage.getWritingSubmission(id);
+      
+      if (!submission) {
+        return res.status(404).json({ error: 'Submission not found' });
+      }
+      
+      res.json(submission);
+    } catch (error: any) {
+      console.error('Writing submission fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch submission' });
+    }
+  });
+
+  app.post("/api/writing/evaluate/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const submission = await storage.getWritingSubmission(id);
+      
+      if (!submission) {
+        return res.status(404).json({ error: 'Submission not found' });
+      }
+      
+      const topic = await storage.getWritingTopic(submission.topicId);
+      if (!topic) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      
+      if (!GEMINI_API_KEY) {
+        return res.status(503).json({ 
+          error: "Gemini API 키가 설정되지 않았습니다. 환경 변수에서 GEMINI_API_KEY를 설정해주세요."
+        });
+      }
+      
+      const prompt = `You are an English writing teacher evaluating a student's essay. 
+
+Topic: ${topic.title}
+Prompt: ${topic.prompt}
+Word Count Requirement: ${topic.wordCountMin} - ${topic.wordCountMax} words
+Student's Word Count: ${submission.wordCount} words
+
+Guidelines:
+${topic.guidelines.map((g, i) => `${i + 1}. ${g}`).join('\n')}
+
+Student's Essay:
+${submission.content}
+
+Please evaluate this essay and provide:
+1. Overall Score (0-100)
+2. Strengths (what the student did well)
+3. Weaknesses (what needs improvement)
+4. Specific Feedback (detailed comments on grammar, vocabulary, structure, and content)
+5. Suggestions for Improvement
+
+Respond in JSON format:
+{
+  "score": number,
+  "strengths": string[],
+  "weaknesses": string[],
+  "feedback": string,
+  "suggestions": string[]
+}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash-exp",
+        contents: prompt,
+      });
+
+      const text = response.text;
+      if (!text) {
+        throw new Error('No response from AI');
+      }
+      
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('Invalid AI response format');
+      }
+      
+      const evaluation = JSON.parse(jsonMatch[0]);
+      
+      const updatedSubmission = await storage.updateWritingSubmission(id, {
+        aiScore: evaluation.score,
+        aiStrengths: evaluation.strengths,
+        aiWeaknesses: evaluation.weaknesses,
+        aiFeedback: evaluation.feedback,
+        aiSuggestions: evaluation.suggestions
+      });
+      
+      res.json(updatedSubmission);
+    } catch (error: any) {
+      console.error('AI evaluation error:', error);
+      res.status(500).json({ 
+        error: getKoreanErrorMessage(error)
+      });
+    }
+  });
+
+  app.get("/api/writing/stats", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const stats = await storage.getWritingStats(userId);
+      res.json(stats);
+    } catch (error: any) {
+      console.error('Writing stats fetch error:', error);
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  });
+
   app.get("/api/health/openai", async (req, res) => {
     try {
       const { checkOpenAIHealth } = await import('./openai');
