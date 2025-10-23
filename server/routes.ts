@@ -219,18 +219,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Vocabulary Routes
-  app.get("/api/vocabulary/:language", requireAuth, async (req, res) => {
-    try {
-      const { language } = req.params;
-      const userId = req.user!.id;
-      const vocabulary = await storage.getVocabulary(userId, language);
-      res.json(vocabulary);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
+  // Vocabulary Routes (specific routes must come before parameterized routes)
+  
   app.post("/api/vocabulary", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
@@ -1104,6 +1094,18 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
     } catch (error: any) {
       console.error('Delete vocabulary error:', error);
       res.status(500).json({ error: 'Failed to delete word' });
+    }
+  });
+
+  // Parameterized vocabulary route (must come after specific routes)
+  app.get("/api/vocabulary/:language", requireAuth, async (req, res) => {
+    try {
+      const { language } = req.params;
+      const userId = req.user!.id;
+      const vocabulary = await storage.getVocabulary(userId, language);
+      res.json(vocabulary);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
