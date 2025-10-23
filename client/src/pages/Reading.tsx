@@ -12,24 +12,21 @@ const contentTypeIcons = {
   news: Newspaper,
   story: BookText,
   essay: PenLine,
-  email: Mail,
-  ad: FileText
+  email: Mail
 };
 
 const contentTypeNames = {
   news: '뉴스',
   story: '이야기',
   essay: '에세이',
-  email: '이메일',
-  ad: '광고'
+  email: '이메일'
 };
 
 const contentTypeColors = {
   news: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
   story: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   essay: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  email: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-  ad: 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
+  email: 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
 };
 
 export default function Reading() {
