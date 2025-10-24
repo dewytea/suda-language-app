@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { PenLine, TrendingUp, FileText, Mail, BookOpen, MessageSquare, Star } from 'lucide-react';
+import { PenLine, TrendingUp, FileText, Mail, BookOpen, MessageSquare, Star, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
-import type { WritingTopic } from '@shared/schema';
+import { apiRequest } from '@/lib/queryClient';
+import type { WritingTopic, SuggestedWritingTopic } from '@shared/schema';
 
 const categoryIcons = {
   email: Mail,
@@ -39,6 +40,7 @@ export default function Writing() {
   const [, setLocation] = useLocation();
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [suggestedTopics, setSuggestedTopics] = useState<SuggestedWritingTopic[]>([]);
 
   const { data: topicsData, isLoading } = useQuery<{ topics: WritingTopic[] }>({
     queryKey: ['/api/writing/topics', { difficulty: selectedDifficulty, category: selectedCategory }],
@@ -89,6 +91,20 @@ export default function Writing() {
       }
       
       return response.json();
+    },
+  });
+
+  const suggestTopicsMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        'POST',
+        '/api/writing/suggest-topics',
+        { language: 'en', count: 3 }
+      );
+      return await response.json() as { topics: SuggestedWritingTopic[] };
+    },
+    onSuccess: (data) => {
+      setSuggestedTopics(data.topics || []);
     },
   });
 
@@ -184,6 +200,111 @@ export default function Writing() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 border-blue-200 dark:border-blue-800" data-testid="card-suggested-topics">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground" data-testid="text-suggested-title">
+                    오늘 배운 내용으로 연습하기
+                  </h2>
+                  <p className="text-sm text-muted-foreground" data-testid="text-suggested-description">
+                    AI가 당신의 학습 기록을 바탕으로 맞춤 글쓰기 주제를 추천합니다
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => suggestTopicsMutation.mutate()}
+                disabled={suggestTopicsMutation.isPending}
+                size="sm"
+                data-testid="button-generate-topics"
+              >
+                {suggestTopicsMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    생성 중...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    주제 생성
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {suggestedTopics.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {suggestedTopics.map((topic, index) => {
+                  const CategoryIcon = categoryIcons[topic.category as keyof typeof categoryIcons] || FileText;
+                  
+                  return (
+                    <Card 
+                      key={index} 
+                      className="hover-elevate active-elevate-2 cursor-pointer bg-white dark:bg-gray-900" 
+                      onClick={() => {
+                        // Store suggested topic in sessionStorage and navigate to editor
+                        sessionStorage.setItem('suggestedTopic', JSON.stringify(topic));
+                        setLocation(`/learn/writing/editor/suggested-${index}`);
+                      }}
+                      data-testid={`card-suggested-${index}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <CategoryIcon className="w-4 h-4 text-primary" />
+                          </div>
+                          <Badge 
+                            className={getDifficultyColor(topic.difficulty)}
+                            data-testid={`badge-suggested-difficulty-${index}`}
+                          >
+                            Lv.{topic.difficulty}
+                          </Badge>
+                        </div>
+                        
+                        <h3 className="text-base font-semibold mb-2 text-foreground" data-testid={`text-suggested-title-${index}`}>
+                          {topic.title}
+                        </h3>
+                        
+                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2" data-testid={`text-suggested-description-${index}`}>
+                          {topic.description}
+                        </p>
+                        
+                        {topic.vocabularyUsed && topic.vocabularyUsed.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {topic.vocabularyUsed.slice(0, 3).map((word, i) => (
+                              <Badge 
+                                key={i} 
+                                variant="outline" 
+                                className="text-xs bg-blue-50 dark:bg-blue-950"
+                                data-testid={`badge-vocab-${index}-${i}`}
+                              >
+                                {word}
+                              </Badge>
+                            ))}
+                            {topic.vocabularyUsed.length > 3 && (
+                              <Badge variant="outline" className="text-xs" data-testid={`badge-vocab-more-${index}`}>
+                                +{topic.vocabularyUsed.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground" data-testid="text-no-suggestions">
+                <p>버튼을 클릭하여 맞춤 주제를 생성해보세요</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="mb-6" data-testid="card-filters">
           <CardContent className="p-4">
