@@ -1505,6 +1505,114 @@ Provide detailed feedback in JSON format as specified.`
     }
   });
 
+  app.post("/api/writing/suggest-topics", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const { language = 'en', count = 3 } = req.body;
+      
+      if (!process.env.OPENAI_API_KEY) {
+        return res.status(503).json({ 
+          error: "OpenAI API 키가 설정되지 않았습니다. 환경 변수에서 OPENAI_API_KEY를 설정해주세요."
+        });
+      }
+      
+      // Get user's recent learning content
+      const learningContent = await storage.getRecentLearningContent(userId, language, 20);
+      
+      // If user has no learning content, return empty
+      if (learningContent.vocabulary.length === 0 && 
+          learningContent.notes.length === 0 && 
+          learningContent.recentTopics.length === 0) {
+        return res.json({ topics: [] });
+      }
+      
+      // Prepare context for AI
+      const vocabularyWords = learningContent.vocabulary
+        .map(v => v.word.word)
+        .join(', ');
+      
+      const notesContent = learningContent.notes
+        .map(n => n.content)
+        .slice(0, 5)
+        .join('\n');
+      
+      const topics = learningContent.recentTopics.join(', ');
+      
+      const { default: OpenAI } = await import('openai');
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert language learning assistant. Based on the student's recent learning activity, suggest ${count} personalized writing topics that incorporate their learned vocabulary and topics.
+
+Your response must be a valid JSON object with this exact structure:
+{
+  "topics": [
+    {
+      "title": "<engaging topic title>",
+      "description": "<brief description in Korean>",
+      "category": "<one of: email, essay, letter, review, story, opinion>",
+      "difficulty": <1-5 based on complexity>,
+      "prompt": "<clear writing prompt>",
+      "guidelines": ["<guideline 1>", "<guideline 2>", ...],
+      "wordCountMin": <minimum words>,
+      "wordCountMax": <maximum words>,
+      "vocabularyUsed": ["<word 1>", "<word 2>", ...],
+      "basedOnContent": ["<topic or note that inspired this>"]
+    }
+  ]
+}
+
+Make topics engaging, relevant, and appropriate for the student's level. Ensure topics naturally incorporate their learned vocabulary.`
+          },
+          {
+            role: "user",
+            content: `Please suggest ${count} writing topics based on this student's recent learning:
+
+Recently learned vocabulary: ${vocabularyWords || 'None yet'}
+
+Recent study notes:
+${notesContent || 'None yet'}
+
+Recent topics studied: ${topics || 'None yet'}
+
+Create topics that help the student practice using this vocabulary and explore these themes in their writing.`
+          }
+        ],
+        temperature: 0.8,
+        response_format: { type: "json_object" }
+      });
+      
+      const responseText = completion.choices[0].message.content;
+      if (!responseText) {
+        throw new Error('No response from AI');
+      }
+      
+      const suggestedTopics = JSON.parse(responseText);
+      
+      res.json(suggestedTopics);
+    } catch (error: any) {
+      console.error('Topic suggestion error:', error);
+      
+      if (error.status === 401) {
+        return res.status(503).json({ 
+          error: 'OpenAI API 키가 유효하지 않습니다.'
+        });
+      } else if (error.status === 429) {
+        return res.status(503).json({ 
+          error: 'OpenAI API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.'
+        });
+      }
+      
+      res.status(500).json({ 
+        error: 'AI 주제 생성 중 오류가 발생했습니다. 다시 시도해주세요.'
+      });
+    }
+  });
+
   app.get("/api/writing/stats", requireAuth, async (req, res) => {
     try {
       const userId = req.user!.id;
