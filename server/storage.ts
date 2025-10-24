@@ -170,6 +170,7 @@ export interface IStorage {
   // Writing Topics
   getWritingTopics(filters?: { difficulty?: number; category?: string }): Promise<WritingTopic[]>;
   getWritingTopic(id: number): Promise<WritingTopic | undefined>;
+  addWritingTopic(topic: InsertWritingTopic): Promise<WritingTopic>;
 
   // Writing Submissions
   saveWritingSubmission(submission: InsertWritingSubmission): Promise<WritingSubmission>;
@@ -2042,6 +2043,17 @@ export class MemStorage implements IStorage {
 
   async getWritingTopic(id: number): Promise<WritingTopic | undefined> {
     return this.writingTopics.get(id);
+  }
+
+  async addWritingTopic(topic: InsertWritingTopic): Promise<WritingTopic> {
+    const id = this.nextId++;
+    const writingTopic: WritingTopic = {
+      id,
+      ...topic,
+      createdAt: new Date()
+    };
+    this.writingTopics.set(id, writingTopic);
+    return writingTopic;
   }
 
   // Writing Submissions

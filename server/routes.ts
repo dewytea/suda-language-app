@@ -1253,12 +1253,19 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
       
       let actualTopicId = topicId;
       
-      // If this is a suggested topic, create a temporary topic entry
+      // If this is a suggested topic, save it as a real WritingTopic first
       if (suggestedTopic && !topicId) {
-        // Note: For suggested topics, we won't save them to the topics table
-        // We'll use a placeholder topicId of -1 to indicate it's a suggested topic
-        // The topic details will be stored in the submission's metadata
-        actualTopicId = -1;
+        const newTopic = await storage.addWritingTopic({
+          title: suggestedTopic.title,
+          description: suggestedTopic.description,
+          category: suggestedTopic.category,
+          difficulty: suggestedTopic.difficulty,
+          prompt: suggestedTopic.prompt,
+          guidelines: suggestedTopic.guidelines,
+          wordCountMin: suggestedTopic.wordCountMin,
+          wordCountMax: suggestedTopic.wordCountMax
+        });
+        actualTopicId = newTopic.id;
       } else if (!topicId) {
         return res.status(400).json({ error: 'Topic ID or suggested topic data is required' });
       }
@@ -1269,11 +1276,6 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
         content,
         wordCount: wordCount || content.trim().split(/\s+/).length
       });
-      
-      // Store suggested topic info in memory for later retrieval
-      if (suggestedTopic) {
-        (submission as any).suggestedTopicData = suggestedTopic;
-      }
       
       res.json(submission);
     } catch (error: any) {
