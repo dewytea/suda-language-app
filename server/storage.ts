@@ -182,6 +182,13 @@ export interface IStorage {
     averageWordCount: number;
     recentSubmissions: WritingSubmission[];
   }>;
+
+  // Learning Content for Writing Suggestions
+  getRecentLearningContent(userId: string, language: string, limit?: number): Promise<{
+    vocabulary: (UserVocabulary & { word: VocabularyWord })[];
+    notes: Note[];
+    recentTopics: string[];
+  }>;
 }
 
 export class MemStorage implements IStorage {
@@ -2096,6 +2103,62 @@ export class MemStorage implements IStorage {
       averageScore,
       averageWordCount,
       recentSubmissions
+    };
+  }
+
+  // Get recent learning content for personalized writing topic suggestions
+  async getRecentLearningContent(userId: string, language: string, limit: number = 20): Promise<{
+    vocabulary: (UserVocabulary & { word: VocabularyWord })[];
+    notes: Note[];
+    recentTopics: string[];
+  }> {
+    // Get user's recently saved vocabulary
+    const userVocab = await this.getUserVocabulary(userId);
+    const recentVocab = userVocab
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+
+    // Get user's recent notes from all skills
+    const allNotes = await this.getNotes(userId, language);
+    const recentNotes = allNotes
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+
+    // Extract topics from reading/listening/speaking activities
+    const recentTopics: string[] = [];
+    
+    // Get recent reading passages the user has completed
+    const readingProgress = await this.getReadingProgress(userId);
+    const recentReadingIds = readingProgress
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
+      .slice(0, 5)
+      .map(p => p.passageId);
+    
+    for (const passageId of recentReadingIds) {
+      const passage = await this.getReadingPassage(passageId);
+      if (passage) {
+        recentTopics.push(passage.title);
+      }
+    }
+
+    // Get recent listening lessons
+    const listeningProgress = await this.getListeningProgress(userId);
+    const recentListeningIds = listeningProgress
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
+      .slice(0, 5)
+      .map(p => p.lessonId);
+    
+    for (const lessonId of recentListeningIds) {
+      const lesson = await this.getListeningLesson(lessonId);
+      if (lesson) {
+        recentTopics.push(lesson.category);
+      }
+    }
+
+    return {
+      vocabulary: recentVocab,
+      notes: recentNotes,
+      recentTopics: Array.from(new Set(recentTopics)) // Remove duplicates
     };
   }
 }
