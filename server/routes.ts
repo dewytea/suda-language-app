@@ -1304,7 +1304,16 @@ Provide: score (0-100), corrections array with {original, corrected, type}, and 
         return res.status(404).json({ error: 'Submission not found' });
       }
       
-      res.json(submission);
+      // Get topic information
+      const topic = await storage.getWritingTopic(submission.topicId);
+      if (!topic) {
+        return res.status(404).json({ error: 'Topic not found' });
+      }
+      
+      res.json({
+        ...submission,
+        topic
+      });
     } catch (error: any) {
       console.error('Writing submission fetch error:', error);
       res.status(500).json({ error: 'Failed to fetch submission' });
