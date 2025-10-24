@@ -2011,6 +2011,115 @@ export class MemStorage implements IStorage {
         ],
         wordCountMin: 300,
         wordCountMax: 500
+      },
+      
+      // Additional Topics - 난이도별/카테고리별 추가
+      {
+        title: "Brief Self-Introduction",
+        description: "매우 간단한 자기소개 작성하기 (10단어 이내)",
+        category: "story",
+        difficulty: 1,
+        prompt: "Write a very brief self-introduction in 10 words or less. Include your name and occupation.",
+        guidelines: [
+          "State your name clearly",
+          "Mention your job or role",
+          "Use simple, short words",
+          "Maximum 10 words",
+          "Keep each sentence short"
+        ],
+        wordCountMin: 5,
+        wordCountMax: 10
+      },
+      {
+        title: "Meeting Schedule Email",
+        description: "직장 동료에게 미팅 일정 연락하기",
+        category: "email",
+        difficulty: 2,
+        prompt: "Write an email to a colleague to schedule a meeting. Include the purpose, suggested date and time, and ask for confirmation.",
+        guidelines: [
+          "Use a professional greeting",
+          "State the purpose of the meeting",
+          "Suggest 2-3 possible times",
+          "Mention the meeting location or link",
+          "Ask them to confirm their availability",
+          "End with a polite closing"
+        ],
+        wordCountMin: 80,
+        wordCountMax: 150
+      },
+      {
+        title: "My Favorite Place",
+        description: "내가 가장 좋아하는 장소에 대한 짧은 에세이",
+        category: "essay",
+        difficulty: 2,
+        prompt: "Write a short essay about your favorite place. Describe what it looks like, why you like it, and what you do there.",
+        guidelines: [
+          "Introduction: Name the place",
+          "Body: Describe what it looks like",
+          "Explain why it is special to you",
+          "Tell what you do there",
+          "Conclusion: Sum up your feelings",
+          "Use descriptive language"
+        ],
+        wordCountMin: 100,
+        wordCountMax: 180
+      },
+      {
+        title: "Recommendation Letter",
+        description: "동료나 학생을 위한 추천서 작성하기",
+        category: "letter",
+        difficulty: 3,
+        prompt: "Write a letter of recommendation for a colleague or student. Describe their strengths, achievements, and why you recommend them.",
+        guidelines: [
+          "Use formal letter format",
+          "Introduce your relationship to the person",
+          "Describe their key strengths and skills",
+          "Give specific examples of achievements",
+          "Explain why you recommend them",
+          "Offer to provide more information",
+          "Use professional tone"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Product Review",
+        description: "최근 구매한 제품에 대한 리뷰 작성하기",
+        category: "review",
+        difficulty: 4,
+        prompt: "Write a detailed review of a product you recently purchased. Discuss features, pros and cons, value for money, and whether you recommend it.",
+        guidelines: [
+          "Introduction: Name the product and category",
+          "Describe key features and specifications",
+          "Discuss what you liked (pros)",
+          "Mention any drawbacks (cons)",
+          "Compare with similar products if possible",
+          "Evaluate value for money",
+          "Give a rating and clear recommendation",
+          "Use balanced, informative tone"
+        ],
+        wordCountMin: 200,
+        wordCountMax: 300
+      },
+      {
+        title: "Remote Work Opinion",
+        description: "재택근무의 장단점에 대한 의견 제시하기",
+        category: "opinion",
+        difficulty: 5,
+        prompt: "Write an opinion essay on remote work. Analyze its benefits and challenges, consider different perspectives, and present your well-reasoned position.",
+        guidelines: [
+          "Introduction: Define remote work and its growing prevalence",
+          "Benefits: Flexibility, work-life balance, reduced commuting",
+          "Challenges: Isolation, communication issues, productivity concerns",
+          "Impact on different stakeholders (employees, employers, society)",
+          "Consider various industries and job types",
+          "Present your position with supporting evidence",
+          "Conclusion: Future outlook and recommendations",
+          "Use persuasive yet balanced language",
+          "Support arguments with examples or research"
+        ],
+        wordCountMin: 300,
+        wordCountMax: 500
       }
     ];
 
