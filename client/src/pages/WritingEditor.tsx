@@ -10,25 +10,44 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { apiRequest, queryClient } from '@/lib/queryClient';
-import type { WritingTopic, WritingSubmission } from '@shared/schema';
+import type { WritingTopic, WritingSubmission, SuggestedWritingTopic } from '@shared/schema';
 
 export default function WritingEditor() {
   const [, params] = useRoute('/learn/writing/editor/:id');
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const topicId = params?.id ? parseInt(params.id) : null;
+  
+  // Check if this is a suggested topic
+  const isSuggestedTopic = params?.id?.startsWith('suggested-');
+  const topicId = isSuggestedTopic ? null : (params?.id ? parseInt(params.id) : null);
   
   const [content, setContent] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [submission, setSubmission] = useState<WritingSubmission | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [suggestedTopic, setSuggestedTopic] = useState<SuggestedWritingTopic | null>(null);
 
   useEffect(() => {
     const words = content.trim().split(/\s+/).filter(w => w.length > 0);
     setWordCount(words.length);
   }, [content]);
 
-  const { data: topic, isLoading: topicLoading } = useQuery<WritingTopic>({
+  // Load suggested topic from sessionStorage if this is a suggested topic
+  useEffect(() => {
+    if (isSuggestedTopic) {
+      const storedTopic = sessionStorage.getItem('suggestedTopic');
+      if (storedTopic) {
+        try {
+          const parsed = JSON.parse(storedTopic);
+          setSuggestedTopic(parsed);
+        } catch (error) {
+          console.error('Failed to parse suggested topic:', error);
+        }
+      }
+    }
+  }, [isSuggestedTopic]);
+
+  const { data: fetchedTopic, isLoading: topicLoading } = useQuery<WritingTopic>({
     queryKey: ['/api/writing/topics', topicId],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -48,16 +67,27 @@ export default function WritingEditor() {
       
       return response.json();
     },
-    enabled: !!topicId,
+    enabled: !!topicId && !isSuggestedTopic,
   });
+
+  // Use suggested topic or fetched topic
+  const topic = isSuggestedTopic ? (suggestedTopic as WritingTopic | null) : fetchedTopic;
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/writing/submit', {
-        topicId,
+      const submitData: any = {
         content,
         wordCount
-      });
+      };
+      
+      // Include either topicId or suggested topic data
+      if (isSuggestedTopic && suggestedTopic) {
+        submitData.suggestedTopic = suggestedTopic;
+      } else {
+        submitData.topicId = topicId;
+      }
+      
+      const res = await apiRequest('POST', '/api/writing/submit', submitData);
       return await res.json();
     },
     onSuccess: async (data: WritingSubmission) => {
