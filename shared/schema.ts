@@ -355,3 +355,19 @@ export const insertWritingSubmissionSchema = z.object({
 
 export type InsertWritingSubmission = z.infer<typeof insertWritingSubmissionSchema>;
 export type WritingSubmission = InsertWritingSubmission & { id: number; submittedAt: Date; createdAt: Date };
+
+// Suggested Writing Topics (AI가 생성한 개인화 추천 주제)
+export const suggestedWritingTopicSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  category: z.enum(["email", "essay", "letter", "review", "story", "opinion"]),
+  difficulty: z.number().min(1).max(5),
+  prompt: z.string(),
+  guidelines: z.array(z.string()),
+  wordCountMin: z.number().optional(),
+  wordCountMax: z.number().optional(),
+  basedOnContent: z.array(z.string()).optional(), // 어떤 학습 내용을 기반으로 했는지
+  vocabularyUsed: z.array(z.string()).optional(), // 활용할 단어들
+});
+
+export type SuggestedWritingTopic = z.infer<typeof suggestedWritingTopicSchema>;
