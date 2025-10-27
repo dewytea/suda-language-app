@@ -45,6 +45,12 @@ import {
   type InsertWritingTopic,
   type WritingSubmission,
   type InsertWritingSubmission,
+  type SpeakingScenario,
+  type InsertSpeakingScenario,
+  type ConversationHistory,
+  type InsertConversationHistory,
+  type ScenarioProgress,
+  type InsertScenarioProgress,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -190,6 +196,21 @@ export interface IStorage {
     notes: Note[];
     recentTopics: string[];
   }>;
+
+  // Speaking Scenarios
+  getSpeakingScenarios(filters?: { category?: string; difficulty?: number }): Promise<SpeakingScenario[]>;
+  getSpeakingScenario(id: number): Promise<SpeakingScenario | undefined>;
+  addSpeakingScenario(scenario: InsertSpeakingScenario): Promise<SpeakingScenario>;
+
+  // Conversation History
+  saveConversationHistory(history: InsertConversationHistory): Promise<ConversationHistory>;
+  getConversationHistory(userId: string, scenarioId?: number): Promise<ConversationHistory[]>;
+  getConversationById(id: number): Promise<ConversationHistory | undefined>;
+
+  // Scenario Progress
+  getScenarioProgress(userId: string, scenarioId?: number): Promise<ScenarioProgress[]>;
+  saveScenarioProgress(progress: InsertScenarioProgress): Promise<ScenarioProgress>;
+  updateScenarioProgress(userId: string, scenarioId: number, updates: Partial<ScenarioProgress>): Promise<ScenarioProgress>;
 }
 
 export class MemStorage implements IStorage {
@@ -218,6 +239,9 @@ export class MemStorage implements IStorage {
   private readingProgress: Map<number, ReadingProgress>;
   private writingTopics: Map<number, WritingTopic>;
   private writingSubmissions: Map<number, WritingSubmission>;
+  private speakingScenarios: Map<number, SpeakingScenario>;
+  private conversationHistory: Map<number, ConversationHistory>;
+  private scenarioProgress: Map<number, ScenarioProgress>;
   private nextId: number;
 
   constructor() {
@@ -246,6 +270,9 @@ export class MemStorage implements IStorage {
     this.readingProgress = new Map();
     this.writingTopics = new Map();
     this.writingSubmissions = new Map();
+    this.speakingScenarios = new Map();
+    this.conversationHistory = new Map();
+    this.scenarioProgress = new Map();
     this.nextId = 1;
 
     this.initializeAchievementTemplates();
@@ -255,6 +282,7 @@ export class MemStorage implements IStorage {
     this.initializeReadingPassages();
     this.initializeWritingTopics();
     this.initializeReadingQuestions();
+    this.initializeSpeakingScenarios();
   }
 
   private initializeAchievementTemplates() {
@@ -2728,6 +2756,197 @@ export class MemStorage implements IStorage {
       notes: recentNotes,
       recentTopics: Array.from(new Set(recentTopics)) // Remove duplicates
     };
+  }
+
+  // Initialize Speaking Scenarios
+  private initializeSpeakingScenarios() {
+    const scenarios: InsertSpeakingScenario[] = [
+      // Scenario 1: Job Interview
+      {
+        category: "business",
+        title: "Job Interview - Software Developer",
+        difficulty: 4,
+        estimatedTime: 15,
+        description: "소프트웨어 개발자 면접 전 과정을 연습합니다.",
+        learningObjectives: [
+          "전문적인 자기소개 방법 습득",
+          "기술 경험 효과적으로 설명하기",
+          "면접 단골 질문에 대응하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "면접장 도착 및 첫 인사",
+            situation: "면접장에 도착했습니다. 리셉셔니스트가 당신을 맞이합니다.",
+            aiRole: "receptionist",
+            aiPrompt: "You are a friendly receptionist greeting a job candidate. Welcome them warmly, confirm their appointment, and guide them through check-in process.",
+            usefulExpressions: [
+              {
+                expression: "I have an interview scheduled with...",
+                meaning: "...와 면접 약속이 있습니다",
+                examples: [
+                  "I have an interview scheduled with Mr. Kim at 2 PM.",
+                  "I have an interview scheduled with the HR department.",
+                  "I have an interview scheduled with your team today."
+                ],
+                pronunciation: "/aɪ hæv ən ˈɪntərvjuː ˈʃɛdjuːld wɪð/"
+              },
+              {
+                expression: "Thank you for having me.",
+                meaning: "초대해 주셔서 감사합니다",
+                examples: [
+                  "Thank you for having me today.",
+                  "Thank you for having me here for this opportunity.",
+                  "Thank you for having me, I'm excited to be here."
+                ],
+                pronunciation: "/θæŋk juː fɔːr ˈhævɪŋ miː/"
+              },
+              {
+                expression: "I'm looking forward to...",
+                meaning: "...을 기대하고 있습니다",
+                examples: [
+                  "I'm looking forward to our discussion.",
+                  "I'm looking forward to learning more about the role.",
+                  "I'm looking forward to meeting the team."
+                ],
+                pronunciation: "/aɪm ˈlʊkɪŋ ˈfɔːrwərd tuː/"
+              }
+            ],
+            expectedQuestions: [
+              "Good morning! Do you have an appointment?",
+              "May I have your name, please?",
+              "The interviewer will be with you shortly. Would you like some water?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 20,
+              appropriateness: 30
+            }
+          }
+        ]
+      }
+    ];
+
+    scenarios.forEach(scenario => {
+      const id = this.nextId++;
+      const speakingScenario: SpeakingScenario = {
+        id,
+        ...scenario,
+        createdAt: new Date()
+      };
+      this.speakingScenarios.set(id, speakingScenario);
+    });
+    
+    console.log(`[Speaking Scenarios] Initialized ${scenarios.length} scenarios`);
+  }
+
+  // Speaking Scenarios
+  async getSpeakingScenarios(filters?: { category?: string; difficulty?: number }): Promise<SpeakingScenario[]> {
+    let scenarios = Array.from(this.speakingScenarios.values());
+    
+    if (filters?.category) {
+      scenarios = scenarios.filter(s => s.category === filters.category);
+    }
+    
+    if (filters?.difficulty) {
+      scenarios = scenarios.filter(s => s.difficulty === filters.difficulty);
+    }
+    
+    return scenarios.sort((a, b) => a.difficulty - b.difficulty);
+  }
+
+  async getSpeakingScenario(id: number): Promise<SpeakingScenario | undefined> {
+    return this.speakingScenarios.get(id);
+  }
+
+  async addSpeakingScenario(scenario: InsertSpeakingScenario): Promise<SpeakingScenario> {
+    const id = this.nextId++;
+    const speakingScenario: SpeakingScenario = {
+      id,
+      ...scenario,
+      createdAt: new Date()
+    };
+    this.speakingScenarios.set(id, speakingScenario);
+    return speakingScenario;
+  }
+
+  // Conversation History
+  async saveConversationHistory(history: InsertConversationHistory): Promise<ConversationHistory> {
+    const id = this.nextId++;
+    const conversationHistory: ConversationHistory = {
+      id,
+      ...history,
+      completedAt: new Date(),
+      createdAt: new Date()
+    };
+    this.conversationHistory.set(id, conversationHistory);
+    return conversationHistory;
+  }
+
+  async getConversationHistory(userId: string, scenarioId?: number): Promise<ConversationHistory[]> {
+    let history = Array.from(this.conversationHistory.values()).filter(h => h.userId === userId);
+    
+    if (scenarioId) {
+      history = history.filter(h => h.scenarioId === scenarioId);
+    }
+    
+    return history.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }
+
+  async getConversationById(id: number): Promise<ConversationHistory | undefined> {
+    return this.conversationHistory.get(id);
+  }
+
+  // Scenario Progress
+  async getScenarioProgress(userId: string, scenarioId?: number): Promise<ScenarioProgress[]> {
+    let progress = Array.from(this.scenarioProgress.values()).filter(p => p.userId === userId);
+    
+    if (scenarioId) {
+      progress = progress.filter(p => p.scenarioId === scenarioId);
+    }
+    
+    return progress;
+  }
+
+  async saveScenarioProgress(progress: InsertScenarioProgress): Promise<ScenarioProgress> {
+    // Check if progress already exists for this user and scenario
+    const existing = Array.from(this.scenarioProgress.values()).find(
+      p => p.userId === progress.userId && p.scenarioId === progress.scenarioId
+    );
+
+    if (existing) {
+      return this.updateScenarioProgress(progress.userId, progress.scenarioId, progress);
+    }
+
+    const id = this.nextId++;
+    const scenarioProgress: ScenarioProgress = {
+      id,
+      ...progress,
+      lastPracticed: new Date(),
+      createdAt: new Date()
+    };
+    this.scenarioProgress.set(id, scenarioProgress);
+    return scenarioProgress;
+  }
+
+  async updateScenarioProgress(userId: string, scenarioId: number, updates: Partial<ScenarioProgress>): Promise<ScenarioProgress> {
+    const existing = Array.from(this.scenarioProgress.values()).find(
+      p => p.userId === userId && p.scenarioId === scenarioId
+    );
+
+    if (!existing) {
+      throw new Error(`Scenario progress not found for user ${userId} and scenario ${scenarioId}`);
+    }
+
+    const updated: ScenarioProgress = {
+      ...existing,
+      ...updates,
+      lastPracticed: new Date()
+    };
+
+    this.scenarioProgress.set(existing.id, updated);
+    return updated;
   }
 }
 

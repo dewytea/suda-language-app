@@ -1,0 +1,589 @@
+✅ 상황별 대화 시나리오
+✅ 단계별 진행 (Step-by-step)
+✅ 유용한 표현 + 예문 3개
+✅ AI와 실시간 대화
+✅ 발음 평가 + 대화 평가
+✅ 다양한 실생활 상황
+
+→ 완전히 가능해요! 🎉
+```
+
+---
+
+## 🎯 **Replit Agent 프롬프트**
+```
+Speaking 모듈을 상황별 대화(Scenario-based Conversation) 시스템으로 대폭 업그레이드해줘.
+
+=== Speaking Phase 2: 상황별 실전 대화 시스템 ===
+
+**목표:**
+실생활 상황을 시뮬레이션하여 단계별로 대화를 연습할 수 있는 시스템 구축.
+각 상황마다 유용한 표현을 학습하고, AI와 실제 대화처럼 연습.
+
+---
+
+## 📋 **핵심 기능**
+
+### 1. **상황별 시나리오 (Scenarios)**
+
+각 시나리오는 3-7단계로 구성:
+
+**카테고리 1: 비즈니스/취업**
+- 📊 Job Interview (면접)
+  - Step 1: 면접장 도착 및 인사
+  - Step 2: 자기소개
+  - Step 3: 경력/경험 질문 답변
+  - Step 4: 강점/약점 질문
+  - Step 5: 회사에 대한 질문하기
+  - Step 6: 마무리 인사
+
+- 💼 Business Meeting (회의)
+  - Step 1: 회의 시작 및 안건 소개
+  - Step 2: 의견 제시
+  - Step 3: 동의/반대 표현
+  - Step 4: 결정 및 액션 아이템
+  
+- 📞 Phone Call (업무 전화)
+  - Step 1: 전화 받기/걸기
+  - Step 2: 용건 전달
+  - Step 3: 일정 조율
+  - Step 4: 마무리
+
+**카테고리 2: 여행/공항**
+- ✈️ Airport Check-in (공항 체크인)
+  - Step 1: 체크인 카운터 접근
+  - Step 2: 좌석 선택
+  - Step 3: 수하물 처리
+  - Step 4: 탑승권 수령
+
+- 🛂 Immigration/Customs (입국심사/세관)
+  - Step 1: 입국 목적 질문
+  - Step 2: 체류 기간 답변
+  - Step 3: 숙소 정보 제공
+  - Step 4: 신고할 물품 여부
+
+- 🏨 Hotel Check-in (호텔 체크인)
+  - Step 1: 예약 확인
+  - Step 2: 방 타입 선택/변경
+  - Step 3: 시설 안내 받기
+  - Step 4: 체크아웃 시간 확인
+
+**카테고리 3: 일상생활**
+- 🍽️ Restaurant (레스토랑)
+  - Step 1: 자리 안내받기
+  - Step 2: 메뉴 주문
+  - Step 3: 추가 요청
+  - Step 4: 계산하기
+
+- 🏪 Shopping (쇼핑)
+  - Step 1: 직원에게 도움 요청
+  - Step 2: 사이즈/색상 문의
+  - Step 3: 가격 흥정/할인
+  - Step 4: 결제 및 영수증
+
+- 🏥 Doctor's Office (병원)
+  - Step 1: 접수
+  - Step 2: 증상 설명
+  - Step 3: 진단 및 처방
+  - Step 4: 복약 지도
+
+**카테고리 4: 사교/네트워킹**
+- 👋 First Meeting (첫 만남)
+  - Step 1: 인사 및 자기소개
+  - Step 2: Small talk
+  - Step 3: 공통 관심사 찾기
+  - Step 4: 연락처 교환
+
+- 🎉 Social Event (사교 행사)
+  - Step 1: 행사장 도착
+  - Step 2: 대화 시작하기
+  - Step 3: 주제 전환
+  - Step 4: 정중히 마무리
+
+---
+
+### 2. **각 단계별 구조**
+```typescript
+interface ScenarioStep {
+  stepNumber: number;
+  title: string;
+  situation: string;              // 상황 설명
+  
+  // 유용한 표현 (3개)
+  usefulExpressions: {
+    expression: string;           // 핵심 표현
+    meaning: string;              // 한국어 의미
+    examples: string[];           // 예문 3개
+    pronunciation: string;        // 발음 가이드
+  }[];
+  
+  // AI 대화 상대 역할
+  aiRole: string;                 // "interviewer", "receptionist" 등
+  aiPrompt: string;               // AI가 해야 할 역할 설명
+  
+  // 예상 질문/상황
+  expectedQuestions: string[];    // AI가 할 가능성 있는 질문들
+  
+  // 평가 기준
+  evaluationCriteria: {
+    pronunciation: number;        // 발음 비중
+    grammar: number;              // 문법 비중
+    fluency: number;              // 유창성 비중
+    appropriateness: number;      // 상황 적절성 비중
+  };
+}
+
+interface Scenario {
+  id: string;
+  category: string;
+  title: string;
+  difficulty: 1 | 2 | 3 | 4 | 5;
+  estimatedTime: number;          // 분
+  description: string;
+  learningObjectives: string[];
+  steps: ScenarioStep[];
+}
+```
+
+---
+
+### 3. **대화 흐름 (Conversation Flow)**
+
+**Step 1: 시나리오 선택**
+- 카테고리별로 시나리오 카드 표시
+- 난이도, 소요 시간, 학습 목표 표시
+
+**Step 2: 사전 학습**
+- 해당 Step의 유용한 표현 3개 학습
+- 각 표현의 예문 3개씩 표시
+- TTS로 발음 듣기
+- 따라 읽기 연습
+
+**Step 3: 실전 대화**
+- AI가 상황에 맞는 역할 수행
+- 사용자가 음성으로 답변
+- AI가 자연스럽게 대화 이어감
+- 실시간 발음 피드백
+
+**Step 4: 평가 및 피드백**
+- 발음 정확도
+- 표현 적절성
+- 대화 자연스러움
+- 개선 제안
+
+**Step 5: 다음 단계**
+- 현재 Step 완료
+- 다음 Step으로 진행
+- 또는 다시 연습
+
+---
+
+### 4. **AI 대화 시스템**
+
+**GPT-4를 활용한 자연스러운 대화:**
+```typescript
+// AI 프롬프트 예시
+const aiSystemPrompt = `
+You are a ${aiRole} in a ${scenario.title} scenario.
+
+Context: ${step.situation}
+
+Your role:
+- Stay in character as ${aiRole}
+- Ask natural follow-up questions
+- Respond appropriately to user's answers
+- Keep conversation realistic and practical
+- Use expressions appropriate for ${difficulty} level
+
+Current step: ${step.title}
+Expected user expressions: ${usefulExpressions.join(', ')}
+
+Provide feedback on:
+1. Pronunciation accuracy
+2. Grammar correctness
+3. Expression appropriateness
+4. Conversation flow
+
+Respond naturally as if you're really having this conversation.
+`;
+```
+
+**대화 흐름 관리:**
+- Multi-turn conversation (3-7 turns)
+- Context-aware responses
+- Natural transitions
+- Error correction (부드럽게)
+
+---
+
+### 5. **UI/UX 설계**
+
+**시나리오 선택 화면:**
+```tsx
+<ScenarioCard>
+  <CategoryBadge>비즈니스</CategoryBadge>
+  <Title>Job Interview</Title>
+  <Difficulty>⭐⭐⭐⭐</Difficulty>
+  <Time>⏱️ 15분</Time>
+  <Steps>6 Steps</Steps>
+  <Preview>면접 전 준비부터 마무리까지...</Preview>
+  <StartButton />
+</ScenarioCard>
+```
+
+**사전 학습 화면:**
+```tsx
+<ExpressionCard>
+  <Expression>"I'd like to highlight..."</Expression>
+  <Meaning>강조하고 싶은 것은...</Meaning>
+  
+  <Examples>
+    <Example>
+      "I'd like to highlight my leadership experience."
+      <PlayButton />
+    </Example>
+    <Example>
+      "I'd like to highlight three key achievements."
+      <PlayButton />
+    </Example>
+    <Example>
+      "I'd like to highlight how this aligns with your goals."
+      <PlayButton />
+    </Example>
+  </Examples>
+  
+  <PracticeButton>따라 읽기</PracticeButton>
+</ExpressionCard>
+```
+
+**대화 화면:**
+```tsx
+<ConversationView>
+  <ScenarioContext>
+    면접관이 당신을 맞이하고 있습니다.
+  </ScenarioContext>
+  
+  <ChatBubble role="ai">
+    "Good morning! Please, have a seat. 
+     How are you today?"
+  </ChatBubble>
+  
+  <ResponseArea>
+    <RecordButton />
+    <SuggestedExpressions>
+      💡 "I'm doing well, thank you."
+    </SuggestedExpressions>
+  </ResponseArea>
+  
+  <ProgressBar>Step 1/6</ProgressBar>
+</ConversationView>
+```
+
+**피드백 화면:**
+```tsx
+<FeedbackView>
+  <OverallScore>85/100</OverallScore>
+  
+  <Scores>
+    <Score label="발음">90</Score>
+    <Score label="문법">85</Score>
+    <Score label="유창성">80</Score>
+    <Score label="적절성">85</Score>
+  </Scores>
+  
+  <WellDone>
+    ✅ 자연스러운 인사
+    ✅ 적절한 표현 사용
+  </WellDone>
+  
+  <Improvements>
+    💡 "experience"의 발음 개선 필요
+    💡 좀 더 자신감 있는 톤 추천
+  </Improvements>
+  
+  <NextButton>다음 단계</NextButton>
+  <RetryButton>다시 연습</RetryButton>
+</FeedbackView>
+```
+
+---
+
+### 6. **데이터베이스 스키마**
+```sql
+-- 시나리오 테이블
+CREATE TABLE speaking_scenarios (
+  id UUID PRIMARY KEY,
+  category TEXT NOT NULL,
+  title TEXT NOT NULL,
+  difficulty INTEGER CHECK (difficulty BETWEEN 1 AND 5),
+  estimated_time INTEGER,
+  description TEXT,
+  learning_objectives TEXT[],
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 시나리오 단계 테이블
+CREATE TABLE scenario_steps (
+  id UUID PRIMARY KEY,
+  scenario_id UUID REFERENCES speaking_scenarios(id),
+  step_number INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  situation TEXT NOT NULL,
+  ai_role TEXT NOT NULL,
+  ai_prompt TEXT NOT NULL,
+  expected_questions TEXT[],
+  evaluation_criteria JSONB NOT NULL,
+  useful_expressions JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 대화 기록 테이블
+CREATE TABLE conversation_history (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id),
+  scenario_id UUID REFERENCES speaking_scenarios(id),
+  step_id UUID REFERENCES scenario_steps(id),
+  conversation JSONB NOT NULL,  -- 전체 대화 내역
+  scores JSONB NOT NULL,
+  completed_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 사용자 진행 상황
+CREATE TABLE user_scenario_progress (
+  user_id UUID REFERENCES profiles(id),
+  scenario_id UUID REFERENCES speaking_scenarios(id),
+  current_step INTEGER DEFAULT 1,
+  completed_steps INTEGER[] DEFAULT '{}',
+  last_practiced TIMESTAMP,
+  PRIMARY KEY (user_id, scenario_id)
+);
+```
+
+---
+
+### 7. **API 엔드포인트**
+```typescript
+// 시나리오 목록
+GET /api/speaking/scenarios
+GET /api/speaking/scenarios/:category
+
+// 시나리오 상세
+GET /api/speaking/scenarios/:id
+
+// 단계 시작
+POST /api/speaking/scenarios/:scenarioId/steps/:stepNumber/start
+
+// 대화 진행
+POST /api/speaking/conversation
+Body: {
+  stepId: UUID,
+  userMessage: string,
+  audioBase64?: string
+}
+Response: {
+  aiResponse: string,
+  pronunciation: { score, feedback },
+  nextAction: "continue" | "complete"
+}
+
+// 단계 완료
+POST /api/speaking/scenarios/:scenarioId/steps/:stepNumber/complete
+Body: {
+  scores: object,
+  feedback: object
+}
+
+// 진행 상황
+GET /api/speaking/progress
+```
+
+---
+
+### 8. **샘플 시나리오: Job Interview**
+```typescript
+{
+  id: "job-interview-001",
+  category: "Business",
+  title: "Job Interview - Software Developer",
+  difficulty: 4,
+  estimatedTime: 15,
+  description: "소프트웨어 개발자 면접 전 과정을 연습합니다.",
+  learningObjectives: [
+    "전문적인 자기소개 방법 습득",
+    "기술 경험 효과적으로 설명하기",
+    "면접 단골 질문에 대응하기"
+  ],
+  
+  steps: [
+    {
+      stepNumber: 1,
+      title: "면접장 도착 및 첫 인사",
+      situation: "면접장에 도착했습니다. 리셉셔니스트가 당신을 맞이합니다.",
+      aiRole: "receptionist",
+      aiPrompt: "You are a friendly receptionist greeting a job candidate.",
+      
+      usefulExpressions: [
+        {
+          expression: "I have an interview scheduled with...",
+          meaning: "...와 면접 약속이 있습니다",
+          examples: [
+            "I have an interview scheduled with Mr. Kim at 2 PM.",
+            "I have an interview scheduled with the HR department.",
+            "I have an interview scheduled with your team today."
+          ],
+          pronunciation: "/aɪ hæv ən ˈɪntərvjuː ˈʃɛdjuːld wɪð/"
+        },
+        {
+          expression: "Thank you for having me.",
+          meaning: "초대해 주셔서 감사합니다",
+          examples: [
+            "Thank you for having me today.",
+            "Thank you for having me here for this opportunity.",
+            "Thank you for having me, I'm excited to be here."
+          ],
+          pronunciation: "/θæŋk juː fɔːr ˈhævɪŋ miː/"
+        },
+        {
+          expression: "I'm looking forward to...",
+          meaning: "...을 기대하고 있습니다",
+          examples: [
+            "I'm looking forward to our discussion.",
+            "I'm looking forward to learning more about the role.",
+            "I'm looking forward to meeting the team."
+          ],
+          pronunciation: "/aɪm ˈlʊkɪŋ ˈfɔːrwərd tuː/"
+        }
+      ],
+      
+      expectedQuestions: [
+        "Good morning! Do you have an appointment?",
+        "May I have your name, please?",
+        "The interviewer will be with you shortly. Would you like some water?"
+      ],
+      
+      evaluationCriteria: {
+        pronunciation: 30,
+        grammar: 20,
+        fluency: 20,
+        appropriateness: 30
+      }
+    },
+    
+    {
+      stepNumber: 2,
+      title: "자기소개",
+      situation: "면접관이 당신에게 자기소개를 요청합니다.",
+      aiRole: "interviewer",
+      aiPrompt: "You are a professional interviewer asking for self-introduction.",
+      
+      usefulExpressions: [
+        {
+          expression: "I'd like to start by saying...",
+          meaning: "먼저 ...라고 말씀드리고 싶습니다",
+          examples: [
+            "I'd like to start by saying how excited I am about this opportunity.",
+            "I'd like to start by thanking you for this interview.",
+            "I'd like to start by highlighting my relevant experience."
+          ],
+          pronunciation: "/aɪd laɪk tuː stɑːrt baɪ ˈseɪɪŋ/"
+        },
+        {
+          expression: "I bring X years of experience in...",
+          meaning: "...분야에서 X년의 경험을 가지고 있습니다",
+          examples: [
+            "I bring five years of experience in software development.",
+            "I bring extensive experience in team leadership.",
+            "I bring a strong background in full-stack development."
+          ],
+          pronunciation: "/aɪ brɪŋ ... jɪərz əv ɪkˈspɪəriəns ɪn/"
+        },
+        {
+          expression: "What sets me apart is...",
+          meaning: "저를 차별화하는 것은 ...입니다",
+          examples: [
+            "What sets me apart is my ability to learn quickly.",
+            "What sets me apart is my passion for clean code.",
+            "What sets me apart is my cross-functional experience."
+          ],
+          pronunciation: "/wɒt sɛts miː əˈpɑːrt ɪz/"
+        }
+      ],
+      
+      expectedQuestions: [
+        "Tell me about yourself.",
+        "Walk me through your resume.",
+        "What interested you in this position?"
+      ],
+      
+      evaluationCriteria: {
+        pronunciation: 25,
+        grammar: 25,
+        fluency: 25,
+        appropriateness: 25
+      }
+    }
+    
+    // ... Steps 3-6 계속
+  ]
+}
+```
+
+---
+
+### 9. **구현 우선순위**
+
+**Phase 1: 기본 구조 (1-2일)**
+1. 데이터베이스 스키마 생성
+2. 시나리오 데이터 구조 설계
+3. 기본 UI 컴포넌트 (시나리오 선택, 단계 화면)
+
+**Phase 2: 핵심 기능 (2-3일)**
+4. GPT-4 대화 시스템 구현
+5. 음성 인식 및 발음 평가 연동
+6. 유용한 표현 학습 UI
+7. 대화 진행 로직
+
+**Phase 3: 컨텐츠 (2-3일)**
+8. 10개 주요 시나리오 작성
+   - Job Interview
+   - Airport
+   - Restaurant
+   - Hotel
+   - Shopping
+   - Doctor
+   - Phone Call
+   - Business Meeting
+   - First Meeting
+   - Social Event
+
+**Phase 4: 고급 기능 (1-2일)**
+9. 진행 상황 추적
+10. 재시도 및 복습 기능
+11. 성과 통계 및 시각화
+
+---
+
+### 10. **성공 기준**
+
+✅ 사용자가 실제 상황처럼 느끼는 몰입감
+✅ 자연스러운 AI 대화 흐름
+✅ 단계별 명확한 학습 목표
+✅ 즉각적이고 유용한 피드백
+✅ 반복 연습을 통한 실력 향상
+
+---
+
+이 시스템을 구현해주세요!
+```
+
+---
+
+## 🎯 **기대 효과**
+```
+✅ 실전 같은 연습
+✅ 상황별 맞춤 학습
+✅ 유용한 표현 자연스럽게 습득
+✅ 자신감 향상
+✅ 즉각적인 피드백
+
+→ 완전히 새로운 수준의 Speaking! 🔥

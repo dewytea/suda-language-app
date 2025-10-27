@@ -371,3 +371,88 @@ export const suggestedWritingTopicSchema = z.object({
 });
 
 export type SuggestedWritingTopic = z.infer<typeof suggestedWritingTopicSchema>;
+
+// Speaking Scenarios (상황별 대화 시나리오)
+export const usefulExpressionSchema = z.object({
+  expression: z.string(),
+  meaning: z.string(),
+  examples: z.array(z.string()).length(3),
+  pronunciation: z.string(),
+});
+
+export const scenarioStepSchema = z.object({
+  stepNumber: z.number(),
+  title: z.string(),
+  situation: z.string(),
+  usefulExpressions: z.array(usefulExpressionSchema).length(3),
+  aiRole: z.string(),
+  aiPrompt: z.string(),
+  expectedQuestions: z.array(z.string()),
+  evaluationCriteria: z.object({
+    pronunciation: z.number(),
+    grammar: z.number(),
+    fluency: z.number(),
+    appropriateness: z.number(),
+  }),
+});
+
+export const insertSpeakingScenarioSchema = z.object({
+  category: z.enum(["business", "travel", "daily_life", "social"]),
+  title: z.string(),
+  difficulty: z.number().min(1).max(5),
+  estimatedTime: z.number(), // minutes
+  description: z.string(),
+  learningObjectives: z.array(z.string()),
+  steps: z.array(scenarioStepSchema).min(3).max(7), // 3-7 steps per scenario
+});
+
+export type UsefulExpression = z.infer<typeof usefulExpressionSchema>;
+export type ScenarioStep = z.infer<typeof scenarioStepSchema>;
+export type InsertSpeakingScenario = z.infer<typeof insertSpeakingScenarioSchema>;
+export type SpeakingScenario = InsertSpeakingScenario & { id: number; createdAt: Date };
+
+// Conversation History (대화 기록)
+export const conversationMessageSchema = z.object({
+  role: z.enum(["user", "ai"]),
+  content: z.string(),
+  timestamp: z.date(),
+  audioUrl: z.string().optional(),
+  transcript: z.string().optional(),
+  pronunciationScore: z.number().optional(),
+});
+
+export const insertConversationHistorySchema = z.object({
+  userId: z.string(),
+  scenarioId: z.number(),
+  stepNumber: z.number(),
+  messages: z.array(conversationMessageSchema),
+  scores: z.object({
+    pronunciation: z.number(),
+    grammar: z.number(),
+    fluency: z.number(),
+    appropriateness: z.number(),
+    overall: z.number(),
+  }),
+  feedback: z.object({
+    wellDone: z.array(z.string()),
+    improvements: z.array(z.string()),
+  }),
+  completed: z.boolean().default(false),
+});
+
+export type ConversationMessage = z.infer<typeof conversationMessageSchema>;
+export type InsertConversationHistory = z.infer<typeof insertConversationHistorySchema>;
+export type ConversationHistory = InsertConversationHistory & { id: number; completedAt: Date; createdAt: Date };
+
+// Scenario Progress (시나리오 진행 상황)
+export const insertScenarioProgressSchema = z.object({
+  userId: z.string(),
+  scenarioId: z.number(),
+  currentStep: z.number().default(1),
+  completedSteps: z.array(z.number()).default([]),
+  bestScore: z.number().default(0),
+  attemptCount: z.number().default(0),
+});
+
+export type InsertScenarioProgress = z.infer<typeof insertScenarioProgressSchema>;
+export type ScenarioProgress = InsertScenarioProgress & { id: number; lastPracticed: Date; createdAt: Date };
