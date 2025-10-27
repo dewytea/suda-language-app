@@ -2334,6 +2334,239 @@ export class MemStorage implements IStorage {
         ],
         wordCountMin: 300,
         wordCountMax: 500
+      },
+      
+      // Additional topics to reach 40
+      {
+        title: "Daily Routine Description",
+        description: "나의 일상적인 하루 일과 설명하기",
+        category: "story",
+        difficulty: 1,
+        prompt: "Write about your daily routine. Describe what you do from morning to evening.",
+        guidelines: [
+          "Start with when you wake up",
+          "Describe your morning activities",
+          "Tell about your afternoon",
+          "Mention your evening routine",
+          "Use simple present tense",
+          "Keep sentences short and clear"
+        ],
+        wordCountMin: 50,
+        wordCountMax: 100
+      },
+      {
+        title: "Favorite Food Description",
+        description: "가장 좋아하는 음식에 대한 설명",
+        category: "story",
+        difficulty: 1,
+        prompt: "Write about your favorite food. Describe what it is, how it tastes, and why you like it.",
+        guidelines: [
+          "Name your favorite food",
+          "Describe how it looks",
+          "Tell how it tastes",
+          "Explain when you eat it",
+          "Say why you like it"
+        ],
+        wordCountMin: 60,
+        wordCountMax: 120
+      },
+      {
+        title: "Weekend Plans Email",
+        description: "친구에게 주말 계획 알리는 이메일",
+        category: "email",
+        difficulty: 2,
+        prompt: "Write an email to a friend telling them about your weekend plans. Ask if they want to join you.",
+        guidelines: [
+          "Start with a friendly greeting",
+          "Tell them what you plan to do",
+          "Mention when and where",
+          "Invite them to join",
+          "Ask for their response",
+          "End with a warm closing"
+        ],
+        wordCountMin: 80,
+        wordCountMax: 150
+      },
+      {
+        title: "Hobby Description",
+        description: "취미에 대한 설명",
+        category: "story",
+        difficulty: 2,
+        prompt: "Write about your hobby. Explain what it is, how you got interested, and what you enjoy about it.",
+        guidelines: [
+          "Introduce your hobby",
+          "Tell when you started",
+          "Describe what you do",
+          "Explain what you enjoy",
+          "Mention how often you do it",
+          "Conclude with future plans"
+        ],
+        wordCountMin: 100,
+        wordCountMax: 180
+      },
+      {
+        title: "App or Website Review",
+        description: "앱이나 웹사이트 리뷰 작성하기",
+        category: "review",
+        difficulty: 3,
+        prompt: "Write a review of an app or website you use regularly. Discuss its features, usability, and value.",
+        guidelines: [
+          "Name the app/website and its purpose",
+          "Describe main features",
+          "Discuss ease of use",
+          "Mention pros and cons",
+          "Compare to alternatives",
+          "Give a recommendation and rating"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Future Career Goals",
+        description: "미래 직업 목표에 대한 에세이",
+        category: "essay",
+        difficulty: 3,
+        prompt: "Write an essay about your future career goals. Explain what you want to do and why, and describe the steps you will take to achieve it.",
+        guidelines: [
+          "Introduction: State your career goal",
+          "Explain why you chose this career",
+          "Describe required skills and education",
+          "Outline your action plan",
+          "Discuss potential challenges",
+          "Conclusion: Express your commitment"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Environmental Protection",
+        description: "환경 보호의 중요성에 대한 에세이",
+        category: "essay",
+        difficulty: 4,
+        prompt: "Write an essay about the importance of environmental protection. Discuss current issues, why it matters, and what individuals can do.",
+        guidelines: [
+          "Introduction: State the importance of environment",
+          "Current environmental issues",
+          "Consequences if we do not act",
+          "What individuals can do",
+          "What governments should do",
+          "Conclusion: Call to action",
+          "Support with examples and facts"
+        ],
+        wordCountMin: 250,
+        wordCountMax: 350
+      },
+      {
+        title: "Work-Life Balance",
+        description: "일과 삶의 균형에 대한 의견",
+        category: "opinion",
+        difficulty: 4,
+        prompt: "Write an opinion essay about achieving work-life balance in modern society. Discuss challenges and propose solutions.",
+        guidelines: [
+          "Introduction: Define work-life balance",
+          "Why it is important",
+          "Current challenges in achieving it",
+          "Personal strategies that work",
+          "Employer responsibilities",
+          "Societal changes needed",
+          "Conclusion: Your perspective"
+        ],
+        wordCountMin: 200,
+        wordCountMax: 300
+      },
+      {
+        title: "Digital Privacy Concerns",
+        description: "디지털 시대의 개인정보 보호 문제",
+        category: "essay",
+        difficulty: 5,
+        prompt: "Write an analytical essay on digital privacy in the modern age. Examine the threats, analyze trade-offs between convenience and privacy, and propose solutions.",
+        guidelines: [
+          "Introduction: Context of digital privacy",
+          "Current threats (data breaches, surveillance, tracking)",
+          "Privacy vs. convenience trade-offs",
+          "Analysis of existing regulations (GDPR, etc.)",
+          "Corporate responsibilities",
+          "Individual protective measures",
+          "Conclusion: Future of digital privacy",
+          "Use formal academic tone",
+          "Reference real examples and cases"
+        ],
+        wordCountMin: 350,
+        wordCountMax: 600
+      },
+      {
+        title: "Healthcare System Reform",
+        description: "의료 시스템 개혁에 대한 제안",
+        category: "opinion",
+        difficulty: 5,
+        prompt: "Write a comprehensive opinion essay on healthcare system reform. Compare different models, analyze challenges, and present your reasoned recommendations.",
+        guidelines: [
+          "Introduction: Current state of healthcare",
+          "Different healthcare models (universal, private, mixed)",
+          "Strengths and weaknesses of each",
+          "Accessibility and affordability issues",
+          "Quality of care considerations",
+          "Economic implications",
+          "Your recommendations with justification",
+          "Conclusion: Vision for the future",
+          "Use evidence-based arguments"
+        ],
+        wordCountMin: 300,
+        wordCountMax: 500
+      },
+      {
+        title: "Success Story",
+        description: "성공한 사람의 이야기 쓰기",
+        category: "story",
+        difficulty: 3,
+        prompt: "Write a story about someone who achieved success through hard work and determination. It can be someone you know or a historical figure.",
+        guidelines: [
+          "Introduce the person and their goal",
+          "Describe the challenges they faced",
+          "Tell about their efforts and strategies",
+          "Include a turning point or key moment",
+          "Describe their achievement",
+          "Reflect on lessons learned from their story"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Cultural Festival Description",
+        description: "문화 축제에 대한 설명",
+        category: "essay",
+        difficulty: 3,
+        prompt: "Write an essay describing a cultural festival or celebration from your country or another culture. Explain its significance and traditions.",
+        guidelines: [
+          "Introduction: Name and introduce the festival",
+          "Historical background",
+          "Traditional activities and customs",
+          "Foods and decorations",
+          "Cultural significance",
+          "Personal experiences or observations",
+          "Conclusion: Why it is important"
+        ],
+        wordCountMin: 150,
+        wordCountMax: 250
+      },
+      {
+        title: "Skills for the Future",
+        description: "미래를 위해 필요한 기술들에 대한 에세이",
+        category: "essay",
+        difficulty: 4,
+        prompt: "Write an essay discussing what skills will be most important in the future workplace. Support your arguments with reasoning and examples.",
+        guidelines: [
+          "Introduction: Changing nature of work",
+          "Technical skills (AI, data analysis, etc.)",
+          "Soft skills (communication, adaptability)",
+          "Importance of continuous learning",
+          "Examples from different industries",
+          "How to develop these skills",
+          "Conclusion: Preparing for the future",
+          "Use specific examples"
+        ],
+        wordCountMin: 250,
+        wordCountMax: 350
       }
     ];
 
