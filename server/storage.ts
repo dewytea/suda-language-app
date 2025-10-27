@@ -323,6 +323,43 @@ export class MemStorage implements IStorage {
       { sentence: "The project is behind schedule.", translation: "프로젝트가 일정보다 늦어지고 있습니다.", language: "en", category: "business" as const, difficulty: 4 },
       { sentence: "We should focus on customer satisfaction.", translation: "고객 만족도에 집중해야 합니다.", language: "en", category: "business" as const, difficulty: 5 },
       { sentence: "I appreciate your cooperation.", translation: "협조해 주셔서 감사합니다.", language: "en", category: "business" as const, difficulty: 3 },
+      
+      // Additional Daily Conversation (Difficulty 1-2)
+      { sentence: "How's the weather today?", translation: "오늘 날씨가 어때요?", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "I'm doing great, thanks!", translation: "잘 지내요, 고마워요!", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "See you tomorrow!", translation: "내일 봐요!", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "Have a nice weekend!", translation: "좋은 주말 보내세요!", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "What are you doing?", translation: "무엇을 하고 계세요?", language: "en", category: "daily" as const, difficulty: 1 },
+      { sentence: "I'm sorry for being late.", translation: "늦어서 죄송합니다.", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "Could you please wait a moment?", translation: "잠시만 기다려 주시겠어요?", language: "en", category: "daily" as const, difficulty: 2 },
+      { sentence: "Let me check my schedule.", translation: "제 일정을 확인해볼게요.", language: "en", category: "daily" as const, difficulty: 2 },
+      
+      // Shopping & Dining (Difficulty 2-3)
+      { sentence: "I'd like to try this on.", translation: "이것을 입어보고 싶어요.", language: "en", category: "shopping" as const, difficulty: 2 },
+      { sentence: "Do you have this in a different size?", translation: "다른 사이즈가 있나요?", language: "en", category: "shopping" as const, difficulty: 2 },
+      { sentence: "Can I pay by credit card?", translation: "신용카드로 결제할 수 있나요?", language: "en", category: "shopping" as const, difficulty: 2 },
+      { sentence: "I'd like to make a reservation for two.", translation: "2명 예약하고 싶어요.", language: "en", category: "dining" as const, difficulty: 3 },
+      { sentence: "Could I see the wine list?", translation: "와인 리스트를 볼 수 있을까요?", language: "en", category: "dining" as const, difficulty: 3 },
+      { sentence: "The food was delicious!", translation: "음식이 정말 맛있었어요!", language: "en", category: "dining" as const, difficulty: 2 },
+      
+      // Travel & Hotel (Difficulty 3-4)
+      { sentence: "I'd like to extend my stay.", translation: "체류 기간을 연장하고 싶습니다.", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "Could you call a taxi for me?", translation: "택시를 불러주시겠어요?", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "What time is check-out?", translation: "체크아웃 시간이 언제인가요?", language: "en", category: "travel" as const, difficulty: 2 },
+      { sentence: "Is there a shuttle to the airport?", translation: "공항 셔틀이 있나요?", language: "en", category: "travel" as const, difficulty: 3 },
+      { sentence: "I need to report a lost item.", translation: "분실물을 신고해야 합니다.", language: "en", category: "travel" as const, difficulty: 4 },
+      
+      // Academic (Difficulty 4-5)
+      { sentence: "Could you explain this concept again?", translation: "이 개념을 다시 설명해 주시겠어요?", language: "en", category: "academic" as const, difficulty: 4 },
+      { sentence: "When is the assignment due?", translation: "과제 마감일이 언제인가요?", language: "en", category: "academic" as const, difficulty: 3 },
+      { sentence: "I need to reference several academic sources.", translation: "여러 학술 자료를 참조해야 합니다.", language: "en", category: "academic" as const, difficulty: 5 },
+      { sentence: "The research methodology is quite comprehensive.", translation: "연구 방법론이 매우 포괄적입니다.", language: "en", category: "academic" as const, difficulty: 5 },
+      { sentence: "We should analyze the data more thoroughly.", translation: "데이터를 더 철저히 분석해야 합니다.", language: "en", category: "academic" as const, difficulty: 5 },
+      
+      // Healthcare (Difficulty 3-4)
+      { sentence: "I have an appointment with the doctor.", translation: "의사와 약속이 있습니다.", language: "en", category: "healthcare" as const, difficulty: 3 },
+      { sentence: "I'm not feeling well.", translation: "몸이 좋지 않아요.", language: "en", category: "healthcare" as const, difficulty: 2 },
+      { sentence: "Do I need a prescription for this?", translation: "이것은 처방전이 필요한가요?", language: "en", category: "healthcare" as const, difficulty: 3 },
     ];
 
     sentences.forEach((sent) => {
@@ -1348,6 +1385,183 @@ export class MemStorage implements IStorage {
           {
             text: "However, the integration of AI into healthcare raises important ethical questions. Issues of data privacy, algorithmic bias, and the role of human judgment in medical decision-making require careful consideration. As this technology continues to evolve, establishing appropriate regulatory frameworks and ethical guidelines becomes increasingly crucial to ensure that AI serves the best interests of patients while maintaining the fundamental principles of medical practice.",
             translation: "그러나 의료 분야에 AI를 통합하는 것은 중요한 윤리적 질문을 제기합니다. 데이터 프라이버시, 알고리즘 편향, 그리고 의료 의사결정에서 인간 판단의 역할에 대한 문제는 신중한 고려가 필요합니다. 이 기술이 계속 발전함에 따라, 의료 실무의 기본 원칙을 유지하면서 AI가 환자의 최선의 이익을 위해 봉사하도록 보장하기 위해 적절한 규제 프레임워크와 윤리 지침을 수립하는 것이 점점 더 중요해지고 있습니다."
+          }
+        ]
+      },
+      // Additional passages
+      {
+        title: "A Trip to the Zoo",
+        content: "Last Sunday, I went to the zoo with my family. We saw many animals. The lions were sleeping. The monkeys were playing. My little brother liked the elephants the most. We had ice cream for lunch. It was a fun day. I took many photos. I want to go back soon!",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 57,
+        estimatedTime: 35,
+        paragraphs: [
+          {
+            text: "Last Sunday, I went to the zoo with my family. We saw many animals. The lions were sleeping. The monkeys were playing. My little brother liked the elephants the most. We had ice cream for lunch. It was a fun day. I took many photos. I want to go back soon!",
+            translation: "지난 일요일, 저는 가족과 함께 동물원에 갔어요. 많은 동물들을 봤어요. 사자들은 자고 있었어요. 원숭이들은 놀고 있었어요. 제 남동생은 코끼리를 가장 좋아했어요. 점심으로 아이스크림을 먹었어요. 재미있는 하루였어요. 사진을 많이 찍었어요. 곧 다시 가고 싶어요!"
+          }
+        ]
+      },
+      {
+        title: "Job Application Email",
+        content: "Dear Hiring Manager,\n\nI am writing to apply for the Marketing Assistant position advertised on your website. I recently graduated with a degree in Marketing and have completed two internships in digital marketing. I am passionate about social media strategies and content creation. I would be excited to bring my skills to your team.\n\nThank you for considering my application. I have attached my resume for your review.\n\nBest regards,\nJohn Smith",
+        contentType: "email",
+        difficulty: 2,
+        wordCount: 75,
+        estimatedTime: 45,
+        paragraphs: [
+          {
+            text: "Dear Hiring Manager,",
+            translation: "채용 담당자님께,"
+          },
+          {
+            text: "I am writing to apply for the Marketing Assistant position advertised on your website. I recently graduated with a degree in Marketing and have completed two internships in digital marketing. I am passionate about social media strategies and content creation. I would be excited to bring my skills to your team.",
+            translation: "귀사 웹사이트에 게재된 마케팅 어시스턴트 직책에 지원하고자 합니다. 저는 최근 마케팅 학위를 취득했으며 디지털 마케팅 분야에서 두 차례 인턴십을 완료했습니다. 소셜 미디어 전략과 콘텐츠 제작에 열정을 가지고 있습니다. 제 기술을 귀사 팀에 기여할 수 있다면 기쁠 것입니다."
+          },
+          {
+            text: "Thank you for considering my application. I have attached my resume for your review.\n\nBest regards,\nJohn Smith",
+            translation: "제 지원서를 검토해 주셔서 감사합니다. 검토를 위해 이력서를 첨부했습니다.\n\n감사합니다,\n존 스미스"
+          }
+        ]
+      },
+      {
+        title: "Weekend Weather Forecast",
+        content: "This weekend will bring mixed weather conditions across the region. Saturday morning starts with cloudy skies and temperatures around 15 degrees Celsius. Rain is expected in the afternoon, so don't forget your umbrella if you're heading out. Sunday looks much brighter, with sunny intervals and highs of 22 degrees. Perfect weather for outdoor activities! Remember to apply sunscreen if spending time outside.",
+        contentType: "news",
+        difficulty: 2,
+        wordCount: 70,
+        estimatedTime: 42,
+        paragraphs: [
+          {
+            text: "This weekend will bring mixed weather conditions across the region. Saturday morning starts with cloudy skies and temperatures around 15 degrees Celsius. Rain is expected in the afternoon, so don't forget your umbrella if you're heading out. Sunday looks much brighter, with sunny intervals and highs of 22 degrees. Perfect weather for outdoor activities! Remember to apply sunscreen if spending time outside.",
+            translation: "이번 주말에는 지역 전체에 다양한 날씨가 예상됩니다. 토요일 아침은 흐린 하늘로 시작하며 기온은 섭씨 15도 정도입니다. 오후에는 비가 예상되니 외출하신다면 우산을 잊지 마세요. 일요일은 훨씬 화창하며 맑은 시간대가 있고 최고 기온은 22도입니다. 야외 활동하기 완벽한 날씨입니다! 밖에서 시간을 보내실 경우 자외선 차단제를 바르는 것을 잊지 마세요."
+          }
+        ]
+      },
+      {
+        title: "The Importance of Exercise",
+        content: "Regular physical exercise is essential for maintaining good health. Exercise strengthens our muscles, improves cardiovascular function, and helps control weight. Beyond physical benefits, it also enhances mental well-being by reducing stress and anxiety. Experts recommend at least 30 minutes of moderate exercise five days a week. This can include activities like walking, swimming, cycling, or dancing. Starting with small goals and gradually increasing intensity helps build sustainable habits. Remember, consistency is more important than intensity when beginning an exercise routine.",
+        contentType: "essay",
+        difficulty: 3,
+        wordCount: 92,
+        estimatedTime: 55,
+        paragraphs: [
+          {
+            text: "Regular physical exercise is essential for maintaining good health. Exercise strengthens our muscles, improves cardiovascular function, and helps control weight. Beyond physical benefits, it also enhances mental well-being by reducing stress and anxiety. Experts recommend at least 30 minutes of moderate exercise five days a week. This can include activities like walking, swimming, cycling, or dancing. Starting with small goals and gradually increasing intensity helps build sustainable habits. Remember, consistency is more important than intensity when beginning an exercise routine.",
+            translation: "규칙적인 신체 운동은 건강을 유지하는 데 필수적입니다. 운동은 근육을 강화하고 심혈관 기능을 향상시키며 체중 조절에 도움이 됩니다. 신체적 이점 외에도 스트레스와 불안을 줄여 정신 건강을 향상시킵니다. 전문가들은 일주일에 5일, 최소 30분의 적당한 운동을 권장합니다. 여기에는 걷기, 수영, 자전거 타기 또는 춤추기와 같은 활동이 포함될 수 있습니다. 작은 목표로 시작하여 점차 강도를 높이는 것이 지속 가능한 습관을 만드는 데 도움이 됩니다. 운동 루틴을 시작할 때는 강도보다 일관성이 더 중요하다는 것을 기억하세요."
+          }
+        ]
+      },
+      {
+        title: "Online Shopping Trends",
+        content: "E-commerce has transformed how people shop around the world. During the past decade, online shopping has grown exponentially, with more consumers choosing the convenience of shopping from home. Mobile shopping apps have made purchasing even easier, allowing customers to browse and buy products anytime, anywhere. However, concerns about product quality and delivery reliability remain. Many shoppers still prefer to see and touch items before buying. The future of retail likely involves a combination of online and in-store experiences.",
+        contentType: "news",
+        difficulty: 3,
+        wordCount: 87,
+        estimatedTime: 52,
+        paragraphs: [
+          {
+            text: "E-commerce has transformed how people shop around the world. During the past decade, online shopping has grown exponentially, with more consumers choosing the convenience of shopping from home. Mobile shopping apps have made purchasing even easier, allowing customers to browse and buy products anytime, anywhere. However, concerns about product quality and delivery reliability remain. Many shoppers still prefer to see and touch items before buying. The future of retail likely involves a combination of online and in-store experiences.",
+            translation: "전자상거래는 전 세계 사람들의 쇼핑 방식을 변화시켰습니다. 지난 10년 동안 온라인 쇼핑은 기하급수적으로 성장했으며, 더 많은 소비자들이 집에서 쇼핑하는 편리함을 선택하고 있습니다. 모바일 쇼핑 앱은 고객이 언제 어디서나 제품을 탐색하고 구매할 수 있게 하여 구매를 더욱 쉽게 만들었습니다. 그러나 제품 품질과 배송 신뢰성에 대한 우려는 여전히 남아 있습니다. 많은 쇼핑객들은 구매하기 전에 직접 보고 만져보는 것을 선호합니다. 소매업의 미래는 온라인과 매장 내 경험의 조합을 포함할 가능성이 높습니다."
+          }
+        ]
+      },
+      {
+        title: "The Digital Divide",
+        content: "The digital divide refers to the gap between those who have access to modern information technology and those who do not. This disparity exists both within and between countries, affecting education, employment opportunities, and access to essential services. In developed nations, the divide often correlates with income levels, age, and geographic location. Rural communities frequently face challenges in accessing high-speed internet.\n\nAddressing this issue requires coordinated efforts from governments, private sector companies, and civil society organizations. Infrastructure development, digital literacy programs, and affordable technology solutions are crucial components. As our world becomes increasingly digital, ensuring equitable access to technology is not just a matter of convenience but a fundamental aspect of social justice and economic opportunity.",
+        contentType: "essay",
+        difficulty: 4,
+        wordCount: 125,
+        estimatedTime: 72,
+        paragraphs: [
+          {
+            text: "The digital divide refers to the gap between those who have access to modern information technology and those who do not. This disparity exists both within and between countries, affecting education, employment opportunities, and access to essential services. In developed nations, the divide often correlates with income levels, age, and geographic location. Rural communities frequently face challenges in accessing high-speed internet.",
+            translation: "디지털 격차는 현대 정보 기술에 접근할 수 있는 사람들과 그렇지 못한 사람들 사이의 격차를 의미합니다. 이러한 불균형은 국가 내부와 국가 간에 존재하며, 교육, 고용 기회, 필수 서비스 이용에 영향을 미칩니다. 선진국에서는 이 격차가 소득 수준, 연령, 지리적 위치와 관련이 있는 경우가 많습니다. 농촌 지역 사회는 고속 인터넷 접근에 어려움을 자주 겪습니다."
+          },
+          {
+            text: "Addressing this issue requires coordinated efforts from governments, private sector companies, and civil society organizations. Infrastructure development, digital literacy programs, and affordable technology solutions are crucial components. As our world becomes increasingly digital, ensuring equitable access to technology is not just a matter of convenience but a fundamental aspect of social justice and economic opportunity.",
+            translation: "이 문제를 해결하려면 정부, 민간 부문 기업, 시민 사회 조직의 조율된 노력이 필요합니다. 인프라 개발, 디지털 리터러시 프로그램, 저렴한 기술 솔루션이 중요한 요소입니다. 우리 세계가 점점 더 디지털화됨에 따라 기술에 대한 공평한 접근을 보장하는 것은 단순히 편의성의 문제가 아니라 사회 정의와 경제적 기회의 근본적인 측면입니다."
+          }
+        ]
+      },
+      {
+        title: "Climate Change and Agriculture",
+        content: "Climate change poses significant challenges to global agriculture. Rising temperatures, changing precipitation patterns, and more frequent extreme weather events are affecting crop yields worldwide. Farmers must adapt their practices to these new conditions, which often requires substantial investment in new technologies and techniques. Some regions face water scarcity, while others experience flooding. Pest populations are shifting to new areas as temperatures change, requiring different pest management strategies. Scientists are developing drought-resistant crop varieties and more efficient irrigation systems to help farmers cope with these challenges.",
+        contentType: "news",
+        difficulty: 4,
+        wordCount: 99,
+        estimatedTime: 58,
+        paragraphs: [
+          {
+            text: "Climate change poses significant challenges to global agriculture. Rising temperatures, changing precipitation patterns, and more frequent extreme weather events are affecting crop yields worldwide. Farmers must adapt their practices to these new conditions, which often requires substantial investment in new technologies and techniques. Some regions face water scarcity, while others experience flooding. Pest populations are shifting to new areas as temperatures change, requiring different pest management strategies. Scientists are developing drought-resistant crop varieties and more efficient irrigation systems to help farmers cope with these challenges.",
+            translation: "기후 변화는 전 세계 농업에 심각한 도전을 제기하고 있습니다. 기온 상승, 강수 패턴 변화, 더 빈번한 극한 기상 현상이 전 세계 작물 수확량에 영향을 미치고 있습니다. 농부들은 새로운 조건에 적응해야 하며, 이는 종종 새로운 기술과 방법에 대한 상당한 투자를 필요로 합니다. 일부 지역은 물 부족에 직면하고, 다른 지역은 홍수를 경험합니다. 기온 변화로 인해 해충 개체군이 새로운 지역으로 이동하고 있어 다른 해충 관리 전략이 필요합니다. 과학자들은 농부들이 이러한 도전에 대처할 수 있도록 가뭄에 강한 작물 품종과 더 효율적인 관개 시스템을 개발하고 있습니다."
+          }
+        ]
+      },
+      {
+        title: "Quantum Computing: The Next Frontier",
+        content: "Quantum computing represents a paradigm shift in computational technology, leveraging the principles of quantum mechanics to perform calculations that would be impossible for classical computers. Unlike traditional computers that use bits representing either 0 or 1, quantum computers use quantum bits, or qubits, which can exist in multiple states simultaneously through a phenomenon called superposition. This capability, combined with quantum entanglement, enables quantum computers to process vast amounts of information in parallel.\n\nThe potential applications of quantum computing are transformative across numerous fields. In cryptography, quantum computers could break current encryption methods but also enable unhackable quantum communication networks. Drug discovery could be revolutionized through the ability to simulate molecular interactions at unprecedented scales. Complex optimization problems in logistics, finance, and climate modeling could be solved exponentially faster.\n\nHowever, significant technical challenges remain. Quantum computers require extreme conditions to operate, including temperatures near absolute zero. Quantum decoherence, where quantum states collapse due to environmental interference, limits computation time. Despite these hurdles, major technology companies and research institutions are investing heavily in quantum computing development, anticipating that overcoming these challenges will unlock computational capabilities that fundamentally transform science, industry, and society.",
+        contentType: "essay",
+        difficulty: 5,
+        wordCount: 198,
+        estimatedTime: 115,
+        paragraphs: [
+          {
+            text: "Quantum computing represents a paradigm shift in computational technology, leveraging the principles of quantum mechanics to perform calculations that would be impossible for classical computers. Unlike traditional computers that use bits representing either 0 or 1, quantum computers use quantum bits, or qubits, which can exist in multiple states simultaneously through a phenomenon called superposition. This capability, combined with quantum entanglement, enables quantum computers to process vast amounts of information in parallel.",
+            translation: "양자 컴퓨팅은 고전적인 컴퓨터로는 불가능한 계산을 수행하기 위해 양자역학의 원리를 활용하는 컴퓨터 기술의 패러다임 전환을 나타냅니다. 0 또는 1을 나타내는 비트를 사용하는 기존 컴퓨터와 달리, 양자 컴퓨터는 중첩이라는 현상을 통해 동시에 여러 상태로 존재할 수 있는 양자 비트 또는 큐비트를 사용합니다. 이 기능은 양자 얽힘과 결합되어 양자 컴퓨터가 방대한 양의 정보를 병렬로 처리할 수 있게 합니다."
+          },
+          {
+            text: "The potential applications of quantum computing are transformative across numerous fields. In cryptography, quantum computers could break current encryption methods but also enable unhackable quantum communication networks. Drug discovery could be revolutionized through the ability to simulate molecular interactions at unprecedented scales. Complex optimization problems in logistics, finance, and climate modeling could be solved exponentially faster.",
+            translation: "양자 컴퓨팅의 잠재적 응용 분야는 다양한 분야에서 혁신적입니다. 암호학에서 양자 컴퓨터는 현재의 암호화 방법을 깨뜨릴 수 있지만, 해킹이 불가능한 양자 통신 네트워크도 가능하게 할 수 있습니다. 전례 없는 규모의 분자 상호작용 시뮬레이션 능력을 통해 신약 발견이 혁명을 일으킬 수 있습니다. 물류, 금융, 기후 모델링의 복잡한 최적화 문제를 기하급수적으로 빠르게 해결할 수 있습니다."
+          },
+          {
+            text: "However, significant technical challenges remain. Quantum computers require extreme conditions to operate, including temperatures near absolute zero. Quantum decoherence, where quantum states collapse due to environmental interference, limits computation time. Despite these hurdles, major technology companies and research institutions are investing heavily in quantum computing development, anticipating that overcoming these challenges will unlock computational capabilities that fundamentally transform science, industry, and society.",
+            translation: "그러나 중요한 기술적 도전 과제가 남아 있습니다. 양자 컴퓨터는 절대 영도에 가까운 온도를 포함한 극한 조건에서 작동해야 합니다. 환경 간섭으로 인해 양자 상태가 붕괴하는 양자 결맞음 상실은 계산 시간을 제한합니다. 이러한 장애물에도 불구하고, 주요 기술 기업과 연구 기관들은 이러한 도전을 극복하면 과학, 산업, 사회를 근본적으로 변화시킬 계산 능력이 열릴 것으로 예상하며 양자 컴퓨팅 개발에 막대한 투자를 하고 있습니다."
+          }
+        ]
+      },
+      {
+        title: "Sustainable Urban Development",
+        content: "As global urbanization accelerates, with projections indicating that nearly 70% of the world's population will reside in cities by 2050, the imperative for sustainable urban development has never been more critical. Modern cities face a complex array of challenges: greenhouse gas emissions, resource depletion, inadequate infrastructure, and social inequality. Addressing these issues requires integrated approaches that consider environmental, economic, and social sustainability simultaneously.\n\nInnovative solutions are emerging worldwide. Green architecture incorporating energy-efficient design and renewable energy sources reduces buildings' carbon footprints. Urban planning strategies emphasizing mixed-use development, public transportation networks, and pedestrian-friendly infrastructure decrease reliance on private vehicles. Smart city technologies optimize resource utilization through data analytics, improving everything from traffic flow to waste management.\n\nCommunity engagement proves essential for sustainable urban development's success. Top-down planning initiatives often fail without local buy-in and participation. Empowering communities to shape their neighborhoods creates more equitable, livable cities. Furthermore, nature-based solutions—such as urban forests, green roofs, and wetland restoration—provide multiple benefits: mitigating heat island effects, managing stormwater, enhancing biodiversity, and improving residents' well-being. The cities of tomorrow must balance growth with sustainability, innovation with tradition, and progress with preservation of our planet's finite resources.",
+        contentType: "news",
+        difficulty: 5,
+        wordCount: 208,
+        estimatedTime: 120,
+        paragraphs: [
+          {
+            text: "As global urbanization accelerates, with projections indicating that nearly 70% of the world's population will reside in cities by 2050, the imperative for sustainable urban development has never been more critical. Modern cities face a complex array of challenges: greenhouse gas emissions, resource depletion, inadequate infrastructure, and social inequality. Addressing these issues requires integrated approaches that consider environmental, economic, and social sustainability simultaneously.",
+            translation: "전 세계 도시화가 가속화되면서 2050년까지 세계 인구의 거의 70%가 도시에 거주할 것으로 예상되는 가운데, 지속 가능한 도시 개발의 필요성은 그 어느 때보다 중요해졌습니다. 현대 도시는 온실가스 배출, 자원 고갈, 불충분한 인프라, 사회적 불평등 등 복잡한 일련의 도전에 직면해 있습니다. 이러한 문제를 해결하려면 환경적, 경제적, 사회적 지속 가능성을 동시에 고려하는 통합적 접근 방식이 필요합니다."
+          },
+          {
+            text: "Innovative solutions are emerging worldwide. Green architecture incorporating energy-efficient design and renewable energy sources reduces buildings' carbon footprints. Urban planning strategies emphasizing mixed-use development, public transportation networks, and pedestrian-friendly infrastructure decrease reliance on private vehicles. Smart city technologies optimize resource utilization through data analytics, improving everything from traffic flow to waste management.",
+            translation: "혁신적인 솔루션이 전 세계적으로 등장하고 있습니다. 에너지 효율적인 디자인과 재생 가능 에너지원을 통합한 녹색 건축은 건물의 탄소 발자국을 줄입니다. 복합 용도 개발, 대중교통 네트워크, 보행자 친화적 인프라를 강조하는 도시 계획 전략은 개인 차량에 대한 의존도를 낮춥니다. 스마트 시티 기술은 데이터 분석을 통해 자원 활용을 최적화하여 교통 흐름에서 폐기물 관리에 이르기까지 모든 것을 개선합니다."
+          },
+          {
+            text: "Community engagement proves essential for sustainable urban development's success. Top-down planning initiatives often fail without local buy-in and participation. Empowering communities to shape their neighborhoods creates more equitable, livable cities. Furthermore, nature-based solutions—such as urban forests, green roofs, and wetland restoration—provide multiple benefits: mitigating heat island effects, managing stormwater, enhancing biodiversity, and improving residents' well-being. The cities of tomorrow must balance growth with sustainability, innovation with tradition, and progress with preservation of our planet's finite resources.",
+            translation: "커뮤니티 참여는 지속 가능한 도시 개발의 성공에 필수적입니다. 하향식 계획 이니셔티브는 지역 주민의 동의와 참여 없이는 종종 실패합니다. 커뮤니티가 자신의 이웃을 형성할 수 있도록 권한을 부여하면 더 공평하고 살기 좋은 도시가 만들어집니다. 또한 도시 숲, 녹색 지붕, 습지 복원과 같은 자연 기반 솔루션은 여러 이점을 제공합니다: 열섬 효과 완화, 빗물 관리, 생물 다양성 향상, 주민의 웰빙 개선. 내일의 도시는 성장과 지속 가능성, 혁신과 전통, 그리고 진보와 우리 행성의 한정된 자원 보존 사이의 균형을 맞춰야 합니다."
+          }
+        ]
+      },
+      {
+        title: "The Psychology of Decision Making",
+        content: "Human decision-making is a fascinating interplay between rational analysis and emotional intuition, shaped by cognitive biases, past experiences, and contextual factors. While we like to believe our choices stem from logical reasoning, research in behavioral economics and cognitive psychology reveals that numerous unconscious influences affect our decisions. Understanding these mechanisms can help individuals make better choices and organizations design more effective policies.\n\nCognitive biases systematically affect our judgment. Confirmation bias leads us to seek information supporting existing beliefs while dismissing contradictory evidence. The availability heuristic causes us to overestimate the probability of events that come easily to mind, often due to recent exposure or emotional impact. Anchoring bias demonstrates how initial information disproportionately influences subsequent judgments, even when that information is arbitrary or irrelevant.\n\nEmotions play a crucial role in decision-making, sometimes beneficially, sometimes detrimentally. The somatic marker hypothesis suggests that emotional responses to previous outcomes guide future choices, enabling quick decisions in familiar situations. However, strong emotions can also cloud judgment, leading to impulsive decisions that prioritize short-term satisfaction over long-term goals. Stress particularly impairs decision quality, narrowing our focus and reducing cognitive flexibility. Recognizing these patterns allows for implementing strategies—such as structured decision frameworks, diverse perspectives, and temporal distance—that can mitigate biases and improve the quality of our choices across personal and professional contexts.",
+        contentType: "essay",
+        difficulty: 5,
+        wordCount: 232,
+        estimatedTime: 135,
+        paragraphs: [
+          {
+            text: "Human decision-making is a fascinating interplay between rational analysis and emotional intuition, shaped by cognitive biases, past experiences, and contextual factors. While we like to believe our choices stem from logical reasoning, research in behavioral economics and cognitive psychology reveals that numerous unconscious influences affect our decisions. Understanding these mechanisms can help individuals make better choices and organizations design more effective policies.",
+            translation: "인간의 의사결정은 인지 편향, 과거 경험, 맥락적 요인에 의해 형성되는 합리적 분석과 감정적 직관 사이의 흥미로운 상호작용입니다. 우리는 우리의 선택이 논리적 추론에서 비롯된다고 믿고 싶지만, 행동경제학과 인지심리학의 연구는 수많은 무의식적 영향이 우리의 결정에 영향을 미친다는 것을 보여줍니다. 이러한 메커니즘을 이해하면 개인이 더 나은 선택을 하고 조직이 더 효과적인 정책을 설계하는 데 도움이 될 수 있습니다."
+          },
+          {
+            text: "Cognitive biases systematically affect our judgment. Confirmation bias leads us to seek information supporting existing beliefs while dismissing contradictory evidence. The availability heuristic causes us to overestimate the probability of events that come easily to mind, often due to recent exposure or emotional impact. Anchoring bias demonstrates how initial information disproportionately influences subsequent judgments, even when that information is arbitrary or irrelevant.",
+            translation: "인지 편향은 체계적으로 우리의 판단에 영향을 미칩니다. 확증 편향은 모순되는 증거를 무시하면서 기존 신념을 뒷받침하는 정보를 찾도록 합니다. 가용성 휴리스틱은 최근의 노출이나 정서적 영향으로 인해 쉽게 떠오르는 사건의 확률을 과대평가하게 만듭니다. 앵커링 편향은 초기 정보가 임의적이거나 관련이 없더라도 후속 판단에 불균형적으로 영향을 미치는 방식을 보여줍니다."
+          },
+          {
+            text: "Emotions play a crucial role in decision-making, sometimes beneficially, sometimes detrimentally. The somatic marker hypothesis suggests that emotional responses to previous outcomes guide future choices, enabling quick decisions in familiar situations. However, strong emotions can also cloud judgment, leading to impulsive decisions that prioritize short-term satisfaction over long-term goals. Stress particularly impairs decision quality, narrowing our focus and reducing cognitive flexibility. Recognizing these patterns allows for implementing strategies—such as structured decision frameworks, diverse perspectives, and temporal distance—that can mitigate biases and improve the quality of our choices across personal and professional contexts.",
+            translation: "감정은 의사결정에서 중요한 역할을 하며, 때로는 유익하게, 때로는 해롭게 작용합니다. 신체 마커 가설은 이전 결과에 대한 감정적 반응이 미래의 선택을 안내하여 익숙한 상황에서 빠른 결정을 가능하게 한다고 제안합니다. 그러나 강한 감정은 판단을 흐리게 하여 장기 목표보다 단기 만족을 우선시하는 충동적인 결정으로 이어질 수 있습니다. 특히 스트레스는 우리의 초점을 좁히고 인지적 유연성을 감소시켜 의사결정의 질을 손상시킵니다. 이러한 패턴을 인식하면 구조화된 의사결정 프레임워크, 다양한 관점, 시간적 거리와 같은 전략을 구현하여 편향을 완화하고 개인적 및 전문적 맥락에서 우리의 선택의 질을 개선할 수 있습니다."
           }
         ]
       }

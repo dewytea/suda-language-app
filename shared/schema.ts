@@ -48,7 +48,7 @@ export const insertKeySentenceSchema = z.object({
   translation: z.string(),
   language: z.string(),
   scenario: z.string().optional(),
-  category: z.enum(["daily", "travel", "business"]).default("daily"),
+  category: z.enum(["daily", "travel", "business", "shopping", "dining", "academic", "healthcare"]).default("daily"),
   difficulty: z.number().min(1).max(5).default(1),
   memorized: z.boolean().default(false),
 });
