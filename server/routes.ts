@@ -12,6 +12,8 @@ import {
   insertPronunciationResultSchema,
   insertWritingResultSchema,
   insertSpeakingProgressSchema,
+  insertConversationHistorySchema,
+  insertScenarioProgressSchema,
 } from "@shared/schema";
 
 // Using Gemini AI integration - see blueprint:javascript_gemini
@@ -1662,6 +1664,170 @@ Create topics that help the student practice using this vocabulary and explore t
         status: 'error', 
         message: error.message || 'OpenAI 상태 확인 실패' 
       });
+    }
+  });
+
+  // ========== Speaking Scenarios API ==========
+  
+  // Get all scenarios (with optional filtering)
+  app.get("/api/speaking-scenarios", async (req, res) => {
+    try {
+      const category = req.query.category as string | undefined;
+      const difficulty = req.query.difficulty ? Number(req.query.difficulty) : undefined;
+      
+      const filters: any = {};
+      if (category) filters.category = category;
+      if (difficulty) filters.difficulty = difficulty;
+      
+      const scenarios = await storage.getSpeakingScenarios(filters);
+      res.json(scenarios);
+    } catch (error: any) {
+      console.error('Get scenarios error:', error);
+      res.status(500).json({ error: 'Failed to fetch scenarios' });
+    }
+  });
+  
+  // Get specific scenario by ID
+  app.get("/api/speaking-scenarios/:id", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid scenario ID' });
+      }
+      
+      const scenario = await storage.getSpeakingScenario(id);
+      if (!scenario) {
+        return res.status(404).json({ error: 'Scenario not found' });
+      }
+      
+      res.json(scenario);
+    } catch (error: any) {
+      console.error('Get scenario error:', error);
+      res.status(500).json({ error: 'Failed to fetch scenario' });
+    }
+  });
+  
+  // Get user's scenario progress
+  app.get("/api/scenario-progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const scenarioId = req.query.scenarioId ? Number(req.query.scenarioId) : undefined;
+      
+      const progress = await storage.getScenarioProgress(userId, scenarioId);
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Get scenario progress error:', error);
+      res.status(500).json({ error: 'Failed to fetch progress' });
+    }
+  });
+  
+  // Save or update scenario progress
+  app.post("/api/scenario-progress", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const validatedData = insertScenarioProgressSchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const progress = await storage.saveScenarioProgress(validatedData);
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Save scenario progress error:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid progress data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to save progress' });
+    }
+  });
+  
+  // Update specific scenario progress
+  app.patch("/api/scenario-progress/:scenarioId", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const scenarioId = Number(req.params.scenarioId);
+      
+      if (isNaN(scenarioId)) {
+        return res.status(400).json({ error: 'Invalid scenario ID' });
+      }
+      
+      // Validate partial update with Zod - allows updating only specific fields
+      const validatedData = insertScenarioProgressSchema.partial().parse({
+        ...req.body,
+        userId,  // Ensure userId matches authenticated user
+        scenarioId  // Ensure scenarioId matches URL parameter
+      });
+      
+      const progress = await storage.updateScenarioProgress(userId, scenarioId, validatedData);
+      res.json(progress);
+    } catch (error: any) {
+      console.error('Update scenario progress error:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid progress data', details: error.errors });
+      }
+      if (error.message.includes('not found')) {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: 'Failed to update progress' });
+    }
+  });
+  
+  // Save conversation history
+  app.post("/api/conversation-history", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const validatedData = insertConversationHistorySchema.parse({
+        ...req.body,
+        userId
+      });
+      
+      const history = await storage.saveConversationHistory(validatedData);
+      res.json(history);
+    } catch (error: any) {
+      console.error('Save conversation history error:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: 'Invalid conversation data', details: error.errors });
+      }
+      res.status(500).json({ error: 'Failed to save conversation' });
+    }
+  });
+  
+  // Get user's conversation history
+  app.get("/api/conversation-history", requireAuth, async (req, res) => {
+    try {
+      const userId = req.user!.id;
+      const scenarioId = req.query.scenarioId ? Number(req.query.scenarioId) : undefined;
+      
+      const history = await storage.getConversationHistory(userId, scenarioId);
+      res.json(history);
+    } catch (error: any) {
+      console.error('Get conversation history error:', error);
+      res.status(500).json({ error: 'Failed to fetch conversation history' });
+    }
+  });
+  
+  // Get specific conversation by ID
+  app.get("/api/conversation-history/:id", requireAuth, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid conversation ID' });
+      }
+      
+      const conversation = await storage.getConversationById(id);
+      if (!conversation) {
+        return res.status(404).json({ error: 'Conversation not found' });
+      }
+      
+      // Verify the conversation belongs to the user
+      if (conversation.userId !== req.user!.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      res.json(conversation);
+    } catch (error: any) {
+      console.error('Get conversation error:', error);
+      res.status(500).json({ error: 'Failed to fetch conversation' });
     }
   });
 
