@@ -14,6 +14,11 @@ import Dashboard from "@/pages/Dashboard";
 import Speaking from "@/pages/Speaking";
 import SpeakingHistory from "@/pages/SpeakingHistory";
 import SpeakingStats from "@/pages/SpeakingStats";
+import SpeakingScenarios from "@/pages/SpeakingScenarios";
+import SpeakingScenarioDetail from "@/pages/SpeakingScenarioDetail";
+import SpeakingLesson from "@/pages/SpeakingLesson";
+import SpeakingConversation from "@/pages/SpeakingConversation";
+import SpeakingFeedback from "@/pages/SpeakingFeedback";
 import Reading from "@/pages/Reading";
 import ReadingPassage from "@/pages/ReadingPassage";
 import Listening from "@/pages/Listening";
@@ -100,6 +105,11 @@ function AppLayout() {
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/learn/speaking/history" component={SpeakingHistory} />
                 <Route path="/learn/speaking/stats" component={SpeakingStats} />
+                <Route path="/learn/speaking-scenarios/:id/step/:stepNumber/feedback" component={SpeakingFeedback} />
+                <Route path="/learn/speaking-scenarios/:id/step/:stepNumber/conversation" component={SpeakingConversation} />
+                <Route path="/learn/speaking-scenarios/:id/step/:stepNumber/learn" component={SpeakingLesson} />
+                <Route path="/learn/speaking-scenarios/:id" component={SpeakingScenarioDetail} />
+                <Route path="/learn/speaking-scenarios" component={SpeakingScenarios} />
                 <Route path="/learn/speaking" component={Speaking} />
                 <Route path="/learn/reading/:id" component={ReadingPassage} />
                 <Route path="/learn/reading" component={Reading} />
