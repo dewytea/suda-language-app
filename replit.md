@@ -21,6 +21,8 @@ PostgreSQL is used as the database, accessed via Drizzle ORM for type-safe opera
 The application features a hybrid design inspired by Duolingo, Notion, and Linear. Semantic color coding is used for different language skills (e.g., blue for speaking, purple for reading). Typography includes Inter for body text and Lexend for headings. The design is responsive and mobile-first, incorporating custom elevation for interactive elements.
 
 ### Feature Specifications
+- **Speaking Module**: Real-world conversation practice across 10 scenarios organized by category (Business, Travel, Daily Life, Social). Features include:
+  - **Phase 2**: Realistic conversation practice with GPT-4o powered dialogue. Each scenario contains 3-7 steps with useful expressions (3 per step, each with 3 examples). Real-time AI feedback evaluates pronunciation, grammar, fluency, and appropriateness. TTS for expressions and examples, Web Speech API for voice input, progress tracking per step, and retry functionality.
 - **Listening Module**: Offers short-form dictation with Levenshtein distance scoring and long-form content listening with paragraph-by-paragraph navigation, translation toggles, and playback speed control.
 - **Vocabulary & Notebook**: Provides an interactive dictionary feature where words in content are clickable, offering definitions, phonetics, examples, and instant saving to a personal vocabulary notebook with filtering and status tracking.
 - **Reading Module**: Supports reading passages across multiple difficulty levels and content types. It includes paragraph-by-paragraph translations, clickable words for vocabulary lookup, and comprehension questions (main idea, detail, inference, vocabulary) with automatic scoring and explanations.
@@ -33,7 +35,7 @@ The application features a hybrid design inspired by Duolingo, Notion, and Linea
 ## External Dependencies
 
 - **AI Integration**: 
-  - OpenAI GPT-4o for detailed writing feedback and corrections
+  - OpenAI GPT-4o for detailed writing feedback, speaking conversation practice, and evaluation
   - Google Gemini AI (@google/genai) for pronunciation and basic writing evaluation
 - **Authentication**: Supabase Auth for user authentication and management.
 - **Database**: PostgreSQL, Drizzle ORM, `connect-pg-simple` for session storage.

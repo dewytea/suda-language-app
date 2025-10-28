@@ -40,7 +40,7 @@ export default function SpeakingScenarios() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const { data: scenarios = [], isLoading } = useQuery<SpeakingScenario[]>({
-    queryKey: ["/api/speaking-scenarios", selectedCategory !== "all" ? { category: selectedCategory } : {}],
+    queryKey: ["/api/speaking-scenarios"],
   });
 
   const { data: progressData = [] } = useQuery<ScenarioProgress[]>({
