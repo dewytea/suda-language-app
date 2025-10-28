@@ -2761,7 +2761,7 @@ export class MemStorage implements IStorage {
   // Initialize Speaking Scenarios
   private initializeSpeakingScenarios() {
     const scenarios: InsertSpeakingScenario[] = [
-      // Scenario 1: Job Interview
+      // Scenario 1: Job Interview - Software Developer (Business, 4 steps)
       {
         category: "business",
         title: "Job Interview - Software Developer",
@@ -2822,6 +2822,1800 @@ export class MemStorage implements IStorage {
               grammar: 20,
               fluency: 20,
               appropriateness: 30
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "자기소개",
+            situation: "면접관이 당신에게 자기소개를 요청합니다.",
+            aiRole: "interviewer",
+            aiPrompt: "You are a professional interviewer. Ask the candidate to introduce themselves and their background. Listen attentively and ask follow-up questions about their experience.",
+            usefulExpressions: [
+              {
+                expression: "I'd be happy to tell you about myself.",
+                meaning: "기꺼이 제 소개를 하겠습니다",
+                examples: [
+                  "I'd be happy to tell you about myself and my experience.",
+                  "I'd be happy to tell you about my background.",
+                  "I'd be happy to tell you about my career journey."
+                ],
+                pronunciation: "/aɪd biː ˈhæpi tuː tɛl juː əˈbaʊt maɪˈsɛlf/"
+              },
+              {
+                expression: "I have X years of experience in...",
+                meaning: "...분야에서 X년의 경험이 있습니다",
+                examples: [
+                  "I have 5 years of experience in software development.",
+                  "I have 3 years of experience in frontend technologies.",
+                  "I have extensive experience in building scalable applications."
+                ],
+                pronunciation: "/aɪ hæv ... jɪrz ʌv ɪkˈspɪriəns ɪn/"
+              },
+              {
+                expression: "I specialize in...",
+                meaning: "...을 전문으로 합니다",
+                examples: [
+                  "I specialize in React and TypeScript.",
+                  "I specialize in backend development with Node.js.",
+                  "I specialize in building user-friendly interfaces."
+                ],
+                pronunciation: "/aɪ ˈspɛʃəˌlaɪz ɪn/"
+              }
+            ],
+            expectedQuestions: [
+              "Tell me about yourself.",
+              "What makes you interested in this position?",
+              "What are your strongest technical skills?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "기술 경험 설명",
+            situation: "면접관이 당신의 프로젝트 경험에 대해 물어봅니다.",
+            aiRole: "interviewer",
+            aiPrompt: "You are a technical interviewer. Ask about specific projects they've worked on, technologies used, and challenges faced. Probe deeper into technical details.",
+            usefulExpressions: [
+              {
+                expression: "In my previous role, I worked on...",
+                meaning: "이전 직장에서 ...을 진행했습니다",
+                examples: [
+                  "In my previous role, I worked on a large-scale e-commerce platform.",
+                  "In my previous role, I worked on optimizing database performance.",
+                  "In my previous role, I worked on implementing new features."
+                ],
+                pronunciation: "/ɪn maɪ ˈpriviəs roʊl aɪ wɜrkt ɒn/"
+              },
+              {
+                expression: "One of the challenges we faced was...",
+                meaning: "우리가 직면한 과제 중 하나는 ...였습니다",
+                examples: [
+                  "One of the challenges we faced was handling high traffic volumes.",
+                  "One of the challenges we faced was integrating legacy systems.",
+                  "One of the challenges we faced was meeting tight deadlines."
+                ],
+                pronunciation: "/wʌn ʌv ðə ˈʧælɪnʤɪz wi feɪst wɒz/"
+              },
+              {
+                expression: "We successfully implemented...",
+                meaning: "우리는 성공적으로 ...를 구현했습니다",
+                examples: [
+                  "We successfully implemented a microservices architecture.",
+                  "We successfully implemented real-time notifications.",
+                  "We successfully implemented automated testing."
+                ],
+                pronunciation: "/wi səkˈsɛsfəli ˈɪmpləˌmɛntɪd/"
+              }
+            ],
+            expectedQuestions: [
+              "Can you describe a challenging project you've worked on?",
+              "What technologies did you use?",
+              "How did you overcome the technical challenges?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 20,
+              grammar: 30,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 4,
+            title: "마무리 및 질문",
+            situation: "면접이 거의 끝나가며, 면접관이 당신에게 질문할 것이 있는지 묻습니다.",
+            aiRole: "interviewer",
+            aiPrompt: "You are wrapping up the interview. Ask if the candidate has any questions. Answer their questions about the role, team, or company culture.",
+            usefulExpressions: [
+              {
+                expression: "I have a few questions about...",
+                meaning: "...에 대해 몇 가지 질문이 있습니다",
+                examples: [
+                  "I have a few questions about the team structure.",
+                  "I have a few questions about the development process.",
+                  "I have a few questions about growth opportunities."
+                ],
+                pronunciation: "/aɪ hæv ə fjuː ˈkwɛsʧənz əˈbaʊt/"
+              },
+              {
+                expression: "What would a typical day look like?",
+                meaning: "일반적인 하루 일과는 어떤가요?",
+                examples: [
+                  "What would a typical day look like in this role?",
+                  "What would a typical day look like for the team?",
+                  "What would a typical day look like during sprint planning?"
+                ],
+                pronunciation: "/wʌt wʊd ə ˈtɪpɪkəl deɪ lʊk laɪk/"
+              },
+              {
+                expression: "Thank you for your time.",
+                meaning: "시간 내주셔서 감사합니다",
+                examples: [
+                  "Thank you for your time today.",
+                  "Thank you for your time and consideration.",
+                  "Thank you for your time, I really enjoyed our conversation."
+                ],
+                pronunciation: "/θæŋk juː fɔːr jɔːr taɪm/"
+              }
+            ],
+            expectedQuestions: [
+              "Do you have any questions for me?",
+              "Is there anything else you'd like to know?",
+              "What are the next steps in the process?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 30
+            }
+          }
+        ]
+      },
+
+      // Scenario 2: Business Meeting (Business, 3 steps)
+      {
+        category: "business",
+        title: "Business Meeting - Project Discussion",
+        difficulty: 3,
+        estimatedTime: 10,
+        description: "프로젝트 진행 상황을 논의하는 비즈니스 미팅을 연습합니다.",
+        learningObjectives: [
+          "회의 시작과 안건 소개하기",
+          "의견 제시 및 동의/반대 표현하기",
+          "회의 마무리 및 다음 단계 정리하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "회의 시작 및 안건 소개",
+            situation: "당신이 프로젝트 리더로서 팀 회의를 시작합니다.",
+            aiRole: "team_member",
+            aiPrompt: "You are a team member attending a project meeting. Respond to the meeting leader's opening and be ready to discuss the agenda items.",
+            usefulExpressions: [
+              {
+                expression: "Let's get started with...",
+                meaning: "...로 시작하겠습니다",
+                examples: [
+                  "Let's get started with today's agenda.",
+                  "Let's get started with the project updates.",
+                  "Let's get started with discussing our progress."
+                ],
+                pronunciation: "/lɛts gɛt ˈstɑrtɪd wɪð/"
+              },
+              {
+                expression: "The main goal of this meeting is...",
+                meaning: "이 회의의 주요 목표는 ...입니다",
+                examples: [
+                  "The main goal of this meeting is to review our timeline.",
+                  "The main goal of this meeting is to address current challenges.",
+                  "The main goal of this meeting is to plan next quarter."
+                ],
+                pronunciation: "/ðə meɪn goʊl ʌv ðɪs ˈmitɪŋ ɪz/"
+              },
+              {
+                expression: "Does everyone have the materials?",
+                meaning: "모두 자료를 받으셨나요?",
+                examples: [
+                  "Does everyone have the materials we sent yesterday?",
+                  "Does everyone have the presentation slides?",
+                  "Does everyone have access to the shared documents?"
+                ],
+                pronunciation: "/dʌz ˈɛvriˌwʌn hæv ðə məˈtɪriəlz/"
+              }
+            ],
+            expectedQuestions: [
+              "Yes, I have all the materials ready.",
+              "Could you clarify the first agenda item?",
+              "How much time do we have for this meeting?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "의견 제시 및 토론",
+            situation: "팀원들이 프로젝트 진행 상황에 대해 의견을 나눕니다.",
+            aiRole: "team_member",
+            aiPrompt: "You are a team member sharing your opinion on the project. Express your views, agree or disagree with others professionally.",
+            usefulExpressions: [
+              {
+                expression: "I'd like to suggest that...",
+                meaning: "...를 제안하고 싶습니다",
+                examples: [
+                  "I'd like to suggest that we adjust the timeline.",
+                  "I'd like to suggest that we add more resources.",
+                  "I'd like to suggest that we try a different approach."
+                ],
+                pronunciation: "/aɪd laɪk tuː səgˈʤɛst ðæt/"
+              },
+              {
+                expression: "I agree with you on...",
+                meaning: "...에 대해 동의합니다",
+                examples: [
+                  "I agree with you on moving the deadline.",
+                  "I agree with you on prioritizing this feature.",
+                  "I agree with you on the budget concerns."
+                ],
+                pronunciation: "/aɪ əˈgri wɪð juː ɒn/"
+              },
+              {
+                expression: "Have we considered...?",
+                meaning: "...를 고려해 봤나요?",
+                examples: [
+                  "Have we considered the client's feedback?",
+                  "Have we considered alternative solutions?",
+                  "Have we considered the budget implications?"
+                ],
+                pronunciation: "/hæv wi kənˈsɪdərd/"
+              }
+            ],
+            expectedQuestions: [
+              "What do you think about this approach?",
+              "Do you see any potential issues?",
+              "How can we improve this?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 20,
+              grammar: 30,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "회의 마무리 및 액션 아이템",
+            situation: "회의를 마무리하며 다음 단계를 정리합니다.",
+            aiRole: "team_member",
+            aiPrompt: "You are a team member confirming action items and next steps. Make sure you understand your responsibilities.",
+            usefulExpressions: [
+              {
+                expression: "To summarize, we've decided to...",
+                meaning: "요약하자면, 우리는 ...로 결정했습니다",
+                examples: [
+                  "To summarize, we've decided to extend the deadline.",
+                  "To summarize, we've decided to hire additional developers.",
+                  "To summarize, we've decided to focus on core features first."
+                ],
+                pronunciation: "/tuː ˈsʌməˌraɪz wiv dɪˈsaɪdɪd tuː/"
+              },
+              {
+                expression: "The next steps are...",
+                meaning: "다음 단계는 ...입니다",
+                examples: [
+                  "The next steps are to review the requirements.",
+                  "The next steps are to schedule a client call.",
+                  "The next steps are to update the project plan."
+                ],
+                pronunciation: "/ðə nɛkst stɛps ɑːr/"
+              },
+              {
+                expression: "I'll take care of...",
+                meaning: "제가 ...를 처리하겠습니다",
+                examples: [
+                  "I'll take care of updating the documentation.",
+                  "I'll take care of contacting the vendors.",
+                  "I'll take care of scheduling the follow-up meeting."
+                ],
+                pronunciation: "/aɪl teɪk kɛr ʌv/"
+              }
+            ],
+            expectedQuestions: [
+              "When is our next meeting?",
+              "Who will handle the client communication?",
+              "What's the deadline for these action items?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 3: Airport Check-in (Travel, 4 steps)
+      {
+        category: "travel",
+        title: "Airport Check-in",
+        difficulty: 2,
+        estimatedTime: 12,
+        description: "공항에서 체크인부터 탑승까지의 전 과정을 연습합니다.",
+        learningObjectives: [
+          "체크인 카운터에서 필요한 표현 익히기",
+          "수하물 관련 대화하기",
+          "보안 검색 및 탑승 절차 이해하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "체크인 카운터",
+            situation: "공항 체크인 카운터에 도착했습니다.",
+            aiRole: "airline_staff",
+            aiPrompt: "You are a friendly airline check-in agent. Help the passenger check in, ask for their documents, and provide boarding information.",
+            usefulExpressions: [
+              {
+                expression: "I'd like to check in for...",
+                meaning: "...로 체크인하고 싶습니다",
+                examples: [
+                  "I'd like to check in for flight AA123 to New York.",
+                  "I'd like to check in for my flight to London.",
+                  "I'd like to check in for the 3 PM flight."
+                ],
+                pronunciation: "/aɪd laɪk tuː ʧɛk ɪn fɔːr/"
+              },
+              {
+                expression: "May I have a window seat?",
+                meaning: "창가 좌석으로 주실 수 있나요?",
+                examples: [
+                  "May I have a window seat, please?",
+                  "May I have an aisle seat?",
+                  "May I have a seat near the front?"
+                ],
+                pronunciation: "/meɪ aɪ hæv ə ˈwɪndoʊ siːt/"
+              },
+              {
+                expression: "How many bags can I check?",
+                meaning: "몇 개의 가방을 체크인할 수 있나요?",
+                examples: [
+                  "How many bags can I check for free?",
+                  "How many bags can I check in total?",
+                  "How many bags can I bring as carry-on?"
+                ],
+                pronunciation: "/haʊ ˈmɛni bægz kæn aɪ ʧɛk/"
+              }
+            ],
+            expectedQuestions: [
+              "May I see your passport and ticket?",
+              "Will you be checking any bags today?",
+              "Would you prefer a window or aisle seat?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "수하물 처리",
+            situation: "수하물을 체크인하고 규정을 확인합니다.",
+            aiRole: "airline_staff",
+            aiPrompt: "You are handling baggage check-in. Ask about the contents, weight, and provide baggage tags. Inform about restrictions if needed.",
+            usefulExpressions: [
+              {
+                expression: "I have one bag to check.",
+                meaning: "체크인할 가방이 하나 있습니다",
+                examples: [
+                  "I have one bag to check in.",
+                  "I have two bags to check.",
+                  "I have one suitcase and one carry-on."
+                ],
+                pronunciation: "/aɪ hæv wʌn bæg tuː ʧɛk/"
+              },
+              {
+                expression: "Does this count as carry-on?",
+                meaning: "이것은 기내 수하물로 계산되나요?",
+                examples: [
+                  "Does this count as carry-on luggage?",
+                  "Does this count as a personal item?",
+                  "Does this count towards my baggage allowance?"
+                ],
+                pronunciation: "/dʌz ðɪs kaʊnt æz ˈkæri ɒn/"
+              },
+              {
+                expression: "Are there any restrictions on...?",
+                meaning: "...에 대한 제한 사항이 있나요?",
+                examples: [
+                  "Are there any restrictions on liquids?",
+                  "Are there any restrictions on electronics?",
+                  "Are there any restrictions on food items?"
+                ],
+                pronunciation: "/ɑːr ðɛr ˈɛni rɪˈstrɪkʃənz ɒn/"
+              }
+            ],
+            expectedQuestions: [
+              "Did you pack these bags yourself?",
+              "Are you carrying any liquids or sharp objects?",
+              "Please place your bag on the scale."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "보안 검색대",
+            situation: "보안 검색대를 통과합니다.",
+            aiRole: "security_officer",
+            aiPrompt: "You are a security officer. Give clear instructions about removing items, going through the scanner, and collecting belongings.",
+            usefulExpressions: [
+              {
+                expression: "Do I need to remove...?",
+                meaning: "...를 벗어야 하나요?",
+                examples: [
+                  "Do I need to remove my shoes?",
+                  "Do I need to remove my belt?",
+                  "Do I need to remove my laptop from the bag?"
+                ],
+                pronunciation: "/duː aɪ niːd tuː rɪˈmuːv/"
+              },
+              {
+                expression: "Where should I put...?",
+                meaning: "...를 어디에 놓아야 하나요?",
+                examples: [
+                  "Where should I put my phone?",
+                  "Where should I put my jacket?",
+                  "Where should I put my carry-on bag?"
+                ],
+                pronunciation: "/wɛr ʃʊd aɪ pʊt/"
+              },
+              {
+                expression: "Can I collect my things now?",
+                meaning: "이제 제 물건을 가져가도 되나요?",
+                examples: [
+                  "Can I collect my things now?",
+                  "Can I collect my bag from the belt?",
+                  "Can I pick up my belongings?"
+                ],
+                pronunciation: "/kæn aɪ kəˈlɛkt maɪ θɪŋz naʊ/"
+              }
+            ],
+            expectedQuestions: [
+              "Please remove your laptop and liquids.",
+              "Step through the metal detector.",
+              "We need to do a quick bag check."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 4,
+            title: "탑승 게이트",
+            situation: "탑승 게이트에서 탑승을 준비합니다.",
+            aiRole: "gate_agent",
+            aiPrompt: "You are a gate agent making boarding announcements and checking boarding passes. Be helpful and provide clear information.",
+            usefulExpressions: [
+              {
+                expression: "Which gate is for...?",
+                meaning: "...는 몇 번 게이트인가요?",
+                examples: [
+                  "Which gate is for flight AA123?",
+                  "Which gate is for the New York flight?",
+                  "Which gate is for my connecting flight?"
+                ],
+                pronunciation: "/wɪʧ geɪt ɪz fɔːr/"
+              },
+              {
+                expression: "When does boarding start?",
+                meaning: "탑승은 언제 시작하나요?",
+                examples: [
+                  "When does boarding start for my flight?",
+                  "When does boarding start for first class?",
+                  "When does boarding start for families?"
+                ],
+                pronunciation: "/wɛn dʌz ˈbɔrdɪŋ stɑrt/"
+              },
+              {
+                expression: "Is this the line for...?",
+                meaning: "이것이 ...줄인가요?",
+                examples: [
+                  "Is this the line for economy class?",
+                  "Is this the line for priority boarding?",
+                  "Is this the line for group 3?"
+                ],
+                pronunciation: "/ɪz ðɪs ðə laɪn fɔːr/"
+              }
+            ],
+            expectedQuestions: [
+              "May I see your boarding pass?",
+              "Are you traveling with any checked baggage?",
+              "Enjoy your flight!"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 4: Hotel Reservation (Travel, 3 steps)
+      {
+        category: "travel",
+        title: "Hotel Reservation",
+        difficulty: 2,
+        estimatedTime: 10,
+        description: "호텔 예약부터 체크인, 문의까지 연습합니다.",
+        learningObjectives: [
+          "호텔 예약하기",
+          "체크인 절차 익히기",
+          "호텔 서비스 문의하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "전화로 예약하기",
+            situation: "호텔에 전화해서 방을 예약합니다.",
+            aiRole: "hotel_receptionist",
+            aiPrompt: "You are a hotel receptionist taking a reservation over the phone. Ask about dates, room preferences, and guest information.",
+            usefulExpressions: [
+              {
+                expression: "I'd like to make a reservation for...",
+                meaning: "...에 대한 예약을 하고 싶습니다",
+                examples: [
+                  "I'd like to make a reservation for two nights.",
+                  "I'd like to make a reservation for next weekend.",
+                  "I'd like to make a reservation for a double room."
+                ],
+                pronunciation: "/aɪd laɪk tuː meɪk ə ˌrɛzərˈveɪʃən fɔːr/"
+              },
+              {
+                expression: "Do you have any rooms available?",
+                meaning: "이용 가능한 방이 있나요?",
+                examples: [
+                  "Do you have any rooms available for tonight?",
+                  "Do you have any rooms available with a sea view?",
+                  "Do you have any rooms available for four guests?"
+                ],
+                pronunciation: "/duː juː hæv ˈɛni ruːmz əˈveɪləbəl/"
+              },
+              {
+                expression: "What's included in the price?",
+                meaning: "가격에 무엇이 포함되나요?",
+                examples: [
+                  "What's included in the price per night?",
+                  "What's included in the breakfast package?",
+                  "What's included in the room rate?"
+                ],
+                pronunciation: "/wʌts ɪnˈkluːdɪd ɪn ðə praɪs/"
+              }
+            ],
+            expectedQuestions: [
+              "For what dates would you like to book?",
+              "How many guests will be staying?",
+              "Would you like a room with a king or twin beds?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "체크인하기",
+            situation: "호텔 프론트 데스크에서 체크인합니다.",
+            aiRole: "hotel_receptionist",
+            aiPrompt: "You are checking in a guest. Ask for ID, confirm reservation details, and explain hotel amenities.",
+            usefulExpressions: [
+              {
+                expression: "I have a reservation under...",
+                meaning: "... 이름으로 예약했습니다",
+                examples: [
+                  "I have a reservation under Smith.",
+                  "I have a reservation under the name Kim.",
+                  "I have a reservation under my company name."
+                ],
+                pronunciation: "/aɪ hæv ə ˌrɛzərˈveɪʃən ˈʌndər/"
+              },
+              {
+                expression: "What time is checkout?",
+                meaning: "체크아웃 시간은 몇 시인가요?",
+                examples: [
+                  "What time is checkout tomorrow?",
+                  "What time is checkout on weekends?",
+                  "What time is late checkout available until?"
+                ],
+                pronunciation: "/wʌt taɪm ɪz ˈʧɛkaʊt/"
+              },
+              {
+                expression: "Is breakfast included?",
+                meaning: "조식이 포함되어 있나요?",
+                examples: [
+                  "Is breakfast included in the room rate?",
+                  "Is breakfast included for all guests?",
+                  "Is breakfast included or is it extra?"
+                ],
+                pronunciation: "/ɪz ˈbrɛkfəst ɪnˈkluːdɪd/"
+              }
+            ],
+            expectedQuestions: [
+              "May I see your ID and credit card?",
+              "Would you like a wake-up call?",
+              "Here's your room key. You're in room 302."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "호텔 서비스 문의",
+            situation: "컨시어지에게 호텔 시설과 주변 정보를 문의합니다.",
+            aiRole: "concierge",
+            aiPrompt: "You are a helpful hotel concierge. Provide information about hotel facilities, local attractions, and make recommendations.",
+            usefulExpressions: [
+              {
+                expression: "Could you recommend...?",
+                meaning: "...를 추천해 주실 수 있나요?",
+                examples: [
+                  "Could you recommend a good restaurant nearby?",
+                  "Could you recommend some local attractions?",
+                  "Could you recommend a place to shop?"
+                ],
+                pronunciation: "/kʊd juː ˌrɛkəˈmɛnd/"
+              },
+              {
+                expression: "How can I get to...?",
+                meaning: "...에 어떻게 가나요?",
+                examples: [
+                  "How can I get to the city center?",
+                  "How can I get to the airport from here?",
+                  "How can I get to the museum?"
+                ],
+                pronunciation: "/haʊ kæn aɪ gɛt tuː/"
+              },
+              {
+                expression: "Is there a ... in the hotel?",
+                meaning: "호텔에 ...가 있나요?",
+                examples: [
+                  "Is there a gym in the hotel?",
+                  "Is there a swimming pool in the hotel?",
+                  "Is there a business center in the hotel?"
+                ],
+                pronunciation: "/ɪz ðɛr ə ... ɪn ðə hoʊˈtɛl/"
+              }
+            ],
+            expectedQuestions: [
+              "What kind of cuisine are you interested in?",
+              "Would you like me to book a table?",
+              "Would you like directions or should I call you a taxi?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 5: Restaurant Ordering (Daily Life, 3 steps)
+      {
+        category: "daily_life",
+        title: "Restaurant Ordering",
+        difficulty: 2,
+        estimatedTime: 10,
+        description: "레스토랑에서 주문하고 식사하는 전 과정을 연습합니다.",
+        learningObjectives: [
+          "메뉴 이해하고 주문하기",
+          "음식 관련 질문하기",
+          "계산 및 팁 주기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "자리 안내 및 메뉴 주문",
+            situation: "레스토랑에 도착하여 자리에 앉아 메뉴를 봅니다.",
+            aiRole: "waiter",
+            aiPrompt: "You are a friendly waiter. Greet the customer, show them to their table, and take their drink order while they look at the menu.",
+            usefulExpressions: [
+              {
+                expression: "A table for..., please.",
+                meaning: "...명 자리 부탁합니다",
+                examples: [
+                  "A table for two, please.",
+                  "A table for four, please.",
+                  "A table for one, please."
+                ],
+                pronunciation: "/ə ˈteɪbəl fɔːr ... pliːz/"
+              },
+              {
+                expression: "Could I see the menu?",
+                meaning: "메뉴를 볼 수 있을까요?",
+                examples: [
+                  "Could I see the menu, please?",
+                  "Could I see the wine list?",
+                  "Could I see the dessert menu?"
+                ],
+                pronunciation: "/kʊd aɪ siː ðə ˈmɛnjuː/"
+              },
+              {
+                expression: "I'll start with...",
+                meaning: "...로 시작하겠습니다",
+                examples: [
+                  "I'll start with a glass of water.",
+                  "I'll start with the soup of the day.",
+                  "I'll start with an appetizer."
+                ],
+                pronunciation: "/aɪl stɑrt wɪð/"
+              }
+            ],
+            expectedQuestions: [
+              "Welcome! How many in your party?",
+              "Can I get you something to drink while you look at the menu?",
+              "Are you ready to order, or do you need a few minutes?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "음식 주문 및 문의",
+            situation: "메뉴를 보고 음식을 주문합니다.",
+            aiRole: "waiter",
+            aiPrompt: "You are taking the food order. Answer questions about menu items, make suggestions, and confirm the order.",
+            usefulExpressions: [
+              {
+                expression: "What do you recommend?",
+                meaning: "무엇을 추천하시나요?",
+                examples: [
+                  "What do you recommend from the menu?",
+                  "What do you recommend for seafood?",
+                  "What do you recommend as a house special?"
+                ],
+                pronunciation: "/wʌt duː juː ˌrɛkəˈmɛnd/"
+              },
+              {
+                expression: "Does this come with...?",
+                meaning: "이것은 ...와 함께 나오나요?",
+                examples: [
+                  "Does this come with a side salad?",
+                  "Does this come with fries or rice?",
+                  "Does this come with any vegetables?"
+                ],
+                pronunciation: "/dʌz ðɪs kʌm wɪð/"
+              },
+              {
+                expression: "I'll have the...",
+                meaning: "...로 주문하겠습니다",
+                examples: [
+                  "I'll have the grilled salmon.",
+                  "I'll have the chicken pasta.",
+                  "I'll have the vegetarian option."
+                ],
+                pronunciation: "/aɪl hæv ðə/"
+              }
+            ],
+            expectedQuestions: [
+              "How would you like that cooked?",
+              "Would you like any sides with that?",
+              "Any allergies I should know about?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "계산 및 마무리",
+            situation: "식사를 마치고 계산을 요청합니다.",
+            aiRole: "waiter",
+            aiPrompt: "You are bringing the check. Ask if everything was satisfactory and process the payment.",
+            usefulExpressions: [
+              {
+                expression: "Could I get the check, please?",
+                meaning: "계산서를 받을 수 있을까요?",
+                examples: [
+                  "Could I get the check, please?",
+                  "Could I get the bill, please?",
+                  "Could we have the check when you get a chance?"
+                ],
+                pronunciation: "/kʊd aɪ gɛt ðə ʧɛk pliːz/"
+              },
+              {
+                expression: "Can I pay by card?",
+                meaning: "카드로 계산할 수 있나요?",
+                examples: [
+                  "Can I pay by card?",
+                  "Can I pay by credit card?",
+                  "Can I split the bill?"
+                ],
+                pronunciation: "/kæn aɪ peɪ baɪ kɑrd/"
+              },
+              {
+                expression: "Everything was delicious.",
+                meaning: "모든 것이 맛있었습니다",
+                examples: [
+                  "Everything was delicious, thank you.",
+                  "Everything was perfect.",
+                  "Everything was wonderful."
+                ],
+                pronunciation: "/ˈɛvriˌθɪŋ wʌz dɪˈlɪʃəs/"
+              }
+            ],
+            expectedQuestions: [
+              "How was everything?",
+              "Would you like the check now?",
+              "Cash or card today?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 6: Shopping at Store (Daily Life, 3 steps)
+      {
+        category: "daily_life",
+        title: "Shopping at Store",
+        difficulty: 1,
+        estimatedTime: 8,
+        description: "상점에서 쇼핑하는 전 과정을 연습합니다.",
+        learningObjectives: [
+          "상품 찾기 및 문의하기",
+          "사이즈와 색상 확인하기",
+          "계산 및 교환/환불 정책 이해하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "상품 찾기",
+            situation: "옷가게에서 원하는 상품을 찾고 있습니다.",
+            aiRole: "sales_associate",
+            aiPrompt: "You are a helpful sales associate. Greet the customer and help them find what they're looking for.",
+            usefulExpressions: [
+              {
+                expression: "I'm looking for...",
+                meaning: "...를 찾고 있습니다",
+                examples: [
+                  "I'm looking for a winter jacket.",
+                  "I'm looking for running shoes.",
+                  "I'm looking for a gift for my friend."
+                ],
+                pronunciation: "/aɪm ˈlʊkɪŋ fɔːr/"
+              },
+              {
+                expression: "Do you have this in...?",
+                meaning: "이것을 ...로 가지고 있나요?",
+                examples: [
+                  "Do you have this in a medium?",
+                  "Do you have this in blue?",
+                  "Do you have this in a larger size?"
+                ],
+                pronunciation: "/duː juː hæv ðɪs ɪn/"
+              },
+              {
+                expression: "Where can I find...?",
+                meaning: "...를 어디서 찾을 수 있나요?",
+                examples: [
+                  "Where can I find the fitting rooms?",
+                  "Where can I find men's clothing?",
+                  "Where can I find the sale items?"
+                ],
+                pronunciation: "/wɛr kæn aɪ faɪnd/"
+              }
+            ],
+            expectedQuestions: [
+              "Can I help you find something?",
+              "What size are you looking for?",
+              "We have similar items over here."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "피팅 및 선택",
+            situation: "옷을 입어보고 점원에게 조언을 구합니다.",
+            aiRole: "sales_associate",
+            aiPrompt: "You are helping a customer try on clothes. Give honest feedback and suggest alternatives if needed.",
+            usefulExpressions: [
+              {
+                expression: "Can I try this on?",
+                meaning: "이것을 입어봐도 될까요?",
+                examples: [
+                  "Can I try this on?",
+                  "Can I try these on?",
+                  "Can I try on a different size?"
+                ],
+                pronunciation: "/kæn aɪ traɪ ðɪs ɒn/"
+              },
+              {
+                expression: "How does this look?",
+                meaning: "이것이 어떻게 보이나요?",
+                examples: [
+                  "How does this look on me?",
+                  "How does this color look?",
+                  "How does this fit look?"
+                ],
+                pronunciation: "/haʊ dʌz ðɪs lʊk/"
+              },
+              {
+                expression: "It's a bit too...",
+                meaning: "약간 너무 ...합니다",
+                examples: [
+                  "It's a bit too tight.",
+                  "It's a bit too long.",
+                  "It's a bit too expensive."
+                ],
+                pronunciation: "/ɪts ə bɪt tuː/"
+              }
+            ],
+            expectedQuestions: [
+              "The fitting rooms are right over there.",
+              "That looks great on you!",
+              "Would you like to try a different size?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "계산 및 정책 문의",
+            situation: "상품을 구매하고 교환/환불 정책을 확인합니다.",
+            aiRole: "cashier",
+            aiPrompt: "You are a cashier processing a purchase. Explain the return policy and ask about payment method.",
+            usefulExpressions: [
+              {
+                expression: "I'll take this.",
+                meaning: "이것으로 하겠습니다",
+                examples: [
+                  "I'll take this one.",
+                  "I'll take these two.",
+                  "I'll take it."
+                ],
+                pronunciation: "/aɪl teɪk ðɪs/"
+              },
+              {
+                expression: "What's your return policy?",
+                meaning: "환불 정책이 어떻게 되나요?",
+                examples: [
+                  "What's your return policy?",
+                  "What's your exchange policy?",
+                  "What's your refund policy?"
+                ],
+                pronunciation: "/wʌts jɔːr rɪˈtɜrn ˈpɒləsi/"
+              },
+              {
+                expression: "Do you accept...?",
+                meaning: "...를 받으시나요?",
+                examples: [
+                  "Do you accept credit cards?",
+                  "Do you accept Apple Pay?",
+                  "Do you accept gift cards?"
+                ],
+                pronunciation: "/duː juː əkˈsɛpt/"
+              }
+            ],
+            expectedQuestions: [
+              "Did you find everything you were looking for?",
+              "How would you like to pay?",
+              "Would you like a bag?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 7: Making New Friends (Social, 3 steps)
+      {
+        category: "social",
+        title: "Making New Friends",
+        difficulty: 2,
+        estimatedTime: 10,
+        description: "새로운 사람을 만나 친구가 되는 과정을 연습합니다.",
+        learningObjectives: [
+          "자연스러운 인사와 소개하기",
+          "공통 관심사 찾기",
+          "연락처 교환하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "첫 만남과 인사",
+            situation: "파티에서 새로운 사람을 만났습니다.",
+            aiRole: "new_acquaintance",
+            aiPrompt: "You are a friendly person at a social gathering. Engage in casual conversation and show interest in getting to know the other person.",
+            usefulExpressions: [
+              {
+                expression: "Hi, I'm...",
+                meaning: "안녕하세요, 저는 ...입니다",
+                examples: [
+                  "Hi, I'm Sarah. Nice to meet you.",
+                  "Hi, I'm John from the marketing team.",
+                  "Hi, I'm Kim. I just moved here."
+                ],
+                pronunciation: "/haɪ aɪm/"
+              },
+              {
+                expression: "How do you know...?",
+                meaning: "...를 어떻게 아시나요?",
+                examples: [
+                  "How do you know the host?",
+                  "How do you know Sarah?",
+                  "How do you know about this event?"
+                ],
+                pronunciation: "/haʊ duː juː noʊ/"
+              },
+              {
+                expression: "What brings you here?",
+                meaning: "여기는 어떻게 오셨어요?",
+                examples: [
+                  "What brings you here today?",
+                  "What brings you to this event?",
+                  "What brings you to the city?"
+                ],
+                pronunciation: "/wʌt brɪŋz juː hɪr/"
+              }
+            ],
+            expectedQuestions: [
+              "Nice to meet you! What's your name?",
+              "Are you from around here?",
+              "Is this your first time at one of these events?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "대화와 공통점 찾기",
+            situation: "대화를 이어가며 공통 관심사를 찾습니다.",
+            aiRole: "new_acquaintance",
+            aiPrompt: "You are having a friendly conversation. Share about your interests and ask about theirs. Find common ground.",
+            usefulExpressions: [
+              {
+                expression: "I'm really into...",
+                meaning: "저는 ...에 정말 관심이 많습니다",
+                examples: [
+                  "I'm really into hiking and outdoor activities.",
+                  "I'm really into photography.",
+                  "I'm really into trying new restaurants."
+                ],
+                pronunciation: "/aɪm ˈrɪəli ˈɪntuː/"
+              },
+              {
+                expression: "Have you ever...?",
+                meaning: "...해본 적 있으세요?",
+                examples: [
+                  "Have you ever been to Japan?",
+                  "Have you ever tried rock climbing?",
+                  "Have you ever attended this conference before?"
+                ],
+                pronunciation: "/hæv juː ˈɛvər/"
+              },
+              {
+                expression: "That sounds interesting!",
+                meaning: "그거 흥미롭네요!",
+                examples: [
+                  "That sounds really interesting!",
+                  "That sounds like fun!",
+                  "That sounds amazing!"
+                ],
+                pronunciation: "/ðæt saʊndz ˈɪntrəstɪŋ/"
+              }
+            ],
+            expectedQuestions: [
+              "What do you do for fun?",
+              "Do you have any hobbies?",
+              "Oh, I love that too! How long have you been into it?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 20,
+              grammar: 25,
+              fluency: 30,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "연락처 교환",
+            situation: "즐거운 대화 후 연락처를 교환합니다.",
+            aiRole: "new_acquaintance",
+            aiPrompt: "You enjoyed the conversation and want to stay in touch. Exchange contact information naturally.",
+            usefulExpressions: [
+              {
+                expression: "We should keep in touch.",
+                meaning: "계속 연락하면 좋겠어요",
+                examples: [
+                  "We should keep in touch!",
+                  "We should definitely stay in touch.",
+                  "We should hang out sometime."
+                ],
+                pronunciation: "/wi ʃʊd kiːp ɪn tʌʧ/"
+              },
+              {
+                expression: "Can I get your...?",
+                meaning: "...를 받을 수 있을까요?",
+                examples: [
+                  "Can I get your number?",
+                  "Can I get your Instagram?",
+                  "Can I get your email address?"
+                ],
+                pronunciation: "/kæn aɪ gɛt jɔːr/"
+              },
+              {
+                expression: "Let's grab coffee sometime.",
+                meaning: "언젠가 커피 한잔 해요",
+                examples: [
+                  "Let's grab coffee sometime.",
+                  "Let's get lunch next week.",
+                  "Let's meet up again soon."
+                ],
+                pronunciation: "/lɛts græb ˈkɔfi ˈsʌmˌtaɪm/"
+              }
+            ],
+            expectedQuestions: [
+              "Sure! What's the best way to reach you?",
+              "Do you use WhatsApp?",
+              "I'd love to! I'll message you this week."
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 20,
+              fluency: 25,
+              appropriateness: 30
+            }
+          }
+        ]
+      },
+
+      // Scenario 8: Doctor's Appointment (Daily Life, 4 steps)
+      {
+        category: "daily_life",
+        title: "Doctor's Appointment",
+        difficulty: 3,
+        estimatedTime: 12,
+        description: "병원 예약부터 진료까지의 전 과정을 연습합니다.",
+        learningObjectives: [
+          "증상 설명하기",
+          "의사의 질문 이해하고 답변하기",
+          "처방전과 치료 지시 이해하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "예약하기",
+            situation: "병원에 전화해서 진료 예약을 합니다.",
+            aiRole: "receptionist",
+            aiPrompt: "You are a medical receptionist scheduling appointments. Ask about symptoms, preferred times, and insurance information.",
+            usefulExpressions: [
+              {
+                expression: "I'd like to make an appointment.",
+                meaning: "예약을 하고 싶습니다",
+                examples: [
+                  "I'd like to make an appointment with Dr. Smith.",
+                  "I'd like to make an appointment for next week.",
+                  "I'd like to make an appointment as soon as possible."
+                ],
+                pronunciation: "/aɪd laɪk tuː meɪk ən əˈpɔɪntmənt/"
+              },
+              {
+                expression: "I'm not feeling well.",
+                meaning: "몸이 좋지 않습니다",
+                examples: [
+                  "I'm not feeling well today.",
+                  "I'm not feeling well and need to see a doctor.",
+                  "I'm not feeling well since yesterday."
+                ],
+                pronunciation: "/aɪm nɒt ˈfiːlɪŋ wɛl/"
+              },
+              {
+                expression: "What times are available?",
+                meaning: "언제 시간이 되시나요?",
+                examples: [
+                  "What times are available this week?",
+                  "What times are available on Monday?",
+                  "What times are available in the morning?"
+                ],
+                pronunciation: "/wʌt taɪmz ɑːr əˈveɪləbəl/"
+              }
+            ],
+            expectedQuestions: [
+              "What seems to be the problem?",
+              "When would you like to come in?",
+              "Do you have insurance?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "접수 및 대기",
+            situation: "병원에 도착하여 접수를 합니다.",
+            aiRole: "receptionist",
+            aiPrompt: "You are checking in a patient. Ask for their information, insurance card, and have them fill out forms.",
+            usefulExpressions: [
+              {
+                expression: "I have an appointment at...",
+                meaning: "...에 예약이 있습니다",
+                examples: [
+                  "I have an appointment at 3 PM.",
+                  "I have an appointment at two o'clock.",
+                  "I have an appointment with Dr. Johnson."
+                ],
+                pronunciation: "/aɪ hæv ən əˈpɔɪntmənt æt/"
+              },
+              {
+                expression: "This is my first visit.",
+                meaning: "처음 방문입니다",
+                examples: [
+                  "This is my first visit here.",
+                  "This is my first visit to this clinic.",
+                  "This is my first time seeing this doctor."
+                ],
+                pronunciation: "/ðɪs ɪz maɪ fɜrst ˈvɪzɪt/"
+              },
+              {
+                expression: "How long is the wait?",
+                meaning: "얼마나 기다려야 하나요?",
+                examples: [
+                  "How long is the wait?",
+                  "How long is the wait time?",
+                  "How long do I need to wait?"
+                ],
+                pronunciation: "/haʊ lɒŋ ɪz ðə weɪt/"
+              }
+            ],
+            expectedQuestions: [
+              "Please fill out these forms.",
+              "May I see your insurance card?",
+              "The doctor will see you shortly. Please have a seat."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "진료 및 증상 설명",
+            situation: "의사가 진료실로 들어와 증상을 물어봅니다.",
+            aiRole: "doctor",
+            aiPrompt: "You are a doctor examining a patient. Ask about symptoms, medical history, and perform a basic examination.",
+            usefulExpressions: [
+              {
+                expression: "I've been having...",
+                meaning: "...가 있었습니다",
+                examples: [
+                  "I've been having headaches for three days.",
+                  "I've been having stomach pain.",
+                  "I've been having trouble sleeping."
+                ],
+                pronunciation: "/aɪv bɪn ˈhævɪŋ/"
+              },
+              {
+                expression: "It hurts when I...",
+                meaning: "...할 때 아픕니다",
+                examples: [
+                  "It hurts when I swallow.",
+                  "It hurts when I move my arm.",
+                  "It hurts when I breathe deeply."
+                ],
+                pronunciation: "/ɪt hɜrts wɛn aɪ/"
+              },
+              {
+                expression: "Is it serious?",
+                meaning: "심각한가요?",
+                examples: [
+                  "Is it serious, doctor?",
+                  "Is it serious or just a cold?",
+                  "Is it something serious?"
+                ],
+                pronunciation: "/ɪz ɪt ˈsɪriəs/"
+              }
+            ],
+            expectedQuestions: [
+              "When did the symptoms start?",
+              "On a scale of 1-10, how bad is the pain?",
+              "Do you have any allergies to medication?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 30,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 4,
+            title: "처방 및 지시 사항",
+            situation: "의사가 진단 결과와 치료 방법을 설명합니다.",
+            aiRole: "doctor",
+            aiPrompt: "You are explaining the diagnosis and treatment plan. Prescribe medication and give care instructions.",
+            usefulExpressions: [
+              {
+                expression: "How often should I take...?",
+                meaning: "...를 얼마나 자주 복용해야 하나요?",
+                examples: [
+                  "How often should I take this medication?",
+                  "How often should I take the pills?",
+                  "How often should I apply the cream?"
+                ],
+                pronunciation: "/haʊ ˈɔfən ʃʊd aɪ teɪk/"
+              },
+              {
+                expression: "When will I feel better?",
+                meaning: "언제 나아질까요?",
+                examples: [
+                  "When will I feel better?",
+                  "When will I start feeling better?",
+                  "When should I expect to recover?"
+                ],
+                pronunciation: "/wɛn wɪl aɪ fiːl ˈbɛtər/"
+              },
+              {
+                expression: "Do I need to come back?",
+                meaning: "다시 와야 하나요?",
+                examples: [
+                  "Do I need to come back for a follow-up?",
+                  "Do I need to come back next week?",
+                  "Do I need to schedule another appointment?"
+                ],
+                pronunciation: "/duː aɪ niːd tuː kʌm bæk/"
+              }
+            ],
+            expectedQuestions: [
+              "Take this twice a day with food.",
+              "You should feel better in a few days.",
+              "Come back if symptoms don't improve in a week."
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          }
+        ]
+      },
+
+      // Scenario 9: Networking Event (Social, 4 steps)
+      {
+        category: "social",
+        title: "Networking Event",
+        difficulty: 3,
+        estimatedTime: 12,
+        description: "전문적인 네트워킹 이벤트에서 인맥을 쌓는 연습을 합니다.",
+        learningObjectives: [
+          "전문적인 자기소개하기",
+          "비즈니스 대화 이어가기",
+          "연락처 교환 및 후속 조치하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "이벤트 도착 및 인사",
+            situation: "네트워킹 이벤트에 도착하여 다른 참석자들과 인사합니다.",
+            aiRole: "attendee",
+            aiPrompt: "You are a professional at a networking event. Introduce yourself, ask about their work, and engage in professional small talk.",
+            usefulExpressions: [
+              {
+                expression: "I work in...",
+                meaning: "저는 ...분야에서 일합니다",
+                examples: [
+                  "I work in software development.",
+                  "I work in marketing and communications.",
+                  "I work in the finance industry."
+                ],
+                pronunciation: "/aɪ wɜrk ɪn/"
+              },
+              {
+                expression: "What line of work are you in?",
+                meaning: "어떤 분야에서 일하시나요?",
+                examples: [
+                  "What line of work are you in?",
+                  "What line of business are you in?",
+                  "What field do you work in?"
+                ],
+                pronunciation: "/wʌt laɪn ʌv wɜrk ɑːr juː ɪn/"
+              },
+              {
+                expression: "I'm here to...",
+                meaning: "저는 ...하러 왔습니다",
+                examples: [
+                  "I'm here to meet other professionals.",
+                  "I'm here to learn about new opportunities.",
+                  "I'm here to expand my network."
+                ],
+                pronunciation: "/aɪm hɪr tuː/"
+              }
+            ],
+            expectedQuestions: [
+              "What brings you to this event?",
+              "How long have you been in your field?",
+              "Have you been to this event before?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "전문 분야 대화",
+            situation: "당신의 전문 분야와 프로젝트에 대해 이야기합니다.",
+            aiRole: "attendee",
+            aiPrompt: "You are discussing professional topics. Share insights about your industry and ask thoughtful questions.",
+            usefulExpressions: [
+              {
+                expression: "I specialize in...",
+                meaning: "저는 ...을 전문으로 합니다",
+                examples: [
+                  "I specialize in digital marketing strategies.",
+                  "I specialize in data analytics.",
+                  "I specialize in product design."
+                ],
+                pronunciation: "/aɪ ˈspɛʃəˌlaɪz ɪn/"
+              },
+              {
+                expression: "We're currently working on...",
+                meaning: "현재 ...를 진행하고 있습니다",
+                examples: [
+                  "We're currently working on a new product launch.",
+                  "We're currently working on expanding to new markets.",
+                  "We're currently working on improving customer experience."
+                ],
+                pronunciation: "/wɪr ˈkʌrəntli ˈwɜrkɪŋ ɒn/"
+              },
+              {
+                expression: "What challenges are you facing?",
+                meaning: "어떤 어려움을 겪고 계시나요?",
+                examples: [
+                  "What challenges are you facing in your role?",
+                  "What challenges are you facing this quarter?",
+                  "What challenges are you facing with remote work?"
+                ],
+                pronunciation: "/wʌt ˈʧælɪnʤɪz ɑːr juː ˈfeɪsɪŋ/"
+              }
+            ],
+            expectedQuestions: [
+              "That sounds interesting. How did you get into that?",
+              "What's been the most rewarding part of your work?",
+              "Are you looking to expand your team?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 20,
+              grammar: 30,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "협력 기회 탐색",
+            situation: "잠재적인 협력 기회에 대해 논의합니다.",
+            aiRole: "attendee",
+            aiPrompt: "You are exploring potential collaboration. Express interest in working together and discuss possibilities.",
+            usefulExpressions: [
+              {
+                expression: "There might be an opportunity to...",
+                meaning: "...할 기회가 있을 것 같습니다",
+                examples: [
+                  "There might be an opportunity to collaborate.",
+                  "There might be an opportunity to partner on this project.",
+                  "There might be an opportunity to share resources."
+                ],
+                pronunciation: "/ðɛr maɪt biː ən ˌɒpərˈtuːnɪti tuː/"
+              },
+              {
+                expression: "I'd be interested in learning more about...",
+                meaning: "...에 대해 더 알아보고 싶습니다",
+                examples: [
+                  "I'd be interested in learning more about your services.",
+                  "I'd be interested in learning more about that approach.",
+                  "I'd be interested in learning more about potential partnerships."
+                ],
+                pronunciation: "/aɪd biː ˈɪntrəstɪd ɪn ˈlɜrnɪŋ mɔːr əˈbaʊt/"
+              },
+              {
+                expression: "We should set up a meeting.",
+                meaning: "회의를 잡아야겠습니다",
+                examples: [
+                  "We should set up a meeting to discuss this further.",
+                  "We should set up a meeting next week.",
+                  "We should set up a meeting with our teams."
+                ],
+                pronunciation: "/wi ʃʊd sɛt ʌp ə ˈmitɪŋ/"
+              }
+            ],
+            expectedQuestions: [
+              "What kind of partnership are you thinking about?",
+              "When would be a good time to connect?",
+              "What's your timeline for this project?"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 4,
+            title: "연락처 교환 및 후속 조치",
+            situation: "명함을 교환하고 후속 연락을 약속합니다.",
+            aiRole: "attendee",
+            aiPrompt: "You are wrapping up the conversation. Exchange business cards and discuss next steps for staying in touch.",
+            usefulExpressions: [
+              {
+                expression: "Here's my business card.",
+                meaning: "제 명함입니다",
+                examples: [
+                  "Here's my business card.",
+                  "Here's my card with all my contact information.",
+                  "Let me give you my business card."
+                ],
+                pronunciation: "/hɪrz maɪ ˈbɪznɪs kɑrd/"
+              },
+              {
+                expression: "I'll follow up with you...",
+                meaning: "...에 연락드리겠습니다",
+                examples: [
+                  "I'll follow up with you next week.",
+                  "I'll follow up with you via email.",
+                  "I'll follow up with you after the holidays."
+                ],
+                pronunciation: "/aɪl ˈfɒloʊ ʌp wɪð juː/"
+              },
+              {
+                expression: "It was great meeting you.",
+                meaning: "만나서 반가웠습니다",
+                examples: [
+                  "It was great meeting you today.",
+                  "It was great meeting you and learning about your work.",
+                  "It was a pleasure meeting you."
+                ],
+                pronunciation: "/ɪt wʌz greɪt ˈmitɪŋ juː/"
+              }
+            ],
+            expectedQuestions: [
+              "Do you have a business card?",
+              "What's the best way to reach you?",
+              "I look forward to hearing from you!"
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 30
+            }
+          }
+        ]
+      },
+
+      // Scenario 10: Phone Customer Service (Business, 3 steps)
+      {
+        category: "business",
+        title: "Phone Customer Service",
+        difficulty: 3,
+        estimatedTime: 10,
+        description: "전화로 고객 서비스에 문의하여 문제를 해결하는 과정을 연습합니다.",
+        learningObjectives: [
+          "문제 명확히 설명하기",
+          "정보 요청 및 확인하기",
+          "해결책 협의하기"
+        ],
+        steps: [
+          {
+            stepNumber: 1,
+            title: "전화 연결 및 문제 설명",
+            situation: "고객 서비스에 전화를 걸어 문제를 설명합니다.",
+            aiRole: "customer_service",
+            aiPrompt: "You are a customer service representative. Greet the caller, ask for account information, and listen to their issue.",
+            usefulExpressions: [
+              {
+                expression: "I'm calling about...",
+                meaning: "...에 대해 전화드렸습니다",
+                examples: [
+                  "I'm calling about my recent order.",
+                  "I'm calling about a billing issue.",
+                  "I'm calling about a problem with my account."
+                ],
+                pronunciation: "/aɪm ˈkɔlɪŋ əˈbaʊt/"
+              },
+              {
+                expression: "I've been experiencing...",
+                meaning: "...를 겪고 있습니다",
+                examples: [
+                  "I've been experiencing technical difficulties.",
+                  "I've been experiencing issues with my service.",
+                  "I've been experiencing problems since yesterday."
+                ],
+                pronunciation: "/aɪv bɪn ɪkˈspɪriənsɪŋ/"
+              },
+              {
+                expression: "Could you help me with...?",
+                meaning: "...를 도와주실 수 있나요?",
+                examples: [
+                  "Could you help me with this issue?",
+                  "Could you help me with canceling my subscription?",
+                  "Could you help me with tracking my order?"
+                ],
+                pronunciation: "/kʊd juː hɛlp miː wɪð/"
+              }
+            ],
+            expectedQuestions: [
+              "Thank you for calling. How can I help you today?",
+              "Can I have your account number or email?",
+              "I understand. Let me look into that for you."
+            ],
+            evaluationCriteria: {
+              pronunciation: 30,
+              grammar: 25,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 2,
+            title: "상세 정보 제공 및 확인",
+            situation: "담당자가 추가 정보를 요청합니다.",
+            aiRole: "customer_service",
+            aiPrompt: "You are gathering information to resolve the issue. Ask clarifying questions and verify account details.",
+            usefulExpressions: [
+              {
+                expression: "The order number is...",
+                meaning: "주문 번호는 ...입니다",
+                examples: [
+                  "The order number is 123456.",
+                  "The order number is on my confirmation email.",
+                  "The reference number is ABC789."
+                ],
+                pronunciation: "/ði ˈɔrdər ˈnʌmbər ɪz/"
+              },
+              {
+                expression: "Can you confirm...?",
+                meaning: "...를 확인해 주실 수 있나요?",
+                examples: [
+                  "Can you confirm my shipping address?",
+                  "Can you confirm the charge amount?",
+                  "Can you confirm when this will be resolved?"
+                ],
+                pronunciation: "/kæn juː kənˈfɜrm/"
+              },
+              {
+                expression: "I need to...",
+                meaning: "저는 ...해야 합니다",
+                examples: [
+                  "I need to update my payment method.",
+                  "I need to change my delivery address.",
+                  "I need to cancel my order."
+                ],
+                pronunciation: "/aɪ niːd tuː/"
+              }
+            ],
+            expectedQuestions: [
+              "When did this problem start?",
+              "Can you describe what happened?",
+              "Let me verify your information."
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 30,
+              fluency: 20,
+              appropriateness: 25
+            }
+          },
+          {
+            stepNumber: 3,
+            title: "해결 및 마무리",
+            situation: "담당자가 해결책을 제시하고 추가 도움을 제안합니다.",
+            aiRole: "customer_service",
+            aiPrompt: "You are resolving the issue. Explain the solution, next steps, and ask if there's anything else you can help with.",
+            usefulExpressions: [
+              {
+                expression: "When can I expect...?",
+                meaning: "언제 ...를 기대할 수 있나요?",
+                examples: [
+                  "When can I expect a refund?",
+                  "When can I expect the replacement?",
+                  "When can I expect this to be fixed?"
+                ],
+                pronunciation: "/wɛn kæn aɪ ɪkˈspɛkt/"
+              },
+              {
+                expression: "Will I receive...?",
+                meaning: "...를 받을 수 있나요?",
+                examples: [
+                  "Will I receive a confirmation email?",
+                  "Will I receive a tracking number?",
+                  "Will I receive any compensation?"
+                ],
+                pronunciation: "/wɪl aɪ rɪˈsiːv/"
+              },
+              {
+                expression: "Thank you for your help.",
+                meaning: "도와주셔서 감사합니다",
+                examples: [
+                  "Thank you for your help today.",
+                  "Thank you for your help resolving this.",
+                  "Thank you for your patience and assistance."
+                ],
+                pronunciation: "/θæŋk juː fɔːr jɔːr hɛlp/"
+              }
+            ],
+            expectedQuestions: [
+              "I've processed that for you.",
+              "Is there anything else I can help you with?",
+              "You should receive an email confirmation shortly."
+            ],
+            evaluationCriteria: {
+              pronunciation: 25,
+              grammar: 25,
+              fluency: 25,
+              appropriateness: 25
             }
           }
         ]
