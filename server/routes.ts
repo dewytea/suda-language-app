@@ -15,6 +15,7 @@ import {
   insertConversationHistorySchema,
   insertScenarioProgressSchema,
 } from "@shared/schema";
+import { getChatResponseForScenario, evaluateConversation } from "./openai";
 
 // Using Gemini AI integration - see blueprint:javascript_gemini
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -1828,6 +1829,98 @@ Create topics that help the student practice using this vocabulary and explore t
     } catch (error: any) {
       console.error('Get conversation error:', error);
       res.status(500).json({ error: 'Failed to fetch conversation' });
+    }
+  });
+
+  // Speaking: Get AI conversation response
+  app.post("/api/speaking/conversation", requireAuth, async (req, res) => {
+    try {
+      const { scenarioId, stepNumber, messages } = req.body;
+      
+      if (!scenarioId || !stepNumber || !messages) {
+        return res.status(400).json({ error: 'Missing required fields: scenarioId, stepNumber, messages' });
+      }
+      
+      // Get scenario and step details
+      const scenario = await storage.getSpeakingScenario(scenarioId);
+      if (!scenario) {
+        return res.status(404).json({ error: 'Scenario not found' });
+      }
+      
+      const step = scenario.steps.find(s => s.stepNumber === stepNumber);
+      if (!step) {
+        return res.status(404).json({ error: 'Step not found' });
+      }
+      
+      // Build context for AI
+      const context = {
+        scenarioTitle: scenario.title,
+        stepTitle: step.title,
+        situation: step.situation,
+        aiRole: step.aiRole,
+        aiPrompt: step.aiPrompt,
+        usefulExpressions: step.usefulExpressions.map(expr => ({
+          expression: expr.expression,
+          meaning: expr.meaning,
+          examples: expr.examples,
+        })),
+      };
+      
+      // Get AI response
+      const aiResponse = await getChatResponseForScenario(messages, context);
+      
+      res.json({ response: aiResponse });
+    } catch (error: any) {
+      console.error('Speaking conversation error:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate AI response' });
+    }
+  });
+
+  // Speaking: Evaluate conversation
+  app.post("/api/speaking/evaluate", requireAuth, async (req, res) => {
+    try {
+      const { scenarioId, stepNumber, messages } = req.body;
+      
+      if (!scenarioId || !stepNumber || !messages) {
+        return res.status(400).json({ error: 'Missing required fields: scenarioId, stepNumber, messages' });
+      }
+      
+      // Get scenario and step details
+      const scenario = await storage.getSpeakingScenario(scenarioId);
+      if (!scenario) {
+        return res.status(404).json({ error: 'Scenario not found' });
+      }
+      
+      const step = scenario.steps.find(s => s.stepNumber === stepNumber);
+      if (!step) {
+        return res.status(404).json({ error: 'Step not found' });
+      }
+      
+      // Build context for evaluation
+      const context = {
+        scenarioTitle: scenario.title,
+        stepTitle: step.title,
+        situation: step.situation,
+        aiRole: step.aiRole,
+        aiPrompt: step.aiPrompt,
+        usefulExpressions: step.usefulExpressions.map(expr => ({
+          expression: expr.expression,
+          meaning: expr.meaning,
+          examples: expr.examples,
+        })),
+      };
+      
+      // Evaluate conversation
+      const evaluation = await evaluateConversation(
+        messages,
+        context,
+        step.evaluationCriteria
+      );
+      
+      res.json(evaluation);
+    } catch (error: any) {
+      console.error('Speaking evaluation error:', error);
+      res.status(500).json({ error: error.message || 'Failed to evaluate conversation' });
     }
   });
 
