@@ -1,0 +1,381 @@
+Reading 모듈의 컨텐츠를 대폭 확장해줘.
+
+=== Reading 컨텐츠 확장: 50개 지문 추가 ===
+
+**목표:**
+현재 Reading 모듈에 다양한 주제의 고품질 읽기 지문 50개를 추가하여
+사용자가 레벨별로 풍부한 학습 경험을 할 수 있도록 함.
+
+---
+
+## 📊 **레벨별 분배**
+
+- **Level 1 (초급):** 10개 지문
+- **Level 2 (초중급):** 10개 지문
+- **Level 3 (중급):** 10개 지문
+- **Level 4 (중상급):** 10개 지문
+- **Level 5 (고급):** 10개 지문
+
+**총 50개 지문**
+
+---
+
+## 📖 **Level 1 (초급) - 10개**
+
+**특징:**
+- 단어 수: 100-150 words
+- 현재시제 위주
+- 단순 문장 구조 (S+V+O)
+- 기초 어휘 (1000 most common words)
+- 짧은 단락 (2-3 paragraphs)
+
+**주제:**
+1. **My Daily Routine** (일상 루틴)
+2. **My Family** (가족 소개)
+3. **Weekend Activities** (주말 활동)
+4. **My Favorite Hobby** (좋아하는 취미)
+5. **A Day at School** (학교에서의 하루)
+6. **My Pet** (반려동물)
+7. **My Favorite Food** (좋아하는 음식)
+8. **My Bedroom** (내 방)
+9. **Going Shopping** (쇼핑 가기)
+10. **My Best Friend** (가장 친한 친구)
+
+---
+
+## 📖 **Level 2 (초중급) - 10개**
+
+**특징:**
+- 단어 수: 150-200 words
+- 현재/과거시제 혼용
+- 접속사 사용 (and, but, because)
+- 일상 어휘 확장
+- 3-4 paragraphs
+
+**주제:**
+1. **My First Trip Abroad** (첫 해외여행)
+2. **City Life vs Country Life** (도시와 시골 생활)
+3. **My Smartphone** (내 스마트폰)
+4. **Healthy Eating Habits** (건강한 식습관)
+5. **Recycling at Home** (집에서 재활용하기)
+6. **Traditional Festivals** (전통 축제)
+7. **Learning a New Language** (새로운 언어 배우기)
+8. **My Favorite Season** (좋아하는 계절)
+9. **Online Shopping** (온라인 쇼핑)
+10. **Exercise and Health** (운동과 건강)
+
+---
+
+## 📖 **Level 3 (중급) - 10개**
+
+**특징:**
+- 단어 수: 200-250 words
+- 다양한 시제 (현재/과거/미래/완료)
+- 복합 문장, 관계대명사
+- 중급 어휘
+- 4-5 paragraphs
+
+**주제:**
+1. **The Benefits of Online Learning** (온라인 학습의 장점)
+2. **Choosing a Career Path** (진로 선택)
+3. **Climate Change Basics** (기후 변화 기초)
+4. **The Power of Volunteering** (봉사활동의 힘)
+5. **Museums and Culture** (박물관과 문화)
+6. **Work-Life Balance** (일과 삶의 균형)
+7. **Renewable Energy** (재생 에너지)
+8. **Social Media Impact** (소셜 미디어 영향)
+9. **Traditional vs Modern Medicine** (전통 의학 vs 현대 의학)
+10. **The Importance of Reading** (독서의 중요성)
+
+---
+
+## 📖 **Level 4 (중상급) - 10개**
+
+**특징:**
+- 단어 수: 250-300 words
+- 모든 시제 및 수동태 활용
+- 추상적 개념 표현
+- 고급 어휘 및 idioms
+- 5-6 paragraphs
+
+**주제:**
+1. **Consumer Behavior in the Digital Age** (디지털 시대의 소비자 행동)
+2. **Managing Stress Effectively** (효과적인 스트레스 관리)
+3. **The Evolution of Communication** (의사소통의 진화)
+4. **Book Reviews: Fiction vs Non-fiction** (도서 리뷰)
+5. **Decision Making Processes** (의사결정 과정)
+6. **Cultural Differences in Business** (비즈니스 문화 차이)
+7. **The Role of Art in Society** (사회에서 예술의 역할)
+8. **Personal Values and Ethics** (개인 가치관과 윤리)
+9. **Innovation and Creativity** (혁신과 창의성)
+10. **The Digital Divide** (디지털 격차)
+
+---
+
+## 📖 **Level 5 (고급) - 10개**
+
+**특징:**
+- 단어 수: 300-400 words
+- 복잡한 문장 구조
+- 학술적/전문적 어휘
+- 깊이 있는 분석
+- 6-8 paragraphs
+
+**주제:**
+1. **Globalization and Its Effects** (세계화와 그 영향)
+2. **Artificial Intelligence and Ethics** (인공지능과 윤리)
+3. **The Future of Space Exploration** (우주 탐사의 미래)
+4. **Leadership in the 21st Century** (21세기 리더십)
+5. **Critical Thinking in Education** (교육에서의 비판적 사고)
+6. **Economic Inequality** (경제적 불평등)
+7. **Urban Planning and Sustainability** (도시 계획과 지속가능성)
+8. **The Impact of Technology on Employment** (기술이 고용에 미치는 영향)
+9. **Global Health Challenges** (글로벌 보건 과제)
+10. **The Philosophy of Happiness** (행복의 철학)
+
+---
+
+## 📝 **각 지문 구조**
+```typescript
+interface ReadingPassage {
+  id: string;
+  title: string;
+  content: string;  // 실제 읽기 지문 전문
+  level: 1 | 2 | 3 | 4 | 5;
+  category: string;  // Daily Life, Science, Culture, Business, etc.
+  wordCount: number;
+  estimatedTime: number;  // 분 단위
+  
+  questions: [
+    {
+      type: "main_idea",
+      question: string,
+      options: [string, string, string, string],
+      correctAnswer: number,  // 0-3
+      explanation: string
+    },
+    {
+      type: "detail",
+      question: string,
+      options: [string, string, string, string],
+      correctAnswer: number,
+      explanation: string
+    },
+    {
+      type: "inference",
+      question: string,
+      options: [string, string, string, string],
+      correctAnswer: number,
+      explanation: string
+    },
+    {
+      type: "vocabulary",
+      question: string,
+      options: [string, string, string, string],
+      correctAnswer: number,
+      explanation: string
+    }
+  ];
+}
+```
+
+---
+
+## 🎯 **질문 유형별 가이드**
+
+**1. Main Idea (주제)**
+- "What is the main idea of this passage?"
+- "What is the author's primary purpose?"
+- "Which title best describes this passage?"
+
+**2. Detail (세부사항)**
+- "According to the passage, ..."
+- "The author mentions that ..."
+- "What does the passage say about ...?"
+
+**3. Inference (추론)**
+- "What can be inferred from the passage?"
+- "The author implies that ..."
+- "Based on the passage, we can conclude that ..."
+
+**4. Vocabulary (어휘)**
+- "What does '[word]' mean in this context?"
+- "Which word is closest in meaning to '[word]'?"
+- "The word '[word]' in paragraph X refers to ..."
+
+---
+
+## 💾 **데이터베이스 작업**
+```sql
+-- 기존 테이블에 데이터 추가
+INSERT INTO reading_passages (
+  id,
+  title,
+  content,
+  level,
+  category,
+  word_count,
+  estimated_time,
+  questions
+) VALUES ...
+```
+
+---
+
+## ✅ **품질 기준**
+
+**각 지문은 반드시:**
+1. ✅ 문법적으로 완벽해야 함
+2. ✅ 자연스러운 영어 표현 사용
+3. ✅ 해당 레벨에 적절한 난이도
+4. ✅ 흥미롭고 유익한 내용
+5. ✅ 문화적으로 중립적
+6. ✅ 실제 사용 가능한 어휘/표현
+
+**각 질문은 반드시:**
+1. ✅ 명확하고 모호하지 않음
+2. ✅ 4개의 선택지 모두 그럴듯함
+3. ✅ 정답이 확실함
+4. ✅ 설명이 교육적임
+
+---
+
+## 📊 **카테고리 분포**
+
+각 레벨에서 다양한 카테고리 포함:
+- Daily Life (일상생활): 10개
+- Culture & Society (문화/사회): 10개
+- Science & Technology (과학/기술): 10개
+- Health & Wellness (건강/웰니스): 8개
+- Business & Work (비즈니스/직장): 7개
+- Education (교육): 5개
+
+---
+
+## 🎯 **구현 순서**
+
+1. **데이터 구조 확인**
+   - 기존 reading_passages 테이블 확인
+   - 스키마 수정 필요 시 migration
+
+2. **지문 생성**
+   - Level 1부터 차례대로 10개씩
+   - 각 지문마다 4개 질문 생성
+   - 정답 및 설명 작성
+
+3. **데이터베이스 삽입**
+   - SQL 또는 seed 파일로 추가
+   - 중복 확인
+
+4. **프론트엔드 테스트**
+   - Reading 페이지에서 새 지문 확인
+   - 질문 표시 확인
+   - 정답 체크 확인
+
+---
+
+## 📝 **예시 지문 (Level 1)**
+```typescript
+{
+  id: "reading-level1-001",
+  title: "My Daily Routine",
+  content: `
+    I wake up at 7:00 AM every morning. First, I brush my teeth and wash my face. Then, I eat breakfast with my family. I usually have toast and milk.
+    
+    After breakfast, I go to school at 8:00 AM. I study many subjects like math, English, and science. I have lunch with my friends at 12:00 PM. We talk and laugh together.
+    
+    I come home at 4:00 PM. I do my homework and play games. At 7:00 PM, I have dinner. I go to bed at 10:00 PM. I like my daily routine.
+  `,
+  level: 1,
+  category: "Daily Life",
+  wordCount: 112,
+  estimatedTime: 2,
+  
+  questions: [
+    {
+      type: "main_idea",
+      question: "What is this passage mainly about?",
+      options: [
+        "The author's school subjects",
+        "The author's daily schedule",
+        "The author's breakfast",
+        "The author's friends"
+      ],
+      correctAnswer: 1,
+      explanation: "The passage describes the author's typical day from morning to night."
+    },
+    {
+      type: "detail",
+      question: "What time does the author go to school?",
+      options: [
+        "7:00 AM",
+        "8:00 AM",
+        "12:00 PM",
+        "4:00 PM"
+      ],
+      correctAnswer: 1,
+      explanation: "The passage states 'I go to school at 8:00 AM.'"
+    },
+    {
+      type: "inference",
+      question: "What can we infer about the author?",
+      options: [
+        "The author is a teacher",
+        "The author is a student",
+        "The author works at night",
+        "The author lives alone"
+      ],
+      correctAnswer: 1,
+      explanation: "The author goes to school, studies subjects, and does homework, which indicates they are a student."
+    },
+    {
+      type: "vocabulary",
+      question: "What does 'routine' mean in this passage?",
+      options: [
+        "Something difficult",
+        "Something new",
+        "Regular activities",
+        "Special events"
+      ],
+      correctAnswer: 2,
+      explanation: "'Routine' refers to activities that are done regularly every day."
+    }
+  ]
+}
+```
+
+---
+
+## ⚡ **시작하세요!**
+
+위 가이드라인에 따라 **50개의 완성도 높은 읽기 지문**을 생성하고
+데이터베이스에 추가해주세요.
+
+각 지문은 실제로 학습자가 읽고 배울 수 있는
+고품질의 교육 자료여야 합니다.
+```
+
+---
+
+## ⏰ **예상 결과**
+```
+30분-1시간 후:
+✅ 50개 지문 생성 완료
+✅ 200개 질문 (각 지문 4개)
+✅ 데이터베이스 추가 완료
+✅ Reading 페이지에서 확인 가능
+
+→ Reading 모듈 완전 확장! 📚
+```
+
+---
+
+## 💡 **진행 중 체크리스트**
+```
+☐ Replit Agent에 프롬프트 붙여넣기
+☐ 생성 시작 확인
+☐ 중간 결과 체크 (Level 1-2 완료 시)
+☐ 전체 완료 확인
+☐ 데이터베이스 확인
+☐ 프론트엔드에서 테스트
+☐ 다음 단계 (Listening 확장) 준비

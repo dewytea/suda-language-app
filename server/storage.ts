@@ -1592,6 +1592,373 @@ export class MemStorage implements IStorage {
             translation: "감정은 의사결정에서 중요한 역할을 하며, 때로는 유익하게, 때로는 해롭게 작용합니다. 신체 마커 가설은 이전 결과에 대한 감정적 반응이 미래의 선택을 안내하여 익숙한 상황에서 빠른 결정을 가능하게 한다고 제안합니다. 그러나 강한 감정은 판단을 흐리게 하여 장기 목표보다 단기 만족을 우선시하는 충동적인 결정으로 이어질 수 있습니다. 특히 스트레스는 우리의 초점을 좁히고 인지적 유연성을 감소시켜 의사결정의 질을 손상시킵니다. 이러한 패턴을 인식하면 구조화된 의사결정 프레임워크, 다양한 관점, 시간적 거리와 같은 전략을 구현하여 편향을 완화하고 개인적 및 전문적 맥락에서 우리의 선택의 질을 개선할 수 있습니다."
           }
         ]
+      },
+      // === LEVEL 1 ADDITIONS (8 more passages) ===
+      {
+        title: "My Family",
+        content: "I have a small family. There are four people in my family: my father, my mother, my sister, and me. My father is a teacher. He teaches English. My mother is a nurse. She works at a hospital. My sister is younger than me. She is in elementary school. We live in a house near the park. On weekends, we like to have dinner together. I love my family very much.",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 75,
+        estimatedTime: 45,
+        paragraphs: [
+          {
+            text: "I have a small family. There are four people in my family: my father, my mother, my sister, and me. My father is a teacher. He teaches English. My mother is a nurse. She works at a hospital. My sister is younger than me. She is in elementary school. We live in a house near the park. On weekends, we like to have dinner together. I love my family very much.",
+            translation: "저는 작은 가족이 있습니다. 우리 가족은 네 명입니다: 아버지, 어머니, 여동생, 그리고 저. 아버지는 선생님이십니다. 영어를 가르치세요. 어머니는 간호사이십니다. 병원에서 일하세요. 여동생은 저보다 어립니다. 초등학생이에요. 우리는 공원 근처 집에 살아요. 주말에는 함께 저녁을 먹는 것을 좋아해요. 저는 우리 가족을 매우 사랑합니다."
+          }
+        ]
+      },
+      {
+        title: "My Pet Dog",
+        content: "I have a pet dog. His name is Max. Max is three years old. He is a golden retriever. Max has brown fur and big eyes. Every morning, I take Max for a walk in the park. He loves to run and play with other dogs. Max is very friendly. When I come home from school, Max is always happy to see me. He is my best friend.",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 72,
+        estimatedTime: 43,
+        paragraphs: [
+          {
+            text: "I have a pet dog. His name is Max. Max is three years old. He is a golden retriever. Max has brown fur and big eyes. Every morning, I take Max for a walk in the park. He loves to run and play with other dogs. Max is very friendly. When I come home from school, Max is always happy to see me. He is my best friend.",
+            translation: "저는 반려견이 있습니다. 이름은 맥스예요. 맥스는 세 살입니다. 골든 리트리버예요. 맥스는 갈색 털과 큰 눈을 가졌어요. 매일 아침, 저는 맥스를 데리고 공원을 산책해요. 다른 개들과 뛰놀기를 좋아해요. 맥스는 아주 친근해요. 제가 학교에서 집에 오면, 맥스는 항상 저를 보고 기뻐해요. 제 가장 친한 친구예요."
+          }
+        ]
+      },
+      {
+        title: "My Favorite Food",
+        content: "My favorite food is pizza. I like pizza because it tastes delicious. My favorite pizza has cheese, tomatoes, and mushrooms. Every Friday, my family orders pizza for dinner. Sometimes we make pizza at home. It is fun to make pizza. I put the sauce on the dough. Then I add cheese and vegetables. The pizza smells good when it is cooking. Pizza is the best!",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 70,
+        estimatedTime: 42,
+        paragraphs: [
+          {
+            text: "My favorite food is pizza. I like pizza because it tastes delicious. My favorite pizza has cheese, tomatoes, and mushrooms. Every Friday, my family orders pizza for dinner. Sometimes we make pizza at home. It is fun to make pizza. I put the sauce on the dough. Then I add cheese and vegetables. The pizza smells good when it is cooking. Pizza is the best!",
+            translation: "제가 가장 좋아하는 음식은 피자예요. 피자가 맛있어서 좋아해요. 제가 좋아하는 피자에는 치즈, 토마토, 버섯이 들어가요. 매주 금요일, 우리 가족은 저녁으로 피자를 주문해요. 가끔 집에서 피자를 만들어요. 피자 만드는 것은 재미있어요. 도우에 소스를 바르고, 치즈와 야채를 올려요. 피자가 요리될 때 냄새가 좋아요. 피자가 최고예요!"
+          }
+        ]
+      },
+      {
+        title: "A Day at the Beach",
+        content: "Last summer, I went to the beach with my family. The weather was sunny and hot. The water was blue and clean. I played in the sand and built a sandcastle. My brother and I swam in the ocean. The water was cold but fun. We found some seashells. In the afternoon, we ate sandwiches. I had a great time at the beach!",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 68,
+        estimatedTime: 41,
+        paragraphs: [
+          {
+            text: "Last summer, I went to the beach with my family. The weather was sunny and hot. The water was blue and clean. I played in the sand and built a sandcastle. My brother and I swam in the ocean. The water was cold but fun. We found some seashells. In the afternoon, we ate sandwiches. I had a great time at the beach!",
+            translation: "지난 여름, 저는 가족과 함께 해변에 갔어요. 날씨가 맑고 더웠어요. 물은 파랗고 깨끗했어요. 모래에서 놀고 모래성을 쌓았어요. 남동생과 저는 바다에서 수영했어요. 물은 차가웠지만 재미있었어요. 조개껍데기를 몇 개 찾았어요. 오후에는 샌드위치를 먹었어요. 해변에서 정말 즐거운 시간을 보냈어요!"
+          }
+        ]
+      },
+      {
+        title: "My Bedroom",
+        content: "My bedroom is my favorite place in the house. It is small but comfortable. My bed is next to the window. I have a desk for studying. On my desk, there are books and pencils. I have a blue chair. My closet is full of clothes. There are posters on the wall. My room is always clean. I like to spend time in my bedroom.",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 68,
+        estimatedTime: 41,
+        paragraphs: [
+          {
+            text: "My bedroom is my favorite place in the house. It is small but comfortable. My bed is next to the window. I have a desk for studying. On my desk, there are books and pencils. I have a blue chair. My closet is full of clothes. There are posters on the wall. My room is always clean. I like to spend time in my bedroom.",
+            translation: "제 침실은 집에서 제가 가장 좋아하는 장소예요. 작지만 편안해요. 제 침대는 창문 옆에 있어요. 공부하는 책상이 있어요. 책상 위에는 책과 연필이 있어요. 파란 의자가 있어요. 옷장에는 옷이 가득해요. 벽에는 포스터가 붙어 있어요. 제 방은 항상 깨끗해요. 제 침실에서 시간 보내는 것을 좋아해요."
+          }
+        ]
+      },
+      {
+        title: "Going to the Library",
+        content: "I go to the library every Saturday. The library is near my school. It is a big building with many books. I like to read story books. Sometimes I borrow books to take home. The librarian is very nice. She helps me find books. The library is quiet. I can study there. Reading makes me happy. I love the library!",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 65,
+        estimatedTime: 39,
+        paragraphs: [
+          {
+            text: "I go to the library every Saturday. The library is near my school. It is a big building with many books. I like to read story books. Sometimes I borrow books to take home. The librarian is very nice. She helps me find books. The library is quiet. I can study there. Reading makes me happy. I love the library!",
+            translation: "저는 매주 토요일마다 도서관에 가요. 도서관은 제 학교 근처에 있어요. 많은 책이 있는 큰 건물이에요. 저는 동화책 읽는 것을 좋아해요. 가끔 집으로 가져갈 책을 빌려요. 사서님이 아주 친절해요. 책 찾는 것을 도와주세요. 도서관은 조용해요. 거기서 공부할 수 있어요. 독서는 저를 행복하게 해요. 도서관을 사랑해요!"
+          }
+        ]
+      },
+      {
+        title: "My Best Friend",
+        content: "My best friend's name is Tom. We are in the same class at school. Tom is funny and kind. We like to play soccer together after school. Sometimes we do homework together. Tom helps me with math. I help him with English. On weekends, we go to the park or watch movies. Tom is a good friend. I am lucky to have him.",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 69,
+        estimatedTime: 41,
+        paragraphs: [
+          {
+            text: "My best friend's name is Tom. We are in the same class at school. Tom is funny and kind. We like to play soccer together after school. Sometimes we do homework together. Tom helps me with math. I help him with English. On weekends, we go to the park or watch movies. Tom is a good friend. I am lucky to have him.",
+            translation: "제 가장 친한 친구 이름은 톰이에요. 우리는 학교에서 같은 반이에요. 톰은 재미있고 친절해요. 방과 후에 함께 축구하는 것을 좋아해요. 가끔 함께 숙제를 해요. 톰은 수학을 도와줘요. 저는 영어를 도와줘요. 주말에는 공원에 가거나 영화를 봐요. 톰은 좋은 친구예요. 그를 가진 것이 행운이에요."
+          }
+        ]
+      },
+      {
+        title: "Making Breakfast",
+        content: "I like to make breakfast on Sunday mornings. First, I make toast. I put butter on the toast. Then I pour a glass of orange juice. Sometimes I make scrambled eggs. It is easy to cook. I crack the eggs into a bowl. Then I cook them in a pan. My family likes my breakfast. Making breakfast is fun!",
+        contentType: "story",
+        difficulty: 1,
+        wordCount: 65,
+        estimatedTime: 39,
+        paragraphs: [
+          {
+            text: "I like to make breakfast on Sunday mornings. First, I make toast. I put butter on the toast. Then I pour a glass of orange juice. Sometimes I make scrambled eggs. It is easy to cook. I crack the eggs into a bowl. Then I cook them in a pan. My family likes my breakfast. Making breakfast is fun!",
+            translation: "저는 일요일 아침에 아침식사 만드는 것을 좋아해요. 먼저 토스트를 만들어요. 토스트에 버터를 바르고, 오렌지 주스를 따라요. 가끔 스크램블 에그를 만들어요. 요리하기 쉬워요. 그릇에 계란을 깨뜨리고, 팬에서 요리해요. 우리 가족은 제가 만든 아침식사를 좋아해요. 아침식사 만들기는 재미있어요!"
+          }
+        ]
+      },
+      // === LEVEL 2 ADDITIONS (7 more passages) ===
+      {
+        title: "My First Day at School",
+        content: "I remember my first day at middle school. I was nervous but excited. The school building looked very big. I walked into my classroom and saw many new faces. My teacher was friendly and welcomed everyone. She told us about the school rules and our schedule. At lunch, I sat with a group of students. We introduced ourselves and talked about our hobbies. By the end of the day, I had made three new friends. I wasn't nervous anymore. I was looking forward to the next day!",
+        contentType: "story",
+        difficulty: 2,
+        wordCount: 95,
+        estimatedTime: 57,
+        paragraphs: [
+          {
+            text: "I remember my first day at middle school. I was nervous but excited. The school building looked very big. I walked into my classroom and saw many new faces. My teacher was friendly and welcomed everyone. She told us about the school rules and our schedule. At lunch, I sat with a group of students. We introduced ourselves and talked about our hobbies. By the end of the day, I had made three new friends. I wasn't nervous anymore. I was looking forward to the next day!",
+            translation: "중학교 첫날을 기억해요. 긴장되었지만 설레었어요. 학교 건물이 아주 커 보였어요. 교실에 들어가니 많은 새로운 얼굴들이 보였어요. 선생님은 친절하셨고 모두를 환영해주셨어요. 학교 규칙과 일정에 대해 말씀해주셨어요. 점심시간에 학생들과 함께 앉았어요. 서로 소개하고 취미에 대해 이야기했어요. 하루가 끝날 무렵, 새로운 친구 세 명을 사귀었어요. 더 이상 긴장되지 않았어요. 다음 날이 기대되었어요!"
+          }
+        ]
+      },
+      {
+        title: "Learning to Ride a Bike",
+        content: "Last year, I learned how to ride a bike. At first, it was difficult. I fell down many times. My dad helped me practice every weekend. He held the back of the bike while I pedaled. After two weeks, I could balance on my own. One day, my dad let go without telling me. I was riding by myself! I felt proud and happy. Now I ride my bike to school every day. It's faster than walking and better for the environment. Learning to ride a bike taught me that practice makes perfect.",
+        contentType: "story",
+        difficulty: 2,
+        wordCount: 102,
+        estimatedTime: 61,
+        paragraphs: [
+          {
+            text: "Last year, I learned how to ride a bike. At first, it was difficult. I fell down many times. My dad helped me practice every weekend. He held the back of the bike while I pedaled. After two weeks, I could balance on my own. One day, my dad let go without telling me. I was riding by myself! I felt proud and happy. Now I ride my bike to school every day. It's faster than walking and better for the environment. Learning to ride a bike taught me that practice makes perfect.",
+            translation: "작년에 자전거 타는 법을 배웠어요. 처음에는 어려웠어요. 여러 번 넘어졌어요. 아빠가 매주 주말마다 연습을 도와주셨어요. 제가 페달을 밟는 동안 자전거 뒤를 잡아주셨어요. 2주 후에는 혼자 균형을 잡을 수 있었어요. 어느 날 아빠가 말씀하지 않고 놓으셨어요. 제가 혼자 타고 있었어요! 자랑스럽고 행복했어요. 이제 매일 자전거를 타고 학교에 가요. 걷는 것보다 빠르고 환경에도 더 좋아요. 자전거 타기를 배우면서 연습이 완벽을 만든다는 것을 배웠어요."
+          }
+        ]
+      },
+      {
+        title: "A Visit to the Museum",
+        content: "Last month, our class went on a field trip to the science museum. We took a bus there. The museum had many interesting exhibits. We saw dinosaur fossils and learned about how they lived millions of years ago. There was also a planetarium show about the solar system. I learned that Jupiter is the biggest planet. The most exciting part was the robot demonstration. The robots could dance and play music. Our teacher gave us worksheets to complete. At the gift shop, I bought a small telescope. The museum trip made me more interested in science.",
+        contentType: "story",
+        difficulty: 2,
+        wordCount: 104,
+        estimatedTime: 62,
+        paragraphs: [
+          {
+            text: "Last month, our class went on a field trip to the science museum. We took a bus there. The museum had many interesting exhibits. We saw dinosaur fossils and learned about how they lived millions of years ago. There was also a planetarium show about the solar system. I learned that Jupiter is the biggest planet. The most exciting part was the robot demonstration. The robots could dance and play music. Our teacher gave us worksheets to complete. At the gift shop, I bought a small telescope. The museum trip made me more interested in science.",
+            translation: "지난달 우리 반은 과학 박물관으로 현장학습을 갔어요. 버스를 타고 갔어요. 박물관에는 많은 흥미로운 전시물이 있었어요. 공룡 화석을 보고 수백만 년 전 그들이 어떻게 살았는지 배웠어요. 태양계에 관한 플라네타리움 쇼도 있었어요. 목성이 가장 큰 행성이라는 것을 배웠어요. 가장 신나는 부분은 로봇 시연이었어요. 로봇들이 춤추고 음악을 연주할 수 있었어요. 선생님이 작성할 워크시트를 주셨어요. 기념품 가게에서 작은 망원경을 샀어요. 박물관 여행은 저를 과학에 더 관심 갖게 만들었어요."
+          }
+        ]
+      },
+      {
+        title: "Helping at Home",
+        content: "In my family, everyone has chores to do at home. My job is to set the table before dinner and wash the dishes afterward. At first, I didn't like doing chores because I wanted to play games instead. But my parents explained that sharing housework is important. Now I understand that helping makes our home cleaner and gives my parents more free time. My sister vacuums the floors, and my brother takes out the trash. On Saturdays, we all clean together. It goes faster when everyone helps. Doing chores has taught me to be more responsible.",
+        contentType: "story",
+        difficulty: 2,
+        wordCount: 104,
+        estimatedTime: 62,
+        paragraphs: [
+          {
+            text: "In my family, everyone has chores to do at home. My job is to set the table before dinner and wash the dishes afterward. At first, I didn't like doing chores because I wanted to play games instead. But my parents explained that sharing housework is important. Now I understand that helping makes our home cleaner and gives my parents more free time. My sister vacuums the floors, and my brother takes out the trash. On Saturdays, we all clean together. It goes faster when everyone helps. Doing chores has taught me to be more responsible.",
+            translation: "우리 가족에서는 모두가 집안일을 해요. 제 일은 저녁 전에 식탁을 차리고 그 후에 설거지하는 거예요. 처음에는 게임하고 싶어서 집안일을 좋아하지 않았어요. 하지만 부모님이 집안일을 나누는 것이 중요하다고 설명해주셨어요. 이제 돕는 것이 집을 더 깨끗하게 만들고 부모님께 더 많은 자유 시간을 준다는 것을 이해해요. 여동생은 바닥을 청소기로 청소하고, 남동생은 쓰레기를 버려요. 토요일에는 모두 함께 청소해요. 모두가 도우면 더 빨리 끝나요. 집안일하는 것이 저를 더 책임감 있게 만들었어요."
+          }
+        ]
+      },
+      {
+        title: "My Favorite Season",
+        content: "Autumn is my favorite season of the year. I love how the leaves change color from green to red, orange, and yellow. The weather is cool and comfortable—not too hot and not too cold. During autumn, my family goes hiking in the mountains to see the beautiful scenery. We take pictures of the colorful trees. Autumn is also harvest time. We visit apple orchards and pick fresh apples. My mom makes apple pie with them. The smell fills our house. Another thing I enjoy is wearing cozy sweaters. Autumn makes me feel happy and peaceful.",
+        contentType: "story",
+        difficulty: 2,
+        wordCount: 107,
+        estimatedTime: 64,
+        paragraphs: [
+          {
+            text: "Autumn is my favorite season of the year. I love how the leaves change color from green to red, orange, and yellow. The weather is cool and comfortable—not too hot and not too cold. During autumn, my family goes hiking in the mountains to see the beautiful scenery. We take pictures of the colorful trees. Autumn is also harvest time. We visit apple orchards and pick fresh apples. My mom makes apple pie with them. The smell fills our house. Another thing I enjoy is wearing cozy sweaters. Autumn makes me feel happy and peaceful.",
+            translation: "가을은 제가 가장 좋아하는 계절이에요. 나뭇잎이 초록색에서 빨강, 주황, 노랑으로 색이 변하는 것을 좋아해요. 날씨가 시원하고 편안해요—너무 덥지도 춥지도 않아요. 가을에 우리 가족은 아름다운 경치를 보러 산에 하이킹을 가요. 화려한 나무들의 사진을 찍어요. 가을은 수확의 시기이기도 해요. 사과 과수원을 방문해서 신선한 사과를 따요. 엄마가 사과 파이를 만들어요. 향기가 집 안을 가득 채워요. 또 다른 즐거움은 아늑한 스웨터를 입는 거예요. 가을은 저를 행복하고 평화롭게 만들어요."
+          }
+        ]
+      },
+      {
+        title: "School Lunch Program",
+        content: "Our school started a new lunch program this year. The cafeteria now offers healthier food choices. Instead of fried foods every day, we have fresh salads, grilled chicken, and whole wheat bread. There's also a vegetarian option for students who don't eat meat. The school nutritionist planned the menus to include more fruits and vegetables. Some students complained at first because they missed pizza and burgers. However, after trying the new food, most students agree it tastes good. The school also started a recycling program for lunch trays and bottles. These changes are better for our health and the environment.",
+        contentType: "news",
+        difficulty: 2,
+        wordCount: 110,
+        estimatedTime: 66,
+        paragraphs: [
+          {
+            text: "Our school started a new lunch program this year. The cafeteria now offers healthier food choices. Instead of fried foods every day, we have fresh salads, grilled chicken, and whole wheat bread. There's also a vegetarian option for students who don't eat meat. The school nutritionist planned the menus to include more fruits and vegetables. Some students complained at first because they missed pizza and burgers. However, after trying the new food, most students agree it tastes good. The school also started a recycling program for lunch trays and bottles. These changes are better for our health and the environment.",
+            translation: "우리 학교는 올해 새로운 급식 프로그램을 시작했어요. 구내식당이 이제 더 건강한 음식 선택을 제공해요. 매일 튀긴 음식 대신에, 신선한 샐러드, 구운 닭고기, 통밀 빵이 있어요. 고기를 먹지 않는 학생들을 위한 채식 옵션도 있어요. 학교 영양사가 과일과 채소를 더 많이 포함하도록 메뉴를 계획했어요. 일부 학생들은 피자와 햄버거가 그리워서 처음에는 불평했어요. 하지만 새 음식을 먹어본 후, 대부분의 학생들이 맛있다는 데 동의해요. 학교는 또한 급식 쟁반과 병을 위한 재활용 프로그램을 시작했어요. 이러한 변화는 우리 건강과 환경에 더 좋아요."
+          }
+        ]
+      },
+      {
+        title: "Video Games and Study Time",
+        content: "Many students enjoy playing video games, but finding balance between gaming and studying can be challenging. Video games are fun and can help develop problem-solving skills. However, spending too much time gaming can affect schoolwork and sleep. Experts recommend limiting game time to one or two hours per day. It's important to finish homework first before playing games. Some parents set rules about when their children can play. Taking breaks from screens is also healthy for your eyes. Playing outdoor games or sports provides exercise and social interaction. The key is moderation—enjoying games while maintaining good study habits.",
+        contentType: "essay",
+        difficulty: 2,
+        wordCount: 108,
+        estimatedTime: 65,
+        paragraphs: [
+          {
+            text: "Many students enjoy playing video games, but finding balance between gaming and studying can be challenging. Video games are fun and can help develop problem-solving skills. However, spending too much time gaming can affect schoolwork and sleep. Experts recommend limiting game time to one or two hours per day. It's important to finish homework first before playing games. Some parents set rules about when their children can play. Taking breaks from screens is also healthy for your eyes. Playing outdoor games or sports provides exercise and social interaction. The key is moderation—enjoying games while maintaining good study habits.",
+            translation: "많은 학생들이 비디오 게임을 즐기지만, 게임과 공부 사이의 균형을 찾는 것은 어려울 수 있어요. 비디오 게임은 재미있고 문제 해결 능력을 개발하는 데 도움이 될 수 있어요. 그러나 게임에 너무 많은 시간을 쓰면 학업과 수면에 영향을 줄 수 있어요. 전문가들은 게임 시간을 하루에 한두 시간으로 제한할 것을 권장해요. 게임하기 전에 먼저 숙제를 끝내는 것이 중요해요. 일부 부모님들은 자녀가 언제 게임할 수 있는지 규칙을 정해요. 화면에서 휴식을 취하는 것도 눈 건강에 좋아요. 야외 게임이나 스포츠를 하면 운동과 사회적 교류를 할 수 있어요. 핵심은 절제예요—좋은 학습 습관을 유지하면서 게임을 즐기는 거예요."
+          }
+        ]
+      },
+      // === LEVEL 3 ADDITIONS (7 more passages) ===
+      {
+        title: "The Benefits of Meditation",
+        content: "Meditation has become increasingly popular in recent years as people search for ways to manage stress and improve their mental health. This ancient practice involves focusing the mind and eliminating distractions to achieve a state of calm awareness. Regular meditation offers numerous benefits for both mental and physical well-being.\n\nScientific research has shown that meditation can reduce anxiety and depression while improving concentration and emotional regulation. When we meditate, our brain waves slow down, promoting relaxation. Studies using brain imaging have revealed that regular meditation can actually change brain structure, increasing gray matter in areas associated with learning and memory.\n\nPhysically, meditation has been linked to lower blood pressure, improved immune function, and better sleep quality. Many practitioners report feeling more energized and focused throughout the day. Starting a meditation practice doesn't require special equipment or extensive time commitment. Even five to ten minutes daily can make a difference. Various meditation techniques exist, from mindfulness meditation to guided visualization, allowing individuals to find an approach that suits their preferences and lifestyle.",
+        contentType: "essay",
+        difficulty: 3,
+        wordCount: 175,
+        estimatedTime: 105,
+        paragraphs: [
+          {
+            text: "Meditation has become increasingly popular in recent years as people search for ways to manage stress and improve their mental health. This ancient practice involves focusing the mind and eliminating distractions to achieve a state of calm awareness. Regular meditation offers numerous benefits for both mental and physical well-being.",
+            translation: "명상은 사람들이 스트레스를 관리하고 정신 건강을 개선하는 방법을 찾으면서 최근 몇 년 동안 점점 더 인기를 얻고 있습니다. 이 고대 수련법은 마음을 집중하고 주의를 산만하게 하는 것들을 제거하여 차분한 인식 상태에 도달하는 것을 포함합니다. 규칙적인 명상은 정신적, 신체적 웰빙 모두에 수많은 이점을 제공합니다."
+          },
+          {
+            text: "Scientific research has shown that meditation can reduce anxiety and depression while improving concentration and emotional regulation. When we meditate, our brain waves slow down, promoting relaxation. Studies using brain imaging have revealed that regular meditation can actually change brain structure, increasing gray matter in areas associated with learning and memory.",
+            translation: "과학적 연구는 명상이 집중력과 감정 조절을 향상시키면서 불안과 우울증을 줄일 수 있다는 것을 보여주었습니다. 명상할 때 우리의 뇌파가 느려지면서 이완을 촉진합니다. 뇌 영상을 사용한 연구는 규칙적인 명상이 실제로 뇌 구조를 변화시켜 학습과 기억과 관련된 영역의 회백질을 증가시킬 수 있다는 것을 밝혔습니다."
+          },
+          {
+            text: "Physically, meditation has been linked to lower blood pressure, improved immune function, and better sleep quality. Many practitioners report feeling more energized and focused throughout the day. Starting a meditation practice doesn't require special equipment or extensive time commitment. Even five to ten minutes daily can make a difference. Various meditation techniques exist, from mindfulness meditation to guided visualization, allowing individuals to find an approach that suits their preferences and lifestyle.",
+            translation: "신체적으로 명상은 혈압 저하, 면역 기능 개선, 수면의 질 향상과 연관이 있습니다. 많은 수련자들이 하루 종일 더 활력이 넘치고 집중된다고 보고합니다. 명상 수련을 시작하는 데는 특별한 장비나 많은 시간 투자가 필요하지 않습니다. 하루에 5~10분만 해도 차이를 만들 수 있습니다. 마음챙김 명상에서 안내된 시각화까지 다양한 명상 기법이 존재하여 개인이 자신의 선호도와 라이프스타일에 맞는 접근법을 찾을 수 있습니다."
+          }
+        ]
+      },
+      {
+        title: "The Rise of Remote Work",
+        content: "The COVID-19 pandemic accelerated a workplace trend that was already emerging: remote work. Millions of employees worldwide transitioned from office environments to working from home, and many companies have decided to make this arrangement permanent. This shift has fundamentally changed how we think about work and productivity.\n\nRemote work offers several advantages for both employees and employers. Workers save time and money by eliminating daily commutes, and they enjoy greater flexibility in managing their schedules. Companies can reduce costs associated with maintaining large office spaces and can access talent from a wider geographic area. Environmental benefits include reduced carbon emissions from fewer people traveling to work.\n\nHowever, remote work also presents challenges. Some employees struggle with isolation and miss the social interaction of office environments. Maintaining work-life boundaries can be difficult when your home is also your workplace. Communication and collaboration may require more effort when team members aren't physically present. Despite these challenges, remote work appears to be a lasting feature of modern professional life, with many organizations adopting hybrid models that combine remote and in-office work.",
+        contentType: "news",
+        difficulty: 3,
+        wordCount: 192,
+        estimatedTime: 115,
+        paragraphs: [
+          {
+            text: "The COVID-19 pandemic accelerated a workplace trend that was already emerging: remote work. Millions of employees worldwide transitioned from office environments to working from home, and many companies have decided to make this arrangement permanent. This shift has fundamentally changed how we think about work and productivity.",
+            translation: "코로나19 팬데믹은 이미 나타나고 있던 직장 트렌드인 원격 근무를 가속화했습니다. 전 세계 수백만 명의 직원들이 사무실 환경에서 재택근무로 전환했고, 많은 회사들이 이 방식을 영구적으로 만들기로 결정했습니다. 이러한 변화는 우리가 일과 생산성에 대해 생각하는 방식을 근본적으로 바꾸었습니다."
+          },
+          {
+            text: "Remote work offers several advantages for both employees and employers. Workers save time and money by eliminating daily commutes, and they enjoy greater flexibility in managing their schedules. Companies can reduce costs associated with maintaining large office spaces and can access talent from a wider geographic area. Environmental benefits include reduced carbon emissions from fewer people traveling to work.",
+            translation: "원격 근무는 직원과 고용주 모두에게 여러 이점을 제공합니다. 근로자들은 매일의 통근을 없애서 시간과 돈을 절약하고, 일정 관리에 있어 더 큰 유연성을 누립니다. 회사는 대규모 사무 공간 유지와 관련된 비용을 줄이고 더 넓은 지역에서 인재를 확보할 수 있습니다. 환경적 이점으로는 직장으로 출퇴근하는 사람이 줄어들면서 탄소 배출이 감소한다는 것이 있습니다."
+          },
+          {
+            text: "However, remote work also presents challenges. Some employees struggle with isolation and miss the social interaction of office environments. Maintaining work-life boundaries can be difficult when your home is also your workplace. Communication and collaboration may require more effort when team members aren't physically present. Despite these challenges, remote work appears to be a lasting feature of modern professional life, with many organizations adopting hybrid models that combine remote and in-office work.",
+            translation: "그러나 원격 근무는 도전 과제도 제시합니다. 일부 직원들은 고립감으로 어려움을 겪고 사무실 환경의 사회적 교류를 그리워합니다. 집이 직장이기도 할 때 일과 삶의 경계를 유지하는 것이 어려울 수 있습니다. 팀원들이 물리적으로 같은 장소에 있지 않을 때 의사소통과 협업에 더 많은 노력이 필요할 수 있습니다. 이러한 도전에도 불구하고, 많은 조직이 원격 근무와 사무실 근무를 결합한 하이브리드 모델을 채택하면서 원격 근무는 현대 직업 생활의 지속적인 특징으로 보입니다."
+          }
+        ]
+      },
+      {
+        title: "Understanding Food Labels",
+        content: "Reading and understanding food labels is an essential skill for making healthy dietary choices. Food labels provide detailed information about nutritional content, ingredients, and serving sizes. However, many consumers find these labels confusing and struggle to interpret the information correctly.\n\nThe nutrition facts panel lists key nutrients including calories, fats, carbohydrates, proteins, vitamins, and minerals. The serving size is crucial to understand because all nutritional information is based on this amount, which may differ from the amount you actually consume. For example, a bottle of soda might contain 2.5 servings, meaning you need to multiply the listed values if you drink the entire bottle.\n\nIngredient lists are arranged by weight, with the most abundant ingredient listed first. This helps identify what the product primarily contains. Pay attention to added sugars, which can appear under various names like corn syrup, dextrose, or fructose. Terms like \"natural,\" \"organic,\" or \"healthy\" aren't always regulated and can be misleading. Learning to read food labels empowers consumers to compare products and make informed decisions that support their health goals.",
+        contentType: "essay",
+        difficulty: 3,
+        wordCount: 194,
+        estimatedTime: 116,
+        paragraphs: [
+          {
+            text: "Reading and understanding food labels is an essential skill for making healthy dietary choices. Food labels provide detailed information about nutritional content, ingredients, and serving sizes. However, many consumers find these labels confusing and struggle to interpret the information correctly.",
+            translation: "식품 라벨을 읽고 이해하는 것은 건강한 식단을 선택하는 데 필수적인 기술입니다. 식품 라벨은 영양 성분, 재료, 제공량에 대한 상세한 정보를 제공합니다. 그러나 많은 소비자들이 이러한 라벨을 혼란스러워하고 정보를 올바르게 해석하는 데 어려움을 겪습니다."
+          },
+          {
+            text: "The nutrition facts panel lists key nutrients including calories, fats, carbohydrates, proteins, vitamins, and minerals. The serving size is crucial to understand because all nutritional information is based on this amount, which may differ from the amount you actually consume. For example, a bottle of soda might contain 2.5 servings, meaning you need to multiply the listed values if you drink the entire bottle.",
+            translation: "영양 성분표는 칼로리, 지방, 탄수화물, 단백질, 비타민, 미네랄을 포함한 주요 영양소를 나열합니다. 모든 영양 정보가 이 양을 기준으로 하기 때문에 제공량을 이해하는 것이 중요하며, 이는 실제로 섭취하는 양과 다를 수 있습니다. 예를 들어, 탄산음료 한 병에는 2.5인분이 들어있을 수 있으며, 이는 전체 병을 마시는 경우 나열된 값을 곱해야 한다는 것을 의미합니다."
+          },
+          {
+            text: "Ingredient lists are arranged by weight, with the most abundant ingredient listed first. This helps identify what the product primarily contains. Pay attention to added sugars, which can appear under various names like corn syrup, dextrose, or fructose. Terms like \"natural,\" \"organic,\" or \"healthy\" aren't always regulated and can be misleading. Learning to read food labels empowers consumers to compare products and make informed decisions that support their health goals.",
+            translation: "성분 목록은 무게순으로 배열되며, 가장 많이 함유된 성분이 먼저 나열됩니다. 이것은 제품이 주로 무엇을 포함하는지 식별하는 데 도움이 됩니다. 옥수수 시럽, 덱스트로스, 과당과 같은 다양한 이름으로 나타날 수 있는 첨가당에 주의를 기울이세요. \"천연\", \"유기농\", \"건강한\"과 같은 용어는 항상 규제되는 것이 아니며 오해의 소지가 있을 수 있습니다. 식품 라벨을 읽는 법을 배우면 소비자가 제품을 비교하고 건강 목표를 지원하는 정보에 입각한 결정을 내릴 수 있습니다."
+          }
+        ]
+      },
+      {
+        title: "The Impact of Social Media on Teenagers",
+        content: "Social media has become an integral part of teenagers' lives, shaping how they communicate, form relationships, and view themselves. Platforms like Instagram, TikTok, and Snapchat provide opportunities for self-expression and connection, but they also present significant challenges for adolescent development.\n\nPositive aspects of social media include staying connected with friends, discovering shared interests, and accessing educational content. Teenagers can find communities that support their identities and interests, which is particularly valuable for those who feel isolated in their immediate environment. Creative platforms allow young people to develop skills in photography, video editing, and writing.\n\nHowever, research has identified concerning effects of excessive social media use. Constant exposure to curated, idealized images can damage self-esteem and body image. The pressure to gain likes and followers can become addictive and anxiety-inducing. Cyberbullying has emerged as a serious problem, with harmful comments and messages affecting mental health. Sleep disruption is common when teenagers check their phones late into the night. Parents and educators should help teens develop healthy social media habits, including setting time limits and maintaining awareness of how these platforms affect their well-being.",
+        contentType: "essay",
+        difficulty: 3,
+        wordCount: 197,
+        estimatedTime: 118,
+        paragraphs: [
+          {
+            text: "Social media has become an integral part of teenagers' lives, shaping how they communicate, form relationships, and view themselves. Platforms like Instagram, TikTok, and Snapchat provide opportunities for self-expression and connection, but they also present significant challenges for adolescent development.",
+            translation: "소셜 미디어는 십대들의 삶에서 필수적인 부분이 되어 그들이 의사소통하고, 관계를 형성하며, 자신을 바라보는 방식을 형성하고 있습니다. 인스타그램, 틱톡, 스냅챗과 같은 플랫폼은 자기 표현과 연결의 기회를 제공하지만, 청소년 발달에 중요한 도전 과제도 제시합니다."
+          },
+          {
+            text: "Positive aspects of social media include staying connected with friends, discovering shared interests, and accessing educational content. Teenagers can find communities that support their identities and interests, which is particularly valuable for those who feel isolated in their immediate environment. Creative platforms allow young people to develop skills in photography, video editing, and writing.",
+            translation: "소셜 미디어의 긍정적인 측면에는 친구들과 연결 상태를 유지하고, 공유된 관심사를 발견하며, 교육 콘텐츠에 접근하는 것이 포함됩니다. 십대들은 자신의 정체성과 관심사를 지원하는 커뮤니티를 찾을 수 있으며, 이는 즉각적인 환경에서 고립감을 느끼는 사람들에게 특히 가치 있습니다. 창의적인 플랫폼은 젊은이들이 사진, 동영상 편집, 글쓰기 기술을 개발할 수 있게 합니다."
+          },
+          {
+            text: "However, research has identified concerning effects of excessive social media use. Constant exposure to curated, idealized images can damage self-esteem and body image. The pressure to gain likes and followers can become addictive and anxiety-inducing. Cyberbullying has emerged as a serious problem, with harmful comments and messages affecting mental health. Sleep disruption is common when teenagers check their phones late into the night. Parents and educators should help teens develop healthy social media habits, including setting time limits and maintaining awareness of how these platforms affect their well-being.",
+            translation: "그러나 연구는 과도한 소셜 미디어 사용의 우려스러운 영향을 확인했습니다. 선별되고 이상화된 이미지에 끊임없이 노출되면 자존감과 신체 이미지가 손상될 수 있습니다. 좋아요와 팔로워를 얻어야 한다는 압박감은 중독적이고 불안을 유발할 수 있습니다. 사이버 괴롭힘은 해로운 댓글과 메시지가 정신 건강에 영향을 미치면서 심각한 문제로 대두되었습니다. 십대들이 밤늦게까지 휴대폰을 확인할 때 수면 방해가 흔합니다. 부모와 교육자는 십대들이 시간 제한을 설정하고 이러한 플랫폼이 웰빙에 어떻게 영향을 미치는지 인식을 유지하는 것을 포함하여 건강한 소셜 미디어 습관을 개발하도록 도와야 합니다."
+          }
+        ]
+      },
+      {
+        title: "Renewable Energy Sources",
+        content: "As concerns about climate change and fossil fuel depletion grow, renewable energy sources have gained significant attention. Unlike coal, oil, and natural gas, renewable energy comes from sources that naturally replenish, such as sunlight, wind, and water. Transitioning to renewable energy is crucial for reducing greenhouse gas emissions and creating a sustainable future.\n\nSolar power harnesses energy from the sun using photovoltaic panels or solar thermal systems. The cost of solar technology has decreased dramatically in recent years, making it more accessible to homeowners and businesses. Wind energy utilizes turbines to convert wind into electricity, with both onshore and offshore wind farms contributing to power grids. Hydroelectric power, generated by flowing water, has been used for decades and remains one of the most reliable renewable sources.\n\nWhile renewable energy offers environmental benefits, challenges remain. Solar and wind power are intermittent, dependent on weather conditions, which requires energy storage solutions or backup power sources. Initial installation costs can be high, though long-term savings and environmental benefits often justify the investment. Grid infrastructure must be updated to accommodate distributed renewable energy sources. Despite these obstacles, technological advances continue to improve efficiency and reduce costs, making renewable energy increasingly competitive with traditional fossil fuels.",
+        contentType: "news",
+        difficulty: 3,
+        wordCount: 212,
+        estimatedTime: 127,
+        paragraphs: [
+          {
+            text: "As concerns about climate change and fossil fuel depletion grow, renewable energy sources have gained significant attention. Unlike coal, oil, and natural gas, renewable energy comes from sources that naturally replenish, such as sunlight, wind, and water. Transitioning to renewable energy is crucial for reducing greenhouse gas emissions and creating a sustainable future.",
+            translation: "기후 변화와 화석 연료 고갈에 대한 우려가 커지면서 재생 가능 에너지원이 상당한 주목을 받고 있습니다. 석탄, 석유, 천연가스와 달리 재생 가능 에너지는 햇빛, 바람, 물과 같이 자연적으로 보충되는 원천에서 나옵니다. 재생 가능 에너지로의 전환은 온실가스 배출을 줄이고 지속 가능한 미래를 만드는 데 중요합니다."
+          },
+          {
+            text: "Solar power harnesses energy from the sun using photovoltaic panels or solar thermal systems. The cost of solar technology has decreased dramatically in recent years, making it more accessible to homeowners and businesses. Wind energy utilizes turbines to convert wind into electricity, with both onshore and offshore wind farms contributing to power grids. Hydroelectric power, generated by flowing water, has been used for decades and remains one of the most reliable renewable sources.",
+            translation: "태양광 발전은 광전지 패널이나 태양열 시스템을 사용하여 태양으로부터 에너지를 활용합니다. 최근 몇 년 동안 태양광 기술 비용이 급격히 감소하여 주택 소유자와 기업이 더 쉽게 접근할 수 있게 되었습니다. 풍력 에너지는 터빈을 사용하여 바람을 전기로 변환하며, 육상 및 해상 풍력 발전소 모두 전력망에 기여합니다. 흐르는 물에서 생성되는 수력 발전은 수십 년 동안 사용되어 왔으며 가장 신뢰할 수 있는 재생 가능 에너지원 중 하나로 남아 있습니다."
+          },
+          {
+            text: "While renewable energy offers environmental benefits, challenges remain. Solar and wind power are intermittent, dependent on weather conditions, which requires energy storage solutions or backup power sources. Initial installation costs can be high, though long-term savings and environmental benefits often justify the investment. Grid infrastructure must be updated to accommodate distributed renewable energy sources. Despite these obstacles, technological advances continue to improve efficiency and reduce costs, making renewable energy increasingly competitive with traditional fossil fuels.",
+            translation: "재생 가능 에너지가 환경적 이점을 제공하지만, 과제는 여전히 남아 있습니다. 태양광과 풍력은 날씨 조건에 따라 간헐적이어서 에너지 저장 솔루션이나 백업 전력원이 필요합니다. 초기 설치 비용이 높을 수 있지만, 장기적인 절감과 환경적 이점이 종종 투자를 정당화합니다. 분산된 재생 가능 에너지원을 수용하려면 전력망 인프라를 업데이트해야 합니다. 이러한 장애물에도 불구하고 기술 발전은 효율성을 계속 개선하고 비용을 줄여 재생 가능 에너지를 전통적인 화석 연료와 점점 더 경쟁력 있게 만들고 있습니다."
+          }
+        ]
+      },
+      {
+        title: "The Importance of Sleep",
+        content: "Sleep is one of the most fundamental aspects of human health, yet many people don't get enough of it. In our fast-paced modern society, sleep is often sacrificed for work, entertainment, or social activities. However, chronic sleep deprivation can have serious consequences for both physical and mental health.\n\nDuring sleep, the body performs essential maintenance functions. The immune system strengthens, muscles repair themselves, and the brain consolidates memories and processes information from the day. Different sleep stages serve different purposes—deep sleep promotes physical restoration while REM sleep supports cognitive functions and emotional regulation. Adults typically need 7-9 hours of sleep per night, though individual requirements may vary.\n\nLack of adequate sleep affects concentration, decision-making abilities, and emotional stability. It increases the risk of accidents and impairs work performance. Long-term sleep deprivation has been linked to serious health conditions including obesity, diabetes, cardiovascular disease, and depression. To improve sleep quality, experts recommend maintaining a consistent sleep schedule, creating a comfortable sleep environment, limiting screen time before bed, and avoiding caffeine in the evening. Prioritizing sleep is not a luxury but a necessity for overall well-being and optimal functioning.",
+        contentType: "essay",
+        difficulty: 3,
+        wordCount: 213,
+        estimatedTime: 128,
+        paragraphs: [
+          {
+            text: "Sleep is one of the most fundamental aspects of human health, yet many people don't get enough of it. In our fast-paced modern society, sleep is often sacrificed for work, entertainment, or social activities. However, chronic sleep deprivation can have serious consequences for both physical and mental health.",
+            translation: "수면은 인간 건강의 가장 기본적인 측면 중 하나이지만, 많은 사람들이 충분한 수면을 취하지 못합니다. 빠르게 변화하는 현대 사회에서 수면은 종종 일, 오락, 또는 사회적 활동을 위해 희생됩니다. 그러나 만성적인 수면 부족은 신체적, 정신적 건강 모두에 심각한 결과를 초래할 수 있습니다."
+          },
+          {
+            text: "During sleep, the body performs essential maintenance functions. The immune system strengthens, muscles repair themselves, and the brain consolidates memories and processes information from the day. Different sleep stages serve different purposes—deep sleep promotes physical restoration while REM sleep supports cognitive functions and emotional regulation. Adults typically need 7-9 hours of sleep per night, though individual requirements may vary.",
+            translation: "수면 중에 신체는 필수적인 유지 기능을 수행합니다. 면역 체계가 강화되고, 근육이 스스로 회복하며, 뇌는 하루의 기억을 통합하고 정보를 처리합니다. 다른 수면 단계는 다른 목적을 제공합니다—깊은 수면은 신체적 회복을 촉진하는 반면 REM 수면은 인지 기능과 감정 조절을 지원합니다. 성인은 일반적으로 밤에 7~9시간의 수면이 필요하지만, 개인의 요구 사항은 다를 수 있습니다."
+          },
+          {
+            text: "Lack of adequate sleep affects concentration, decision-making abilities, and emotional stability. It increases the risk of accidents and impairs work performance. Long-term sleep deprivation has been linked to serious health conditions including obesity, diabetes, cardiovascular disease, and depression. To improve sleep quality, experts recommend maintaining a consistent sleep schedule, creating a comfortable sleep environment, limiting screen time before bed, and avoiding caffeine in the evening. Prioritizing sleep is not a luxury but a necessity for overall well-being and optimal functioning.",
+            translation: "충분한 수면 부족은 집중력, 의사 결정 능력, 감정적 안정성에 영향을 미칩니다. 사고 위험을 증가시키고 업무 성과를 저해합니다. 장기적인 수면 부족은 비만, 당뇨병, 심혈관 질환, 우울증을 포함한 심각한 건강 상태와 연관되어 왔습니다. 수면의 질을 개선하기 위해 전문가들은 일관된 수면 일정 유지, 편안한 수면 환경 조성, 취침 전 화면 시간 제한, 저녁 카페인 피하기를 권장합니다. 수면을 우선시하는 것은 사치가 아니라 전반적인 웰빙과 최적의 기능을 위한 필수입니다."
+          }
+        ]
+      },
+      {
+        title: "Community Gardens and Urban Agriculture",
+        content: "Community gardens are flourishing in cities around the world as people rediscover the benefits of growing their own food. These shared spaces transform vacant lots and unused urban land into productive gardens where neighbors come together to cultivate vegetables, fruits, and flowers. The movement represents more than just food production—it fosters community connections and environmental awareness.\n\nUrban agriculture provides fresh, locally grown produce in areas that may lack access to healthy food options, known as food deserts. Gardeners learn about nutrition, sustainable agriculture practices, and seasonal eating. The physical activity involved in gardening promotes health, while time spent outdoors and working with plants can reduce stress and improve mental well-being. Community gardens also create green spaces that beautify neighborhoods and support local biodiversity by providing habitats for pollinators.\n\nThese gardens bring together people from diverse backgrounds, creating opportunities for social interaction and cultural exchange. Experienced gardeners share knowledge with beginners, and different cultural traditions of growing and preparing food enrich the community. Children who participate in community gardens develop appreciation for nature and healthy eating habits. While challenges include securing land, funding, and volunteer participation, successful community gardens demonstrate how urban spaces can be reimagined to support both ecological sustainability and social cohesion.",
+        contentType: "news",
+        difficulty: 3,
+        wordCount: 226,
+        estimatedTime: 136,
+        paragraphs: [
+          {
+            text: "Community gardens are flourishing in cities around the world as people rediscover the benefits of growing their own food. These shared spaces transform vacant lots and unused urban land into productive gardens where neighbors come together to cultivate vegetables, fruits, and flowers. The movement represents more than just food production—it fosters community connections and environmental awareness.",
+            translation: "사람들이 자신의 음식을 재배하는 이점을 재발견하면서 전 세계 도시에서 커뮤니티 정원이 번성하고 있습니다. 이러한 공유 공간은 빈 땅과 사용되지 않는 도시 토지를 이웃들이 함께 모여 채소, 과일, 꽃을 재배하는 생산적인 정원으로 변화시킵니다. 이 운동은 단순한 식량 생산 이상을 나타냅니다—커뮤니티 연결과 환경 인식을 촉진합니다."
+          },
+          {
+            text: "Urban agriculture provides fresh, locally grown produce in areas that may lack access to healthy food options, known as food deserts. Gardeners learn about nutrition, sustainable agriculture practices, and seasonal eating. The physical activity involved in gardening promotes health, while time spent outdoors and working with plants can reduce stress and improve mental well-being. Community gardens also create green spaces that beautify neighborhoods and support local biodiversity by providing habitats for pollinators.",
+            translation: "도시 농업은 식품 사막으로 알려진, 건강한 식품 옵션에 대한 접근이 부족할 수 있는 지역에서 신선하고 지역에서 재배된 농산물을 제공합니다. 정원사들은 영양, 지속 가능한 농업 관행, 계절별 식사에 대해 배웁니다. 원예에 포함된 신체 활동은 건강을 촉진하고, 야외에서 보내는 시간과 식물과 함께 일하는 것은 스트레스를 줄이고 정신적 웰빙을 향상시킬 수 있습니다. 커뮤니티 정원은 또한 이웃을 아름답게 하고 수분 매개자를 위한 서식지를 제공함으로써 지역 생물 다양성을 지원하는 녹지 공간을 만듭니다."
+          },
+          {
+            text: "These gardens bring together people from diverse backgrounds, creating opportunities for social interaction and cultural exchange. Experienced gardeners share knowledge with beginners, and different cultural traditions of growing and preparing food enrich the community. Children who participate in community gardens develop appreciation for nature and healthy eating habits. While challenges include securing land, funding, and volunteer participation, successful community gardens demonstrate how urban spaces can be reimagined to support both ecological sustainability and social cohesion.",
+            translation: "이러한 정원은 다양한 배경을 가진 사람들을 모아 사회적 상호작용과 문화 교류의 기회를 만듭니다. 경험 많은 정원사들은 초보자들과 지식을 공유하고, 음식을 재배하고 준비하는 다양한 문화 전통이 커뮤니티를 풍요롭게 합니다. 커뮤니티 정원에 참여하는 어린이들은 자연과 건강한 식습관에 대한 감사를 발전시킵니다. 도전 과제에는 토지 확보, 자금 조달, 자원 봉사 참여가 포함되지만, 성공적인 커뮤니티 정원은 도시 공간이 생태적 지속 가능성과 사회적 응집력을 모두 지원하도록 어떻게 재구상될 수 있는지 보여줍니다."
+          }
+        ]
       }
     ];
 
